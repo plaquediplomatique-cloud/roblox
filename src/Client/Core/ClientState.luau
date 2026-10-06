@@ -80,10 +80,19 @@ function ClientState.setMenuOpen(open: boolean)
 end
 
 function ClientState.start()
-	player:GetAttributeChangedSignal("Arena"):Connect(function()
+	-- Arena et ArenaKind sont deux attributs : on ne publie qu'un changement effectif.
+	local lastKind, lastId = "", ""
+	local function publishArena()
 		local kind: ArenaKind, id: string = ClientState.arena()
-		ClientState.ArenaChanged:Fire(kind, id)
-	end)
+		if kind ~= lastKind or id ~= lastId then
+			lastKind, lastId = kind, id
+			ClientState.ArenaChanged:Fire(kind, id)
+		end
+	end
+	player:GetAttributeChangedSignal("Arena"):Connect(publishArena)
+	player:GetAttributeChangedSignal("ArenaKind"):Connect(publishArena)
+	local initialKind: ArenaKind, initialId: string = ClientState.arena()
+	lastKind, lastId = initialKind, initialId
 	ReplicaController.onNew("PlayerProfile", function(replica)
 		profile = replica
 		ClientState.ProfileReady:Fire(replica)

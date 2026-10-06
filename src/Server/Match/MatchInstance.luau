@@ -1065,6 +1065,8 @@ function MatchInstance.new(spec: Types.MatchSpec, arena: MapBuilder.MapInstance,
 		closed = false,
 	}, MatchInstance)
 	local match = (self :: any) :: MatchInstance
+	-- Le client retrouve son arène (intro, sites, contours) par cet attribut.
+	arena.model:SetAttribute("MatchId", spec.matchId)
 
 	match.janitor:Add(GameEvents.Kill:Connect(function(info: GameEvents.KillInfo)
 		if info.arena == match.id then

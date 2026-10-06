@@ -316,9 +316,14 @@ function MapBuilder.build(blueprint: Blueprint, origin: CFrame, parent: Instance
 		end
 	end
 
-	for _, keyframe in blueprint.intro do
-		table.insert(instance.intro, origin * keyframe)
+	for index, keyframe in blueprint.intro do
+		local world = origin * keyframe
+		table.insert(instance.intro, world)
+		-- Exposé au client (attributs du modèle : répliqués même avec le streaming).
+		model:SetAttribute("Intro" .. index, world)
 	end
+	model:SetAttribute("IntroCount", #blueprint.intro)
+	model:SetAttribute("Overview", instance.overview)
 
 	model.Parent = parent
 	if RunService:IsStudio() then

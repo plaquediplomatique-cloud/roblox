@@ -257,7 +257,9 @@ local function step(dt: number)
 	end
 	local now = os.clock()
 	local yaw = select(1, CameraController.getYawPitch())
-	local moveLocal = if frozen then Vector3.zero else InputController.moveVector()
+	-- Gel : cinématique, ou action d'objectif en cours (attribut Busy posé par le serveur).
+	local blocked = frozen or (character :: Model):GetAttribute("Busy") == true
+	local moveLocal = if blocked then Vector3.zero else InputController.moveVector()
 	local wishWorld = CFrame.Angles(0, yaw, 0) * moveLocal
 	if not firstPerson then
 		-- Hub : déplacement relatif à la caméra, rotation libre du personnage.
@@ -314,7 +316,7 @@ local function step(dt: number)
 
 	-- Saut (buffer + coyote)
 	local buffered = jumpBufferedAt
-	if buffered and now - buffered <= Movement.jumpBuffer and not frozen then
+	if buffered and now - buffered <= Movement.jumpBuffer and not blocked then
 		tryJump(now, flat)
 	end
 
