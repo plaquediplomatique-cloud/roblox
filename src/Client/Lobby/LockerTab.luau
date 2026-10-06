@@ -127,7 +127,7 @@ function LockerTab.build(parent: Instance, mode: Mode): Tab
 			TextXAlignment = Enum.TextXAlignment.Left,
 			TextTruncate = Enum.TextTruncate.AtEnd,
 			Position = UDim2.fromOffset(12, 10),
-			Size = UDim2.new(1, -24, 0, 22),
+			Size = UDim2.new(1, -44, 0, 22),
 			Parent = button,
 		})
 		UI.text({
@@ -142,21 +142,65 @@ function LockerTab.build(parent: Instance, mode: Mode): Tab
 			Size = UDim2.new(1, -24, 0, 38),
 			Parent = button,
 		})
-		local status = if equipped
-			then "ÉQUIPÉ"
-			elseif owned then (if mode == "Shop" then "POSSÉDÉ" else "ÉQUIPER")
-			elseif item.price then (if pendingBuy == item.id then "CONFIRMER · " else "") .. item.price .. " ◈ FLUX"
-			else "PASS · NIVEAU · ÉVÉNEMENT"
+		-- Bas de carte : rareté à gauche, action à droite dans une pastille (lisible d'un coup).
 		UI.text({
-			Text = rarity.label .. "   " .. status,
-			FontFace = fonts.mono,
-			TextSize = 12,
-			TextColor3 = if pendingBuy == item.id then colors.warning else rarity.color,
+			Text = rarity.label,
+			FontFace = fonts.headingHeavy,
+			TextSize = 11,
+			TextColor3 = rarity.color,
 			TextXAlignment = Enum.TextXAlignment.Left,
 			Position = UDim2.new(0, 12, 1, -26),
-			Size = UDim2.new(1, -24, 0, 18),
+			Size = UDim2.new(0.45, -12, 0, 18),
 			Parent = button,
 		})
+		local confirming = pendingBuy == item.id
+		local action = if equipped
+			then "ÉQUIPÉ"
+			elseif owned then (if mode == "Shop" then "POSSÉDÉ" else "ÉQUIPER")
+			elseif item.price then (if confirming then "CONFIRMER · " else "") .. item.price .. " ◈"
+			else "PASS · NIVEAU · ÉVÉNEMENT"
+		local actionable = (owned and not equipped and mode ~= "Shop") or (not owned and item.price ~= nil)
+		local chip = UI.text({
+			Name = "Action",
+			Text = action,
+			FontFace = fonts.headingHeavy,
+			TextSize = 11,
+			TextColor3 = if confirming or actionable then colors.void else colors.textDim,
+			BackgroundColor3 = if confirming
+				then colors.warning
+				elseif actionable then colors.primary
+				else colors.panelLight,
+			BackgroundTransparency = if confirming or actionable then 0 else 0.3,
+			AutomaticSize = Enum.AutomaticSize.X,
+			AnchorPoint = Vector2.new(1, 0),
+			Position = UDim2.new(1, -10, 1, -28),
+			Size = UDim2.fromOffset(0, 20),
+			Parent = button,
+		})
+		UI.corner(3, chip)
+		UI.padding(chip, 8, 8, 0, 0)
+		if equipped then
+			local check = UI.text({
+				Name = "Check",
+				Text = "✓",
+				FontFace = fonts.headingHeavy,
+				TextSize = 13,
+				TextColor3 = colors.void,
+				BackgroundColor3 = colors.primary,
+				AnchorPoint = Vector2.new(1, 0),
+				Position = UDim2.new(1, -8, 0, 10),
+				Size = UDim2.fromOffset(20, 20),
+				Parent = button,
+			})
+			UI.corner(10, check)
+		end
+		button.AutoButtonColor = false
+		button.MouseEnter:Connect(function()
+			button.BackgroundColor3 = colors.panelLight
+		end)
+		button.MouseLeave:Connect(function()
+			button.BackgroundColor3 = if equipped then colors.panelLight else colors.panel
+		end)
 		button.Activated:Connect(function()
 			if owned and not equipped then
 				UI.playSound("UI.Confirm")
@@ -275,13 +319,25 @@ function LockerTab.build(parent: Instance, mode: Mode): Tab
 			local button = UI.button({
 				Text = KIND_NAMES[name],
 				TextSize = 13,
+				FontFace = if active then fonts.headingHeavy else fonts.heading,
+				AutoButtonColor = false,
 				Size = UDim2.fromOffset(130, 34),
 				LayoutOrder = index,
-				BackgroundColor3 = if active then colors.primary else colors.panelLight,
-				TextColor3 = if active then colors.void else colors.textDim,
+				BackgroundColor3 = colors.panelLight,
+				BackgroundTransparency = if active then 0.2 else 0.7,
+				TextColor3 = if active then colors.text else colors.textDim,
 				Parent = filters,
 			})
 			UI.corner(3, button)
+			UI.frame({
+				Name = "Underline",
+				BackgroundColor3 = colors.primary,
+				AnchorPoint = Vector2.new(0.5, 1),
+				Position = UDim2.fromScale(0.5, 1),
+				Size = UDim2.new(1, -16, 0, 2),
+				Visible = active,
+				Parent = button,
+			})
 			button.Activated:Connect(function()
 				kind = name
 				pendingBuy = nil
