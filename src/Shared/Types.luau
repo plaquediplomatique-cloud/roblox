@@ -321,6 +321,57 @@ export type KillEvent = {
 	streak: number,
 }
 
+export type SlotAmmo = {
+	w: string,
+	mag: number,
+	reserve: number,
+}
+
+export type AmmoSyncPacket = {
+	slots: { [string]: SlotAmmo }, -- "Primary" | "Secondary" | "Melee"
+	equipped: string,
+	seed: number,
+	counter: number,
+	reloading: boolean,
+}
+
+export type ShotVisualPacket = {
+	s: number, -- NetSlot du tireur
+	w: string,
+	o: Vector3,
+	e: { Vector3 },
+}
+
+export type KillcamSample = {
+	t: number,
+	cf: CFrame,
+	stance: Stance,
+	yaw: number,
+	pitch: number,
+}
+
+export type KillcamPacket = {
+	killer: number,
+	killerName: string,
+	weapon: string,
+	killerTrack: { KillcamSample },
+	victimTrack: { KillcamSample },
+	killTime: number,
+	headshot: boolean,
+	killerHealth: number,
+	killerArmor: number,
+}
+
+export type MatchEventPacket = {
+	kind: string,
+	team: string?,
+	round: number?,
+	reason: string?,
+	player: number?,
+	text: string?,
+	value: number?,
+}
+
 export type InteractAction = "PlantStart" | "PlantCancel" | "DefuseStart" | "DefuseCancel"
 
 export type StancePacket = {
@@ -380,7 +431,7 @@ export type MatchPlayerData = {
 }
 
 export type RoundRecord = {
-	winner: TeamId,
+	winner: string, -- "A" | "B" | "" (manche nulle)
 	reason: string,
 }
 

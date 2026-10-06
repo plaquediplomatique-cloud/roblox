@@ -1,0 +1,3 @@
+--!strict
+-- Remplace les sons de personnage par défaut : pas, sauts et atterrissages sont gérés
+-- par l'AudioController (matériau, vitesse, occlusion, marche silencieuse).

@@ -1,0 +1,3 @@
+--!strict
+-- Remplace le script "Health" par défaut de Roblox (régénération passive des PV).
+-- Dans AETHER STRIKE, seuls les dégâts et soins serveur modifient la santé.
