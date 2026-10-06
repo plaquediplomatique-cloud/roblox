@@ -403,34 +403,72 @@ function ArmoryTab.build(parent: Instance): Tab
 			local active = def == selected
 			local card = UI.button({
 				Text = "",
-				Size = UDim2.new(1, -6, 0, 58),
+				AutoButtonColor = false,
+				Size = UDim2.new(1, -6, 0, 62),
 				LayoutOrder = order,
 				BackgroundColor3 = if active then colors.panelLight else colors.panel,
 				Parent = list,
 			})
-			UI.corner(3, card)
-			if equipped then
-				UI.accent(card, colors.primary, 3)
-			end
+			UI.corner(4, card)
+			UI.stroke(card, if active then colors.primary else colors.stroke, if active then 2 else 1, 0)
 			UI.text({
-				Text = def.shortName .. (if equipped then "  ·  ÉQUIPÉE" else ""),
-				FontFace = fonts.heading,
-				TextSize = 17,
+				Text = def.shortName,
+				FontFace = fonts.headingHeavy,
+				TextSize = 18,
 				TextXAlignment = Enum.TextXAlignment.Left,
-				Position = UDim2.fromOffset(14, 6),
-				Size = UDim2.new(1, -20, 0, 24),
+				Position = UDim2.fromOffset(14, 7),
+				Size = UDim2.new(1, -110, 0, 24),
 				Parent = card,
 			})
 			UI.text({
-				Text = CATEGORY_NAMES[def.category] or def.category,
-				FontFace = fonts.mono,
-				TextSize = 12,
+				Text = string.upper(CATEGORY_NAMES[def.category] or def.category),
+				FontFace = fonts.heading,
+				TextSize = 11,
 				TextColor3 = colors.textDim,
 				TextXAlignment = Enum.TextXAlignment.Left,
 				Position = UDim2.fromOffset(14, 32),
-				Size = UDim2.new(1, -20, 0, 16),
+				Size = UDim2.new(0.5, -14, 0, 14),
 				Parent = card,
 			})
+			-- Mini-jauge de dégâts : comparer les armes sans ouvrir chaque fiche.
+			local power = statValues(def)[1].value
+			local track = UI.frame({
+				Name = "Power",
+				BackgroundColor3 = colors.panelLight,
+				Position = UDim2.fromOffset(14, 50),
+				Size = UDim2.new(0.5, -14, 0, 3),
+				Parent = card,
+			})
+			UI.frame({
+				BackgroundColor3 = if active then colors.primary else colors.textDim,
+				Size = UDim2.fromScale(power, 1),
+				Parent = track,
+			})
+			if equipped then
+				local badge = UI.text({
+					Name = "Equipped",
+					Text = "ÉQUIPÉE",
+					FontFace = fonts.headingHeavy,
+					TextSize = 11,
+					TextColor3 = colors.void,
+					BackgroundColor3 = colors.primary,
+					AutomaticSize = Enum.AutomaticSize.X,
+					AnchorPoint = Vector2.new(1, 0),
+					Position = UDim2.new(1, -12, 0, 10),
+					Size = UDim2.fromOffset(0, 18),
+					Parent = card,
+				})
+				UI.corner(3, badge)
+				UI.padding(badge, 7, 7, 0, 0)
+			end
+			card.MouseEnter:Connect(function()
+				if not active then
+					card.BackgroundColor3 = colors.panelLight
+				end
+			end)
+			card.MouseLeave:Connect(function()
+				card.BackgroundColor3 = if active then colors.panelLight else colors.panel
+			end)
 			card.Activated:Connect(function()
 				UI.playSound("UI.Click")
 				select(def)
@@ -451,13 +489,26 @@ function ArmoryTab.build(parent: Instance): Tab
 			local button = UI.button({
 				Text = labels[name],
 				TextSize = 13,
+				FontFace = if active then fonts.headingHeavy else fonts.heading,
+				AutoButtonColor = false,
 				Size = UDim2.new(1 / 3, -4, 1, 0),
 				LayoutOrder = index,
-				BackgroundColor3 = if active then colors.primary else colors.panelLight,
-				TextColor3 = if active then colors.void else colors.textDim,
+				BackgroundColor3 = colors.panelLight,
+				BackgroundTransparency = if active then 0.2 else 0.7,
+				TextColor3 = if active then colors.text else colors.textDim,
 				Parent = slotTabs,
 			})
 			UI.corner(3, button)
+			-- Onglet actif : soulignement cyan (pas seulement une couleur de fond).
+			UI.frame({
+				Name = "Underline",
+				BackgroundColor3 = colors.primary,
+				AnchorPoint = Vector2.new(0.5, 1),
+				Position = UDim2.fromScale(0.5, 1),
+				Size = UDim2.new(1, -16, 0, 2),
+				Visible = active,
+				Parent = button,
+			})
 			button.Activated:Connect(function()
 				slot = name :: Types.WeaponSlot
 				local data = profile()
