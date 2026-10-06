@@ -295,9 +295,11 @@ export type Glass = { root: Frame, gradient: UIGradient }
 	obliques sont découpés par un UIGradient à paliers nets. La rotation du dégradé est en
 	espace UV (0..1) : l'angle est calculé pour que la découpe tombe exactement à `slant`
 	pixels sur la hauteur, quelle que soit la largeur. Le verre s'éclaircit à gauche.
-	`width`/`height` en pixels (référence 1080p), `slant` > 0.
+	`width`/`height` en pixels (référence 1080p), `slant` > 0 ; `mirrored` : biseau « \ »
+	(liseré à droite), pour les compositions symétriques.
 ]]
-function UI.glass(width: number, height: number, slant: number, props: Props?): Glass
+function UI.glass(width: number, height: number, slant: number, props: Props?, mirrored: boolean?): Glass
+	local sign = if mirrored then -1 else 1
 	local frame = UI.frame({
 		BackgroundColor3 = Color3.new(1, 1, 1),
 		BackgroundTransparency = 0,
@@ -312,7 +314,7 @@ function UI.glass(width: number, height: number, slant: number, props: Props?): 
 	local gradient = UI.gradient(
 		frame,
 		ColorSequence.new(Theme.colors.glassLight, Theme.colors.glass),
-		math.deg(angle),
+		sign * math.deg(angle),
 		NumberSequence.new({
 			NumberSequenceKeypoint.new(0, 1),
 			NumberSequenceKeypoint.new(edge, 1),
@@ -329,9 +331,11 @@ function UI.glass(width: number, height: number, slant: number, props: Props?): 
 		BackgroundColor3 = Theme.colors.primary,
 		BackgroundTransparency = 0.15,
 		AnchorPoint = Vector2.new(0.5, 0.5),
-		Position = UDim2.fromOffset(slant / 2 + 1, height / 2),
+		Position = if mirrored
+			then UDim2.new(1, -(slant / 2 + 1), 0, height / 2)
+			else UDim2.fromOffset(slant / 2 + 1, height / 2),
 		Size = UDim2.fromOffset(3, length),
-		Rotation = math.deg(math.atan(slant / height)),
+		Rotation = sign * math.deg(math.atan(slant / height)),
 		ZIndex = 2,
 		Parent = frame,
 	})
@@ -339,7 +343,7 @@ function UI.glass(width: number, height: number, slant: number, props: Props?): 
 		Name = "Highlight",
 		BackgroundColor3 = Color3.new(1, 1, 1),
 		BackgroundTransparency = 0.86,
-		Position = UDim2.fromOffset(slant + 2, 0),
+		Position = UDim2.fromOffset(if mirrored then 0 else slant + 2, 0),
 		Size = UDim2.new(1, -slant - 2, 0, 1),
 		ZIndex = 2,
 		Parent = frame,

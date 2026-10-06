@@ -706,110 +706,115 @@ export type MatchBar = {
 	pipsRight: Frame,
 }
 
+local MATCH_SIDE_W, MATCH_TIMER_W, MATCH_H = 200, 112, 54
+
 function HudWidgets.matchBar(parent: Instance): MatchBar
+	-- Chrono au centre, équipes de part et d'autre en verre biseauté symétrique (« \ » à
+	-- gauche, « / » à droite) : la barre se lit comme un seul bloc, pas trois boîtes.
 	local root = UI.frame({
 		Name = "MatchBar",
 		BackgroundTransparency = 1,
 		AnchorPoint = Vector2.new(0.5, 0),
-		Position = UDim2.new(0.5, 0, 0, 14),
-		Size = UDim2.fromOffset(520, 86),
+		Position = UDim2.new(0.5, 0, 0, 12),
+		Size = UDim2.fromOffset(MATCH_SIDE_W * 2 + MATCH_TIMER_W, 76),
 		Parent = parent,
 	})
-	local center = UI.frame({
+	local center = UI.glass(MATCH_TIMER_W, MATCH_H, 1, {
 		Name = "Timer",
-		BackgroundColor3 = colors.shadow,
-		BackgroundTransparency = 0.3,
 		AnchorPoint = Vector2.new(0.5, 0),
 		Position = UDim2.fromScale(0.5, 0),
-		Size = UDim2.fromOffset(108, 48),
+		ZIndex = 2,
 		Parent = root,
-	})
-	UI.corner(6, center)
+	}).root
+	local edge = center:FindFirstChild("Edge")
+	if edge then
+		edge:Destroy()
+	end
+	glowLine(center, 0, WHITE).BackgroundTransparency = 0.6
 	local timer = label({
 		Name = "Time",
 		Text = "1:40",
 		FontFace = fonts.number,
-		TextSize = 30,
+		TextSize = 32,
 		Size = UDim2.fromScale(1, 1),
+		ZIndex = 2,
 		Parent = center,
 	})
+	HudWidgets.textShadow(timer, 0.6)
 	local round = label({
 		Name = "Round",
 		Text = "MANCHE 1",
 		FontFace = fonts.heading,
 		TextSize = 11,
-		TextColor3 = colors.text,
-		TextTransparency = 0.15,
-		BackgroundColor3 = colors.shadow,
-		BackgroundTransparency = 0.45,
-		AutomaticSize = Enum.AutomaticSize.X,
+		TextColor3 = colors.textDim,
 		AnchorPoint = Vector2.new(0.5, 0),
-		Position = UDim2.new(0.5, 0, 0, 53),
-		Size = UDim2.fromOffset(0, 18),
+		Position = UDim2.new(0.5, 0, 0, MATCH_H + 4),
+		Size = UDim2.fromOffset(420, 14),
 		Parent = root,
 	})
-	UI.corner(9, round)
-	UI.padding(round, 10, 10, 0, 0)
+	HudWidgets.textShadow(round, 0.5)
 	local function side(direction: number): (TextLabel, TextLabel, Frame, Frame)
-		local anchorX = if direction < 0 then 1 else 0
-		local box = UI.frame({
-			Name = if direction < 0 then "Ally" else "Enemy",
-			BackgroundColor3 = colors.shadow,
-			BackgroundTransparency = 0.3,
-			AnchorPoint = Vector2.new(anchorX, 0),
-			Position = UDim2.new(0.5, direction * 60, 0, 0),
-			Size = UDim2.fromOffset(68, 48),
-			ClipsDescendants = true,
+		local left = direction < 0
+		local plate = UI.glass(MATCH_SIDE_W, MATCH_H - 6, 14, {
+			Name = if left then "Ally" else "Enemy",
+			AnchorPoint = Vector2.new(if left then 1 else 0, 0),
+			Position = UDim2.new(0.5, direction * (MATCH_TIMER_W / 2 - 1), 0, 3),
 			Parent = root,
+		}, left)
+		local box = plate.root
+		local strip = UI.frame({
+			Name = "Strip",
+			BackgroundColor3 = if left then colors.ally else colors.enemy,
+			AnchorPoint = Vector2.new(if left then 1 else 0, 1),
+			Position = UDim2.fromScale(if left then 1 else 0, 1),
+			Size = UDim2.new(1, -16, 0, 3),
+			ZIndex = 3,
+			Parent = box,
 		})
-		UI.corner(6, box)
 		local score = label({
 			Name = "Score",
 			Text = "0",
 			FontFace = fonts.number,
-			TextSize = 30,
-			Size = UDim2.new(1, 0, 1, -3),
+			TextSize = 32,
+			TextXAlignment = if left then Enum.TextXAlignment.Right else Enum.TextXAlignment.Left,
+			AnchorPoint = Vector2.new(if left then 1 else 0, 0),
+			Position = UDim2.new(if left then 1 else 0, if left then -14 else 14, 0, 0),
+			Size = UDim2.fromOffset(52, MATCH_H - 8),
+			ZIndex = 2,
 			Parent = box,
 		})
-		local strip = UI.frame({
-			Name = "Strip",
-			BackgroundColor3 = colors.ally,
-			AnchorPoint = Vector2.new(0, 1),
-			Position = UDim2.fromScale(0, 1),
-			Size = UDim2.new(1, 0, 0, 3),
-			Parent = box,
-		})
+		HudWidgets.textShadow(score, 0.6)
 		local name = label({
 			Name = "Side",
 			Text = "",
-			FontFace = fonts.heading,
-			TextSize = 12,
-			TextXAlignment = if direction < 0 then Enum.TextXAlignment.Right else Enum.TextXAlignment.Left,
-			AnchorPoint = Vector2.new(anchorX, 0),
-			Position = UDim2.new(0.5, direction * 136, 0, 8),
-			Size = UDim2.fromOffset(110, 16),
-			Parent = root,
+			FontFace = fonts.headingHeavy,
+			TextSize = 13,
+			TextXAlignment = if left then Enum.TextXAlignment.Right else Enum.TextXAlignment.Left,
+			AnchorPoint = Vector2.new(if left then 1 else 0, 0),
+			Position = UDim2.new(if left then 1 else 0, if left then -74 else 74, 0, 7),
+			Size = UDim2.fromOffset(MATCH_SIDE_W - 100, 16),
+			ZIndex = 2,
+			Parent = box,
 		})
-		HudWidgets.textShadow(name, 0.6)
 		local pips = UI.frame({
 			Name = "Alive",
 			BackgroundTransparency = 1,
-			AnchorPoint = Vector2.new(anchorX, 0),
-			Position = UDim2.new(0.5, direction * 136, 0, 30),
-			Size = UDim2.fromOffset(110, 6),
-			Parent = root,
+			AnchorPoint = Vector2.new(if left then 1 else 0, 0),
+			Position = UDim2.new(if left then 1 else 0, if left then -74 else 74, 0, 29),
+			Size = UDim2.fromOffset(MATCH_SIDE_W - 100, 6),
+			ZIndex = 2,
+			Parent = box,
 		})
 		UI.list(
 			pips,
 			Enum.FillDirection.Horizontal,
 			4,
-			if direction < 0 then Enum.HorizontalAlignment.Right else Enum.HorizontalAlignment.Left
+			if left then Enum.HorizontalAlignment.Right else Enum.HorizontalAlignment.Left
 		)
 		return score, name, strip, pips
 	end
 	local scoreLeft, sideLeft, stripLeft, pipsLeft = side(-1)
 	local scoreRight, sideRight, stripRight, pipsRight = side(1)
-	stripRight.BackgroundColor3 = colors.enemy
 	return {
 		root = root,
 		timer = timer,

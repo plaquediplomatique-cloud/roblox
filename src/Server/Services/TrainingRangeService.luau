@@ -45,6 +45,7 @@ type Bot = {
 	humanoid: Humanoid,
 	root: BasePart,
 	home: CFrame,
+	pickHome: () -> CFrame, -- point de réapparition aléatoire (couloir ou zone de patrouille)
 	kind: "Static" | "Strafe",
 	zone: MapBuilder.Zone?,
 	health: number,
@@ -54,6 +55,10 @@ type Bot = {
 }
 
 local TrainingRangeService = {}
+
+local RESPAWN_DELAY = 0.6 -- s entre la mort d'un bot et sa réapparition ailleurs
+local STATIC_DEPTH_JITTER = 5 -- ± studs autour du palier de distance
+local STATIC_LATERAL = 3.5 -- ± studs de décalage latéral dans le couloir
 
 local bots: { [number]: Bot } = {}
 local botFolder: Folder
@@ -110,6 +115,7 @@ local function resetBot(bot: Bot)
 	bot.model:SetAttribute("Alive", true)
 	bot.model:SetAttribute("Stance", "Stand")
 	bot.humanoid.HipHeight = bot.standHip
+	bot.home = bot.pickHome()
 	bot.model:PivotTo(bot.home)
 	for _, descendant in bot.model:GetDescendants() do
 		if descendant:IsA("BasePart") and descendant.Name ~= "HumanoidRootPart" then
@@ -129,12 +135,15 @@ local function damageBot(bot: Bot, amount: number): LagCompensationService.Damag
 	if health <= 0.5 then
 		bot.alive = false
 		bot.model:SetAttribute("Alive", false)
+		-- Disparition immédiate : invisible et sorti du stand dans la même frame (aucun corps
+		-- qui traîne), puis réapparition ailleurs, au hasard, juste après.
 		for _, descendant in bot.model:GetDescendants() do
 			if descendant:IsA("BasePart") then
 				descendant.Transparency = 1
 			end
 		end
-		task.delay(1.4, function()
+		bot.model:PivotTo(bot.home + Vector3.new(0, -200, 0))
+		task.delay(RESPAWN_DELAY, function()
 			if bots[bot.id] == bot then
 				resetBot(bot)
 			end
@@ -144,7 +153,8 @@ local function damageBot(bot: Bot, amount: number): LagCompensationService.Damag
 	return { killed = false, health = health, armor = armor, healthLoss = healthLoss, armorLoss = armorLoss }
 end
 
-local function createBot(home: CFrame, kind: "Static" | "Strafe", zone: MapBuilder.Zone?)
+local function createBot(pickHome: () -> CFrame, kind: "Static" | "Strafe", zone: MapBuilder.Zone?)
+	local home = pickHome()
 	local description = Instance.new("HumanoidDescription")
 	local ok, model = pcall(function()
 		return Players:CreateHumanoidModelFromDescriptionAsync(description, Enum.HumanoidRigType.R15)
@@ -178,6 +188,7 @@ local function createBot(home: CFrame, kind: "Static" | "Strafe", zone: MapBuild
 		humanoid = humanoid,
 		root = root,
 		home = home,
+		pickHome = pickHome,
 		kind = kind,
 		zone = zone,
 		health = Ballistics.MAX_HEALTH,
@@ -267,26 +278,43 @@ local function createBot(home: CFrame, kind: "Static" | "Strafe", zone: MapBuild
 end
 
 local function spawnBots()
+	local rng = Random.new()
 	for _, anchor in CollectionService:GetTagged("BotAnchor") do
 		if not (anchor:IsA("BasePart") and anchor:IsDescendantOf(Workspace:FindFirstChild("Hub") :: Instance)) then
 			continue
 		end
 		local kind = anchor:GetAttribute("Kind")
 		if kind == "Static" then
+			-- Cibles fixes : une par palier de distance, chacune réapparaît dans sa tranche
+			-- (proche / moyenne / loin) à une profondeur et une position latérale aléatoires.
 			local distances = tostring(anchor:GetAttribute("Distances") or "15,30,45")
+			local tiers: { number } = {}
 			for token in string.gmatch(distances, "%d+") do
-				local distance = tonumber(token) or 15
-				local position = Vector3.new(-49 - distance, 3, anchor.Position.Z)
+				table.insert(tiers, tonumber(token) or 15)
+			end
+			for _, distance in tiers do
+				local function pickHome(): CFrame
+					local depth = distance + rng:NextNumber(-STATIC_DEPTH_JITTER, STATIC_DEPTH_JITTER)
+					local lateral = rng:NextNumber(-STATIC_LATERAL, STATIC_LATERAL)
+					local position = Vector3.new(-49 - depth, 3, anchor.Position.Z + lateral)
+					return CFrame.lookAt(position, position + Vector3.new(1, 0, 0))
+				end
 				task.spawn(function()
-					createBot(CFrame.lookAt(position, position + Vector3.new(1, 0, 0)), "Static", nil)
+					createBot(pickHome, "Static", nil)
 				end)
 			end
 		elseif kind == "Strafe" then
 			local zone: MapBuilder.Zone = { name = "Strafe", cframe = anchor.CFrame, size = anchor.Size }
-			for index = 1, 2 do
-				local position = anchor.Position + Vector3.new((index - 1.5) * 8, 3, 0)
+			local function pickHome(): CFrame
+				local half = zone.size * 0.5 - Vector3.new(2, 0, 2)
+				local point = zone.cframe
+					* Vector3.new(rng:NextNumber(-half.X, half.X), 0, rng:NextNumber(-half.Z, half.Z))
+				local position = Vector3.new(point.X, anchor.Position.Y + 3, point.Z)
+				return CFrame.lookAt(position, position + Vector3.new(1, 0, 0))
+			end
+			for _ = 1, 3 do
 				task.spawn(function()
-					createBot(CFrame.lookAt(position, position + Vector3.new(1, 0, 0)), "Strafe", zone)
+					createBot(pickHome, "Strafe", zone)
 				end)
 			end
 		end

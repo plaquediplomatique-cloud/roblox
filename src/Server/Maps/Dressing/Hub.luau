@@ -420,6 +420,25 @@ local function range(kit: Kit, rng: Rng)
 	Decor.floorLine(kit, -98, 31, -70, 31, 0, 0.2, "PaintWhite")
 	ceilingLights(kit, CEILING, { { -48, -8 }, { -84, -8 } }, { { -84, 30 } }, Vector2.new(4, 40))
 	Furniture.plant(kit, rng, -42.5, 37, 2, "HqConcrete")
+	-- Paliers de distance peints en travers de chaque couloir (les bots réapparaissent
+	-- au hasard autour de 15, 30 et 45 m : on lit la distance d'un coup d'oeil).
+	for _, z in lanes do
+		for _, x in { -64, -79, -94 } do
+			Decor.floorLine(kit, x, z - 4.6, x, z + 4.6, 0, 0.18, "PaintWhite")
+		end
+	end
+	-- Attente derrière la ligne de tir : bancs le long du mur, hors des portes.
+	Furniture.bench(kit, -42.4, -27, 90, 8, true, "HqWalnut")
+	Furniture.bench(kit, -42.4, 25, 90, 8, true, "HqWalnut")
+	-- Écrans de stand (statistiques, consignes) sur le mur de tracking.
+	Furniture.wallScreen(kit, Vector3.new(-66, 6.5, 17.9), Vector3.new(0, 0, -1), 7, 3.6, Color3.fromRGB(61, 225, 255))
+	Furniture.wallScreen(kit, Vector3.new(-102, 6.5, 17.9), Vector3.new(0, 0, -1), 7, 3.6, Color3.fromRGB(61, 225, 255))
+	-- Éclairage de piste : une rangée de dalles au-dessus de chaque couloir.
+	for _, z in lanes do
+		for _, x in { -60, -75, -90 } do
+			Furniture.ceilingPanel(kit, x, z, CEILING, 2, 6, true)
+		end
+	end
 end
 
 ---------------------------------------------------------------------------------------------
