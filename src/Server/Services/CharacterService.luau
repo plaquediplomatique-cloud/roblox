@@ -229,7 +229,14 @@ end
 
 --[[ Fait (ré)apparaître un joueur. Bloquant (chargement du personnage). ]]
 function CharacterService.spawn(player: Player, cframe: CFrame, options: SpawnOptions): Model?
-	if spawning[player] then
+	-- Une réapparition déjà en cours (fin de manche puis début de la suivante, coup sur
+	-- coup) : on attend qu'elle se termine au lieu d'abandonner celle-ci — sinon le joueur
+	-- restait sans personnage pour toute la manche.
+	local waitedUntil = os.clock() + 10
+	while spawning[player] and os.clock() < waitedUntil and player.Parent do
+		task.wait()
+	end
+	if spawning[player] or not player.Parent then
 		return nil
 	end
 	spawning[player] = true
@@ -284,6 +291,10 @@ function CharacterService.spawn(player: Player, cframe: CFrame, options: SpawnOp
 	setCollisionGroup(character, "Players")
 	AntiCheatService.allowTeleport(player, 3)
 	character:PivotTo(cframe)
+	-- Orientation du point d'apparition : LoadCharacterAsync a d'abord créé le personnage au
+	-- point par défaut ; le client se recale sur cet angle (caméra + orientation du corps).
+	local _, spawnYaw, _ = cframe:ToEulerAnglesYXZ()
+	character:SetAttribute("SpawnYaw", spawnYaw)
 	damageLogs[player] = {}
 	registerTarget(player, character, root, humanoid, options.arenaId)
 

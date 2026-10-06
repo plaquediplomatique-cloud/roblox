@@ -624,6 +624,18 @@ local function onCharacter(model: Model)
 	aligner.Parent = r
 	align = aligner
 	CameraController.setYawPitch(currentYaw, 0)
+	-- Le serveur téléporte le personnage au point de la manche juste après sa création et
+	-- publie l'angle (SpawnYaw) : on s'y cale, sinon la caméra et le corps gardent
+	-- l'orientation du point provisoire (joueur tourné dans le mauvais sens à chaque manche).
+	local function applySpawnYaw()
+		local spawnYaw = model:GetAttribute("SpawnYaw")
+		if type(spawnYaw) == "number" and character == model then
+			aligner.CFrame = CFrame.Angles(0, spawnYaw, 0)
+			CameraController.setYawPitch(spawnYaw, 0)
+		end
+	end
+	applySpawnYaw()
+	model:GetAttributeChangedSignal("SpawnYaw"):Connect(applySpawnYaw)
 	model.DescendantAdded:Connect(function(descendant)
 		if firstPerson and (descendant:IsA("BasePart") or descendant:IsA("Decal")) then
 			(descendant :: any).LocalTransparencyModifier = 1
