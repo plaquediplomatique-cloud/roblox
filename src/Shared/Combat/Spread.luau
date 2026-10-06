@@ -8,8 +8,12 @@
 	  * n : le numéro du tir.
 	La graine = hash(graine_joueur_attribuée_par_le_serveur, n). Le serveur recalcule donc
 	EXACTEMENT les mêmes directions, sans faire confiance au client :
-	  * un cheat "no-spread" doit déclarer s≈0 -> rejeté car s < cône minimal plausible,
-	  * un cheat ne peut pas choisir une graine favorable (n est séquentiel, la base secrète).
+	  * déclarer s≈0 ne sert à rien : le serveur applique au moins le cône minimal plausible,
+	  * le client ne choisit pas sa graine (base tirée par le serveur à chaque armement, n
+	    strictement séquentiel : un tir ne peut être ni rejoué ni sauté).
+	La base est transmise au client (sinon pas de prédiction exacte) : un cheat peut donc
+	pré-compenser le décalage connu d'avance. Cette signature est détectée statistiquement
+	par SpreadAudit (corrélation visée / décalage).
 
 	Le cône lui-même suit une formule unique (Spread.cone) : base hip/ADS, pénalité de
 	mouvement au-delà de 34 % de la vitesse de course (counter-strafe récompensé), pénalité

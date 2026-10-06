@@ -61,6 +61,7 @@ local function processReceipt(receipt: { [string]: any }): Enum.ProductPurchaseD
 		log:warn("produit inconnu", receipt.ProductId)
 		return Enum.ProductPurchaseDecision.NotProcessedYet
 	end
+	local premiumBefore = profile.data.Pass.Premium
 	if product.crystals then
 		InventoryService.addCrystals(player, product.crystals)
 	end
@@ -70,8 +71,15 @@ local function processReceipt(receipt: { [string]: any }): Enum.ProductPurchaseD
 	purchases[purchaseId] = os.time()
 	pruneReceipts(purchases)
 	if not DataService.saveNow(player) then
-		-- Annulation locale : le reçu sera rejoué par Roblox.
+		-- Annulation COMPLÈTE (reçu + octroi) : Roblox rejouera le reçu. Rien ne doit rester
+		-- accordé d'ici là, sinon l'autosave suivante persisterait un achat crédité deux fois.
 		purchases[purchaseId] = nil
+		if product.crystals then
+			InventoryService.addCrystals(player, -product.crystals)
+		end
+		if product.premiumPass then
+			PlayerService.set(player, { "Pass", "Premium" }, premiumBefore)
+		end
 		return Enum.ProductPurchaseDecision.NotProcessedYet
 	end
 	PlayerService.notify(player, "Purchase", product.displayName, { product = product.key })

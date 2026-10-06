@@ -158,9 +158,9 @@ export type TargetHit = {
 }
 
 --[[
-	Rayon contre toutes les cibles acceptées par `filter`, à l'instant rembobiné `t`.
-	Teste aussi la pose actuelle (tolérance de désynchronisation) et garde la touche
-	la plus proche.
+	Rayon contre toutes les cibles acceptées par `filter`, chacune dans sa pose
+	interpolée à l'instant rembobiné `t` ; garde la touche la plus proche. La tolérance
+	de désynchronisation est l'`inflate` des boîtes (pas un second test à l'instant présent).
 ]]
 function LagCompensationService.raycast(
 	origin: Vector3,

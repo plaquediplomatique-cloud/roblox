@@ -13,7 +13,8 @@
 	  6. Origine   : distance à l'oeil serveur ≤ 3.5 + vitesse × 0.35 studs.
 	  7. Spread    : cône déclaré ≥ cône MINIMAL plausible (état observé par le serveur).
 	                 Sinon on utilise le minimum (le cheat ne gagne rien) + signalement.
-	  8. Visée     : vitesse angulaire implicite > 3500°/s = suspicion (heuristique douce).
+	  8. Visée     : vitesse angulaire implicite > 3500°/s = suspicion (heuristique douce) ;
+	                 audit statistique de pré-compensation de dispersion (SpreadAudit).
 	  9. Résolution: directions recalculées (graine serveur), raycast monde + hitboxes
 	                 rembobinées (LagCompensationService), pénétration matériau/épaisseur.
 	 10. Effets    : dégâts, kill, assists, killfeed de l'arène, killcam, retours client.
@@ -29,6 +30,7 @@ local Weapons = require(Shared.Config.Weapons)
 local Cosmetics = require(Shared.Config.Cosmetics)
 local Movement = require(Shared.Config.Movement)
 local Spread = require(Shared.Combat.Spread)
+local SpreadAudit = require(Shared.Combat.SpreadAudit)
 local Ballistics = require(Shared.Combat.Ballistics)
 local Hitbox = require(Shared.Combat.Hitbox)
 local MathUtil = require(Shared.Util.MathUtil)
@@ -82,6 +84,9 @@ local SLOT_ORDER: { Types.WeaponSlot } = { "Primary", "Secondary", "Melee" }
 local CombatService = {}
 
 local states: { [Player]: State } = {}
+-- Audit de dispersion par JOUEUR (et non par armement) : les fenêtres de 40 paires de
+-- tirs couvrent plusieurs manches.
+local audits: { [Player]: SpreadAudit.Audit } = {}
 local phaseResolver: (Player) -> boolean = function(_player: Player): boolean
 	return false
 end
@@ -785,13 +790,17 @@ local function onFire(player: Player, packet: Types.FirePacket)
 	state.lastShotWeapon = def.id
 	table.insert(recent, now)
 
-	local directions = Spread.directions(
-		packet.a,
-		cone,
-		Spread.seed(state.seedBase, packet.n),
-		def.damage.pellets,
-		def.spread.pelletCone
-	)
+	local seed = Spread.seed(state.seedBase, packet.n)
+	local directions = Spread.directions(packet.a, cone, seed, def.damage.pellets, def.spread.pelletCone)
+	local audit = audits[player]
+	if not audit then
+		audit = SpreadAudit.new()
+		audits[player] = audit
+	end
+	local correlation = SpreadAudit.observe(audit, def.id, packet.t, packet.a, cone, SpreadAudit.offset(cone, seed))
+	if correlation and correlation <= SpreadAudit.FLAG_CORRELATION then
+		AntiCheatService.flag(player, "SpreadCompensation", 4)
+	end
 	resolveShot(player, state, def, packet, directions)
 end
 
@@ -908,6 +917,7 @@ function CombatService.Start()
 	end)
 	Players.PlayerRemoving:Connect(function(player)
 		states[player] = nil
+		audits[player] = nil
 	end)
 
 	-- Suivi "en l'air" pour le cône minimal (évite de faire confiance au client).

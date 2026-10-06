@@ -3,6 +3,7 @@
 local Hitbox = req(Shared.Combat.Hitbox)
 local Stances = req(Shared.Combat.Stances)
 local Spread = req(Shared.Combat.Spread)
+local SpreadAudit = req(Shared.Combat.SpreadAudit)
 local Ballistics = req(Shared.Combat.Ballistics)
 local Weapons = req(Shared.Config.Weapons)
 local MathUtil = req(Shared.Util.MathUtil)
@@ -134,6 +135,86 @@ T.describe("Spread", function()
 		end
 		T.near(bloom, profile.bloomMax, 1e-9, "plafond")
 		T.near(Spread.decayBloom(profile, bloom, 10), 0, 1e-9, "récupéré")
+	end)
+end)
+
+T.describe("SpreadAudit (anti no-spread)", function()
+	local aim = Vector3.new(0.3, -0.1, -1).Unit
+	T.it("reproduit exactement le centre de Spread.directions", function()
+		for shot = 1, 200 do
+			local cone = 0.5 + shot % 7
+			local seed = Spread.seed(31, shot)
+			local expected = Spread.directions(aim, cone, seed, 1, 0)[1]
+			local rebuilt = SpreadAudit.apply(aim, SpreadAudit.offset(cone, seed))
+			T.expect(MathUtil.angleBetween(expected, rebuilt) < 1e-6, "tir " .. shot)
+		end
+	end)
+
+	-- Le tricheur résout a tel que la balle (a + δ) parte exactement vers la cible.
+	local function compensate(target, offset)
+		local sent = target
+		for _ = 1, 4 do
+			sent = (sent + (target - SpreadAudit.apply(sent, offset))).Unit
+		end
+		return sent
+	end
+
+	-- 10 fenêtres de tirs en rafale (cône 2.5°, 10 tirs/s) ; visée humaine = marche
+	-- aléatoire d'environ 1° par tir et par axe.
+	local function simulate(cheater)
+		local noise = Random.new(2024)
+		local audit = SpreadAudit.new()
+		local target = aim
+		local cone = 2.5
+		local results = {}
+		for shot = 1, SpreadAudit.WINDOW * 10 + 1 do
+			local step = Vector2.new(noise:NextNumber(-1, 1), noise:NextNumber(-1, 1)) * math.rad(1.7)
+			target = SpreadAudit.apply(target, step)
+			local seed = Spread.seed(4242, shot)
+			local offset = SpreadAudit.offset(cone, seed)
+			local sent = if cheater then compensate(target, offset) else target
+			if cheater then
+				local bullet = Spread.directions(sent, cone, seed, 1, 0)[1]
+				T.expect(math.deg(MathUtil.angleBetween(bullet, target)) < 0.01, "balle parfaite")
+			end
+			local correlation = SpreadAudit.observe(audit, "vk12", shot * 0.1, sent, cone, offset)
+			if correlation then
+				table.insert(results, correlation)
+			end
+		end
+		return results
+	end
+
+	T.it("joueur légitime : aucune fenêtre signalée", function()
+		local results = simulate(false)
+		T.eq(#results, 10, "fenêtres")
+		for _, correlation in results do
+			T.expect(correlation > SpreadAudit.FLAG_CORRELATION, "r = " .. correlation)
+		end
+	end)
+	T.it("tricheur no-spread : signalé", function()
+		local flagged = 0
+		for _, correlation in simulate(true) do
+			if correlation <= SpreadAudit.FLAG_CORRELATION then
+				flagged += 1
+			end
+		end
+		T.expect(flagged >= 9, "fenêtres signalées : " .. flagged)
+	end)
+	T.it("aucune paire entre armes différentes, après une pause ou sous le cône minimal", function()
+		local audit = SpreadAudit.new()
+		local offset = SpreadAudit.offset(3, 1)
+		for shot = 1, 100 do
+			local weapon = if shot % 2 == 0 then "vk12" else "sx5"
+			T.eq(SpreadAudit.observe(audit, weapon, shot * 0.1, aim, 3, offset), nil)
+		end
+		for shot = 1, 100 do
+			T.eq(SpreadAudit.observe(audit, "vk12", 100 + shot * 0.7, aim, 3, offset), nil)
+		end
+		for shot = 1, 100 do
+			T.eq(SpreadAudit.observe(audit, "vk12", 500 + shot * 0.1, aim, 0.5, offset), nil)
+		end
+		T.eq(audit.count, 0, "paires comptées")
 	end)
 end)
 

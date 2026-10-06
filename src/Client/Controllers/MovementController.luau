@@ -260,11 +260,9 @@ local function step(dt: number)
 	-- Gel : cinématique, ou action d'objectif en cours (attribut Busy posé par le serveur).
 	local blocked = frozen or (character :: Model):GetAttribute("Busy") == true
 	local moveLocal = if blocked then Vector3.zero else InputController.moveVector()
+	-- Relatif au yaw caméra : la visée en 1re personne, la caméra orbitale au hub (le corps
+	-- se tourne ensuite vers la direction de déplacement, voir « Orientation du corps »).
 	local wishWorld = CFrame.Angles(0, yaw, 0) * moveLocal
-	if not firstPerson then
-		-- Hub : déplacement relatif à la caméra, rotation libre du personnage.
-		wishWorld = CFrame.Angles(0, yaw, 0) * moveLocal
-	end
 	local wishDir = if wishWorld.Magnitude > 0.01 then wishWorld.Unit else Vector3.zero
 	local analog = math.min(moveLocal.Magnitude, 1)
 
