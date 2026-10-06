@@ -42,7 +42,14 @@ local function add(item: ItemDef)
 	table.insert(Cosmetics.order, item.id)
 end
 
-local function palette(base: Color3, secondary: Color3, accent: Color3, neon: Color3, metal: Color3?, grip: Color3?): Palette
+local function palette(
+	base: Color3,
+	secondary: Color3,
+	accent: Color3,
+	neon: Color3,
+	metal: Color3?,
+	grip: Color3?
+): Palette
 	return {
 		Base = base,
 		Secondary = secondary,
@@ -76,7 +83,11 @@ Cosmetics.skinLines = {
 		rarity = "Common",
 		purchasable = false,
 		palette = palette(rgb(46, 50, 58), rgb(30, 33, 38), rgb(80, 86, 96), rgb(61, 225, 255)),
-		materials = { Base = Enum.Material.Metal, Secondary = Enum.Material.SmoothPlastic, Accent = Enum.Material.Metal },
+		materials = {
+			Base = Enum.Material.Metal,
+			Secondary = Enum.Material.SmoothPlastic,
+			Accent = Enum.Material.Metal,
+		},
 		fx = {},
 		description = "Finition d'usine, gris acier et filet cyan.",
 	},
@@ -86,7 +97,11 @@ Cosmetics.skinLines = {
 		rarity = "Common",
 		purchasable = true,
 		palette = palette(rgb(18, 18, 20), rgb(10, 10, 12), rgb(230, 230, 235), rgb(245, 245, 255)),
-		materials = { Base = Enum.Material.SmoothPlastic, Secondary = Enum.Material.SmoothPlastic, Accent = Enum.Material.Metal },
+		materials = {
+			Base = Enum.Material.SmoothPlastic,
+			Secondary = Enum.Material.SmoothPlastic,
+			Accent = Enum.Material.Metal,
+		},
 		fx = {},
 		description = "Noir mat absolu, accents blanc pur.",
 	},
@@ -95,8 +110,19 @@ Cosmetics.skinLines = {
 		name = "Arctic Circuit",
 		rarity = "Rare",
 		purchasable = true,
-		palette = palette(rgb(228, 234, 240), rgb(170, 180, 192), rgb(70, 80, 95), rgb(80, 230, 255), rgb(150, 158, 170), rgb(60, 66, 76)),
-		materials = { Base = Enum.Material.SmoothPlastic, Secondary = Enum.Material.Metal, Accent = Enum.Material.Metal },
+		palette = palette(
+			rgb(228, 234, 240),
+			rgb(170, 180, 192),
+			rgb(70, 80, 95),
+			rgb(80, 230, 255),
+			rgb(150, 158, 170),
+			rgb(60, 66, 76)
+		),
+		materials = {
+			Base = Enum.Material.SmoothPlastic,
+			Secondary = Enum.Material.Metal,
+			Accent = Enum.Material.Metal,
+		},
 		fx = {},
 		description = "Céramique blanche parcourue de pistes cyan.",
 	},
@@ -106,7 +132,11 @@ Cosmetics.skinLines = {
 		rarity = "Rare",
 		purchasable = true,
 		palette = palette(rgb(52, 36, 30), rgb(28, 22, 20), rgb(160, 90, 50), rgb(255, 120, 40), rgb(90, 70, 60)),
-		materials = { Base = Enum.Material.CorrodedMetal, Secondary = Enum.Material.Metal, Accent = Enum.Material.Metal },
+		materials = {
+			Base = Enum.Material.CorrodedMetal,
+			Secondary = Enum.Material.Metal,
+			Accent = Enum.Material.Metal,
+		},
 		fx = {},
 		description = "Acier brûlé, braises orange dans les rainures.",
 	},
@@ -116,7 +146,11 @@ Cosmetics.skinLines = {
 		rarity = "Epic",
 		purchasable = true,
 		palette = palette(rgb(255, 170, 40), rgb(60, 40, 20), rgb(255, 230, 160), rgb(255, 200, 60), rgb(120, 90, 50)),
-		materials = { Base = Enum.Material.Metal, Secondary = Enum.Material.SmoothPlastic, Accent = Enum.Material.Metal },
+		materials = {
+			Base = Enum.Material.Metal,
+			Secondary = Enum.Material.SmoothPlastic,
+			Accent = Enum.Material.Metal,
+		},
 		fx = { neonPulse = 1.2 },
 		description = "Or solaire, coeur néon qui pulse comme une étoile.",
 	},
@@ -126,7 +160,11 @@ Cosmetics.skinLines = {
 		rarity = "Epic",
 		purchasable = true,
 		palette = palette(rgb(150, 18, 32), rgb(16, 14, 16), rgb(40, 36, 40), rgb(255, 50, 70), rgb(70, 60, 64)),
-		materials = { Base = Enum.Material.SmoothPlastic, Secondary = Enum.Material.SmoothPlastic, Accent = Enum.Material.Metal },
+		materials = {
+			Base = Enum.Material.SmoothPlastic,
+			Secondary = Enum.Material.SmoothPlastic,
+			Accent = Enum.Material.Metal,
+		},
 		fx = { neonPulse = 2.0, tracerColor = rgb(255, 80, 90) },
 		description = "Rouge protocole d'urgence, pulsation d'alerte.",
 	},
@@ -135,8 +173,19 @@ Cosmetics.skinLines = {
 		name = "Specter",
 		rarity = "Legendary",
 		purchasable = true,
-		palette = palette(rgb(120, 100, 200), rgb(30, 24, 50), rgb(200, 180, 255), rgb(180, 110, 255), rgb(70, 60, 110), rgb(24, 20, 40)),
-		materials = { Base = Enum.Material.Glass, Secondary = Enum.Material.SmoothPlastic, Accent = Enum.Material.Metal },
+		palette = palette(
+			rgb(120, 100, 200),
+			rgb(30, 24, 50),
+			rgb(200, 180, 255),
+			rgb(180, 110, 255),
+			rgb(70, 60, 110),
+			rgb(24, 20, 40)
+		),
+		materials = {
+			Base = Enum.Material.Glass,
+			Secondary = Enum.Material.SmoothPlastic,
+			Accent = Enum.Material.Metal,
+		},
 		fx = { neonPulse = 0.8, aura = true, inspectFlourish = true, tracerColor = rgb(190, 140, 255) },
 		description = "Verre spectral et brume violette. Animation d'inspection exclusive.",
 	},
@@ -145,8 +194,19 @@ Cosmetics.skinLines = {
 		name = "Aether Prime",
 		rarity = "Mythic",
 		purchasable = false,
-		palette = palette(rgb(14, 16, 24), rgb(30, 34, 48), rgb(230, 240, 255), rgb(61, 225, 255), rgb(90, 96, 120), rgb(20, 22, 30)),
-		materials = { Base = Enum.Material.Metal, Secondary = Enum.Material.SmoothPlastic, Accent = Enum.Material.Metal },
+		palette = palette(
+			rgb(14, 16, 24),
+			rgb(30, 34, 48),
+			rgb(230, 240, 255),
+			rgb(61, 225, 255),
+			rgb(90, 96, 120),
+			rgb(20, 22, 30)
+		),
+		materials = {
+			Base = Enum.Material.Metal,
+			Secondary = Enum.Material.SmoothPlastic,
+			Accent = Enum.Material.Metal,
+		},
 		fx = {
 			gradientShift = true,
 			aura = true,
@@ -186,7 +246,15 @@ end
 -- Tenues d'opérateur (palette appliquée à l'équipement procédural du personnage)
 ---------------------------------------------------------------------------------------------
 
-local function operator(id: string, name: string, rarity: Types.Rarity, purchasable: boolean, p: Palette, fx: Types.SkinFx, description: string)
+local function operator(
+	id: string,
+	name: string,
+	rarity: Types.Rarity,
+	purchasable: boolean,
+	p: Palette,
+	fx: Types.SkinFx,
+	description: string
+)
 	add({
 		id = id,
 		kind = "Operator",
@@ -199,17 +267,64 @@ local function operator(id: string, name: string, rarity: Types.Rarity, purchasa
 	})
 end
 
-operator("op_standard", "Standard Issue", "Common", false, palette(rgb(44, 48, 56), rgb(26, 28, 32), rgb(90, 96, 106), rgb(61, 225, 255)), {}, "Tenue réglementaire Aether Corps.")
-operator("op_nightops", "Night Ops", "Rare", true, palette(rgb(20, 22, 26), rgb(12, 12, 14), rgb(60, 64, 70), rgb(120, 255, 170)), {}, "Camouflage nocturne, visière verte.")
-operator("op_ronin", "Cyber Ronin", "Epic", true, palette(rgb(120, 20, 30), rgb(20, 18, 20), rgb(220, 200, 170), rgb(255, 60, 80)), { neonPulse = 1.0 }, "Armure laquée et visière écarlate.")
-operator("op_wraith", "Wraith", "Legendary", true, palette(rgb(60, 50, 110), rgb(20, 16, 36), rgb(190, 170, 255), rgb(170, 100, 255)), { aura = true, neonPulse = 0.7 }, "Silhouette spectrale nimbée de brume.")
-operator("op_ascendant", "Aether Ascendant", "Mythic", false, palette(rgb(16, 18, 26), rgb(34, 38, 52), rgb(235, 240, 255), rgb(61, 225, 255)), { gradientShift = true, aura = true }, "L'uniforme des légendes. Exclusif Pass premium.")
+operator(
+	"op_standard",
+	"Standard Issue",
+	"Common",
+	false,
+	palette(rgb(44, 48, 56), rgb(26, 28, 32), rgb(90, 96, 106), rgb(61, 225, 255)),
+	{},
+	"Tenue réglementaire Aether Corps."
+)
+operator(
+	"op_nightops",
+	"Night Ops",
+	"Rare",
+	true,
+	palette(rgb(20, 22, 26), rgb(12, 12, 14), rgb(60, 64, 70), rgb(120, 255, 170)),
+	{},
+	"Camouflage nocturne, visière verte."
+)
+operator(
+	"op_ronin",
+	"Cyber Ronin",
+	"Epic",
+	true,
+	palette(rgb(120, 20, 30), rgb(20, 18, 20), rgb(220, 200, 170), rgb(255, 60, 80)),
+	{ neonPulse = 1.0 },
+	"Armure laquée et visière écarlate."
+)
+operator(
+	"op_wraith",
+	"Wraith",
+	"Legendary",
+	true,
+	palette(rgb(60, 50, 110), rgb(20, 16, 36), rgb(190, 170, 255), rgb(170, 100, 255)),
+	{ aura = true, neonPulse = 0.7 },
+	"Silhouette spectrale nimbée de brume."
+)
+operator(
+	"op_ascendant",
+	"Aether Ascendant",
+	"Mythic",
+	false,
+	palette(rgb(16, 18, 26), rgb(34, 38, 52), rgb(235, 240, 255), rgb(61, 225, 255)),
+	{ gradientShift = true, aura = true },
+	"L'uniforme des légendes. Exclusif Pass premium."
+)
 
 ---------------------------------------------------------------------------------------------
 -- Effets de kill, emotes, bannières
 ---------------------------------------------------------------------------------------------
 
-local function simple(id: string, kind: Types.ItemKind, name: string, rarity: Types.Rarity, purchasable: boolean, description: string)
+local function simple(
+	id: string,
+	kind: Types.ItemKind,
+	name: string,
+	rarity: Types.Rarity,
+	purchasable: boolean,
+	description: string
+)
 	add({
 		id = id,
 		kind = kind,
@@ -222,7 +337,14 @@ end
 
 simple("ke_none", "KillEffect", "Aucun", "Common", false, "Pas d'effet.")
 simple("ke_voltage", "KillEffect", "Voltage", "Rare", true, "Des arcs électriques parcourent la cible.")
-simple("ke_disintegrate", "KillEffect", "Désintégration", "Epic", true, "La cible se dissout en particules lumineuses.")
+simple(
+	"ke_disintegrate",
+	"KillEffect",
+	"Désintégration",
+	"Epic",
+	true,
+	"La cible se dissout en particules lumineuses."
+)
 simple("ke_shatter", "KillEffect", "Shatter", "Legendary", true, "La cible éclate en cubes de néon.")
 simple("ke_rift", "KillEffect", "Rift", "Mythic", false, "Une singularité avale la cible.")
 

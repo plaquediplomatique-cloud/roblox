@@ -116,7 +116,8 @@ local function handle(player: Player, request: InventoryAction): ServerNet.Respo
 		if not item or not data.Inventory[item.id] then
 			return ServerNet.failure("Objet non possédé")
 		end
-		local field = if item.kind == "Operator" then "Operator"
+		local field = if item.kind == "Operator"
+			then "Operator"
 			elseif item.kind == "KillEffect" then "KillEffect"
 			elseif item.kind == "Banner" then "Banner"
 			elseif item.kind == "Title" then "Title"

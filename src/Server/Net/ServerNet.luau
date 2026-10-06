@@ -40,7 +40,13 @@ function ServerNet.report(player: Player, reason: string, weight: number)
 	reporter(player, reason, weight)
 end
 
-local function guardCall<T>(player: Player, name: string, limiter: RateLimiter.RateLimiter, parse: (...any) -> T?, ...: any): T?
+local function guardCall<T>(
+	player: Player,
+	name: string,
+	limiter: RateLimiter.RateLimiter,
+	parse: (...any) -> T?,
+	...: any
+): T?
 	if not limiter:consume(player) then
 		reporter(player, "RateLimit:" .. name, 0.5)
 		return nil
@@ -63,7 +69,12 @@ function ServerNet.onEvent<T>(name: Net.EventName, rate: RateSpec, parse: (...an
 	end)
 end
 
-function ServerNet.onUnreliable<T>(name: Net.UnreliableName, rate: RateSpec, parse: (...any) -> T?, handler: (Player, T) -> ())
+function ServerNet.onUnreliable<T>(
+	name: Net.UnreliableName,
+	rate: RateSpec,
+	parse: (...any) -> T?,
+	handler: (Player, T) -> ()
+)
 	local limiter = RateLimiter.new(rate.capacity, rate.refill)
 	Net.unreliable(name).OnServerEvent:Connect(function(player: Player, ...: any)
 		local payload = guardCall(player, name, limiter, parse, ...)
@@ -73,7 +84,12 @@ function ServerNet.onUnreliable<T>(name: Net.UnreliableName, rate: RateSpec, par
 	end)
 end
 
-function ServerNet.onInvoke<T>(name: Net.FunctionName, rate: RateSpec, parse: (...any) -> T?, handler: (Player, T) -> Response)
+function ServerNet.onInvoke<T>(
+	name: Net.FunctionName,
+	rate: RateSpec,
+	parse: (...any) -> T?,
+	handler: (Player, T) -> Response
+)
 	local limiter = RateLimiter.new(rate.capacity, rate.refill)
 	Net.func(name).OnServerInvoke = function(player: Player, ...: any): Response
 		local payload = guardCall(player, name, limiter, parse, ...)

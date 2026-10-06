@@ -52,7 +52,10 @@ T.describe("Hitbox", function()
 			local head = profile.parts[1]
 			local localEye = (root * head.offset):PointToObjectSpace(eye)
 			local half = head.size * 0.5
-			T.expect(math.abs(localEye.X) <= half.X and math.abs(localEye.Y) <= half.Y and math.abs(localEye.Z) <= half.Z, stance)
+			T.expect(
+				math.abs(localEye.X) <= half.X and math.abs(localEye.Y) <= half.Y and math.abs(localEye.Z) <= half.Z,
+				stance
+			)
 		end
 	end)
 	T.it("le lean décale la tête latéralement comme la caméra", function()
@@ -108,9 +111,18 @@ T.describe("Spread", function()
 	end)
 	T.it("counter-strafe : sous 34% de la vitesse, aucune pénalité de mouvement", function()
 		local profile = Weapons.require("vk12").spread
-		local still = Spread.cone(profile, { ads = 1, speedRatio = 0, airborne = false, crouched = false, bloom = 0, firstShot = false })
-		local slow = Spread.cone(profile, { ads = 1, speedRatio = 0.3, airborne = false, crouched = false, bloom = 0, firstShot = false })
-		local running = Spread.cone(profile, { ads = 1, speedRatio = 1, airborne = false, crouched = false, bloom = 0, firstShot = false })
+		local still = Spread.cone(
+			profile,
+			{ ads = 1, speedRatio = 0, airborne = false, crouched = false, bloom = 0, firstShot = false }
+		)
+		local slow = Spread.cone(
+			profile,
+			{ ads = 1, speedRatio = 0.3, airborne = false, crouched = false, bloom = 0, firstShot = false }
+		)
+		local running = Spread.cone(
+			profile,
+			{ ads = 1, speedRatio = 1, airborne = false, crouched = false, bloom = 0, firstShot = false }
+		)
 		T.near(still, slow, 1e-9, "pas de pénalité")
 		T.near(running, still + profile.move, 1e-9, "pénalité pleine")
 	end)

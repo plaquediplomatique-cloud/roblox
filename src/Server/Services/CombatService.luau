@@ -170,7 +170,10 @@ function CombatService.arm(player: Player, loadout: Loadout, infiniteReserve: bo
 			slots[slotName] = { weaponId = def.id, mag = def.ammo.magazine, reserve = reserve }
 		end
 	end
-	local equipped: Types.WeaponSlot = if slots.Primary then "Primary" elseif slots.Secondary then "Secondary" else "Melee"
+	local equipped: Types.WeaponSlot = if slots.Primary
+		then "Primary"
+		elseif slots.Secondary then "Secondary"
+		else "Melee"
 	local now = Workspace:GetServerTimeNow()
 	local state: State = {
 		player = player,
@@ -520,7 +523,14 @@ local function handleKill(shooter: Player, state: State?, def: WeaponDef, hit: P
 	sendKillcam(victim, shooter, def.id, hit.zone == "Head")
 end
 
-local function applyHits(shooter: Player, state: State?, def: WeaponDef, pending: { [number]: PendingHit }, shot: number, noscope: boolean)
+local function applyHits(
+	shooter: Player,
+	state: State?,
+	def: WeaponDef,
+	pending: { [number]: PendingHit },
+	shot: number,
+	noscope: boolean
+)
 	local reports: { Types.HitReport } = {}
 	local arena = ArenaService.idOf(shooter)
 	for _, hit in pending do
@@ -573,7 +583,13 @@ local function applyHits(shooter: Player, state: State?, def: WeaponDef, pending
 	remotes.shotResult:FireClient(shooter, packet)
 end
 
-local function resolveShot(shooter: Player, state: State, def: WeaponDef, packet: Types.FirePacket, directions: { Vector3 })
+local function resolveShot(
+	shooter: Player,
+	state: State,
+	def: WeaponDef,
+	packet: Types.FirePacket,
+	directions: { Vector3 }
+)
 	local rewind = LagCompensationService.rewindTime(packet.t)
 	local params = worldParams()
 	local filter = enemyFilter(shooter)
@@ -759,7 +775,13 @@ local function onFire(player: Player, packet: Types.FirePacket)
 	state.lastShotClient = packet.t
 	table.insert(recent, now)
 
-	local directions = Spread.directions(packet.a, cone, Spread.seed(state.seedBase, packet.n), def.damage.pellets, def.spread.pelletCone)
+	local directions = Spread.directions(
+		packet.a,
+		cone,
+		Spread.seed(state.seedBase, packet.n),
+		def.damage.pellets,
+		def.spread.pelletCone
+	)
 	resolveShot(player, state, def, packet, directions)
 end
 
@@ -801,7 +823,10 @@ local function onMelee(player: Player, packet: Types.MeleePacket)
 			local center = Hitbox.centerOf(cframe, stance)
 			local offset = center - eye
 			local distance = offset.Magnitude
-			if distance < bestDistance and math.deg(MathUtil.angleBetween(packet.a, offset)) <= melee.coneDegrees + 10 then
+			if
+				distance < bestDistance
+				and math.deg(MathUtil.angleBetween(packet.a, offset)) <= melee.coneDegrees + 10
+			then
 				if Workspace:Raycast(eye, offset, params) == nil then
 					best = target
 					bestCenter = center
@@ -821,8 +846,12 @@ local function onMelee(player: Player, packet: Types.MeleePacket)
 	else
 		facing = best.root.CFrame.LookVector
 	end
-	local backstab = packet.heavy and MathUtil.flat(facing).Unit:Dot(MathUtil.flat(attackDir).Unit) > math.cos(math.rad(70))
-	local damage = if backstab then melee.backstabDamage elseif packet.heavy then melee.heavyDamage else melee.lightDamage
+	local backstab = packet.heavy
+		and MathUtil.flat(facing).Unit:Dot(MathUtil.flat(attackDir).Unit) > math.cos(math.rad(70))
+	local damage = if backstab
+		then melee.backstabDamage
+		elseif packet.heavy then melee.heavyDamage
+		else melee.lightDamage
 	local pending: { [number]: PendingHit } = {
 		[best.id] = {
 			target = best,

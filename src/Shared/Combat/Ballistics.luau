@@ -125,7 +125,12 @@ function Ballistics.penetrate(
 end
 
 --[[ Nombre de balles nécessaires pour tuer (pour l'UI de l'Armory et la doc). ]]
-function Ballistics.shotsToKill(profile: Types.DamageProfile, zone: Types.HitZone, distance: number, armor: number): number
+function Ballistics.shotsToKill(
+	profile: Types.DamageProfile,
+	zone: Types.HitZone,
+	distance: number,
+	armor: number
+): number
 	local health, shield = Ballistics.MAX_HEALTH, armor
 	local perShot = Ballistics.damage(profile, zone, distance, 1) * math.max(1, profile.pellets)
 	local shots = 0

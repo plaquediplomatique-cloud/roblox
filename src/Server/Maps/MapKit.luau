@@ -64,10 +64,42 @@ export type Kit = {
 	style: (self: Kit, name: string) -> Style,
 	defineStyle: (self: Kit, name: string, style: Style) -> (),
 	block: (self: Kit, name: string, center: Vector3, size: Vector3, style: string, group: string?) -> Prim,
-	box: (self: Kit, name: string, x1: number, y1: number, z1: number, x2: number, y2: number, z2: number, style: string, group: string?) -> Prim,
-	floor: (self: Kit, name: string, x1: number, z1: number, x2: number, z2: number, style: string, top: number?, thickness: number?) -> Prim,
+	box: (
+		self: Kit,
+		name: string,
+		x1: number,
+		y1: number,
+		z1: number,
+		x2: number,
+		y2: number,
+		z2: number,
+		style: string,
+		group: string?
+	) -> Prim,
+	floor: (
+		self: Kit,
+		name: string,
+		x1: number,
+		z1: number,
+		x2: number,
+		z2: number,
+		style: string,
+		top: number?,
+		thickness: number?
+	) -> Prim,
 	ceiling: (self: Kit, x1: number, z1: number, x2: number, z2: number, y: number, style: string) -> Prim,
-	wall: (self: Kit, name: string, x1: number, z1: number, x2: number, z2: number, height: number, style: string, thickness: number?, baseY: number?) -> Prim,
+	wall: (
+		self: Kit,
+		name: string,
+		x1: number,
+		z1: number,
+		x2: number,
+		z2: number,
+		height: number,
+		style: string,
+		thickness: number?,
+		baseY: number?
+	) -> Prim,
 	wallDoor: (
 		self: Kit,
 		name: string,
@@ -98,21 +130,117 @@ export type Kit = {
 		thickness: number?
 	) -> (),
 	crate: (self: Kit, x: number, z: number, y: number?, size: number?, style: string?, yaw: number?) -> Prim,
-	cover: (self: Kit, x1: number, z1: number, x2: number, z2: number, height: number, style: string?, baseY: number?) -> Prim,
-	platform: (self: Kit, name: string, x1: number, z1: number, x2: number, z2: number, top: number, style: string, thickness: number?) -> Prim,
-	ramp: (self: Kit, name: string, x1: number, z1: number, x2: number, z2: number, y1: number, y2: number, direction: string, style: string) -> Prim,
+	cover: (
+		self: Kit,
+		x1: number,
+		z1: number,
+		x2: number,
+		z2: number,
+		height: number,
+		style: string?,
+		baseY: number?
+	) -> Prim,
+	platform: (
+		self: Kit,
+		name: string,
+		x1: number,
+		z1: number,
+		x2: number,
+		z2: number,
+		top: number,
+		style: string,
+		thickness: number?
+	) -> Prim,
+	ramp: (
+		self: Kit,
+		name: string,
+		x1: number,
+		z1: number,
+		x2: number,
+		z2: number,
+		y1: number,
+		y2: number,
+		direction: string,
+		style: string
+	) -> Prim,
 	pillar: (self: Kit, x: number, z: number, width: number, height: number, style: string, baseY: number?) -> Prim,
-	trim: (self: Kit, x1: number, z1: number, x2: number, z2: number, y: number, color: Color3, thickness: number?) -> Prim,
-	light: (self: Kit, x: number, y: number, z: number, color: Color3, brightness: number, range: number, shadows: boolean?) -> Prim,
+	trim: (
+		self: Kit,
+		x1: number,
+		z1: number,
+		x2: number,
+		z2: number,
+		y: number,
+		color: Color3,
+		thickness: number?
+	) -> Prim,
+	light: (
+		self: Kit,
+		x: number,
+		y: number,
+		z: number,
+		color: Color3,
+		brightness: number,
+		range: number,
+		shadows: boolean?
+	) -> Prim,
 	lamp: (self: Kit, x: number, z: number, height: number, color: Color3, baseY: number?) -> (),
-	panelLight: (self: Kit, x1: number, z1: number, x2: number, z2: number, y: number, color: Color3, brightness: number) -> Prim,
+	panelLight: (
+		self: Kit,
+		x1: number,
+		z1: number,
+		x2: number,
+		z2: number,
+		y: number,
+		color: Color3,
+		brightness: number
+	) -> Prim,
 	spawn: (self: Kit, side: string, x: number, z: number, lookX: number, lookZ: number, y: number?) -> Prim,
-	barrier: (self: Kit, side: string, x1: number, z1: number, x2: number, z2: number, height: number, baseY: number?) -> Prim,
+	barrier: (
+		self: Kit,
+		side: string,
+		x1: number,
+		z1: number,
+		x2: number,
+		z2: number,
+		height: number,
+		baseY: number?
+	) -> Prim,
 	modeBarrier: (self: Kit, modes: { string }, x1: number, z1: number, x2: number, z2: number, height: number) -> Prim,
 	site: (self: Kit, id: string, x1: number, z1: number, x2: number, z2: number, y: number?) -> (),
-	callout: (self: Kit, name: string, x1: number, z1: number, x2: number, z2: number, y1: number?, y2: number?) -> Prim,
-	zone: (self: Kit, tag: string, name: string, x1: number, y1: number, z1: number, x2: number, y2: number, z2: number, attributes: { [string]: any }?) -> Prim,
-	sign: (self: Kit, text: string, x: number, y: number, z: number, width: number, height: number, facing: string, color: Color3) -> Prim,
+	callout: (
+		self: Kit,
+		name: string,
+		x1: number,
+		z1: number,
+		x2: number,
+		z2: number,
+		y1: number?,
+		y2: number?
+	) -> Prim,
+	zone: (
+		self: Kit,
+		tag: string,
+		name: string,
+		x1: number,
+		y1: number,
+		z1: number,
+		x2: number,
+		y2: number,
+		z2: number,
+		attributes: { [string]: any }?
+	) -> Prim,
+	sign: (
+		self: Kit,
+		text: string,
+		x: number,
+		y: number,
+		z: number,
+		width: number,
+		height: number,
+		facing: string,
+		color: Color3
+	) -> Prim,
 	terminal: (self: Kit, action: string, label: string, x: number, z: number, facing: string, color: Color3) -> (),
 	bounds: (self: Kit, x1: number, z1: number, x2: number, z2: number, height: number) -> (),
 }
@@ -192,7 +320,15 @@ function KitClass.defineStyle(self: any, name: string, style: Style)
 	self._styles[name] = style
 end
 
-local function makePrim(self: Kit, name: string, shape: "Block" | "Wedge" | "Cylinder" | "Ball", cframe: CFrame, size: Vector3, styleName: string, group: string?): Prim
+local function makePrim(
+	self: Kit,
+	name: string,
+	shape: "Block" | "Wedge" | "Cylinder" | "Ball",
+	cframe: CFrame,
+	size: Vector3,
+	styleName: string,
+	group: string?
+): Prim
 	local style = self:style(styleName)
 	local transparency = style.transparency or 0
 	return {
@@ -219,7 +355,18 @@ function KitClass.block(self: Kit, name: string, center: Vector3, size: Vector3,
 	return record(self, makePrim(self, name, "Block", CFrame.new(center), size, style, group))
 end
 
-function KitClass.box(self: Kit, name: string, x1: number, y1: number, z1: number, x2: number, y2: number, z2: number, style: string, group: string?): Prim
+function KitClass.box(
+	self: Kit,
+	name: string,
+	x1: number,
+	y1: number,
+	z1: number,
+	x2: number,
+	y2: number,
+	z2: number,
+	style: string,
+	group: string?
+): Prim
 	local ax, bx = sorted(x1, x2)
 	local ay, by = sorted(y1, y2)
 	local az, bz = sorted(z1, z2)
@@ -228,7 +375,17 @@ function KitClass.box(self: Kit, name: string, x1: number, y1: number, z1: numbe
 	return self:block(name, center, size, style, group)
 end
 
-function KitClass.floor(self: Kit, name: string, x1: number, z1: number, x2: number, z2: number, style: string, top: number?, thickness: number?): Prim
+function KitClass.floor(
+	self: Kit,
+	name: string,
+	x1: number,
+	z1: number,
+	x2: number,
+	z2: number,
+	style: string,
+	top: number?,
+	thickness: number?
+): Prim
 	local y = top or 0
 	local t = thickness or 2
 	return self:box(name, x1, y - t, z1, x2, y, z2, style, "Floor")
@@ -240,7 +397,18 @@ function KitClass.ceiling(self: Kit, x1: number, z1: number, x2: number, z2: num
 	return prim
 end
 
-function KitClass.wall(self: Kit, name: string, x1: number, z1: number, x2: number, z2: number, height: number, style: string, thickness: number?, baseY: number?): Prim
+function KitClass.wall(
+	self: Kit,
+	name: string,
+	x1: number,
+	z1: number,
+	x2: number,
+	z2: number,
+	height: number,
+	style: string,
+	thickness: number?,
+	baseY: number?
+): Prim
 	local t = thickness or 1.2
 	local y0 = baseY or 0
 	if x1 == x2 then
@@ -336,14 +504,33 @@ function KitClass.crate(self: Kit, x: number, z: number, y: number?, size: numbe
 	return prim
 end
 
-function KitClass.cover(self: Kit, x1: number, z1: number, x2: number, z2: number, height: number, style: string?, baseY: number?): Prim
+function KitClass.cover(
+	self: Kit,
+	x1: number,
+	z1: number,
+	x2: number,
+	z2: number,
+	height: number,
+	style: string?,
+	baseY: number?
+): Prim
 	local base = baseY or 0
 	local prim = self:box("Cover", x1, base, z1, x2, base + height, z2, style or "WallPanel", "Cover")
 	prim.attributes.CoverHeight = height
 	return prim
 end
 
-function KitClass.platform(self: Kit, name: string, x1: number, z1: number, x2: number, z2: number, top: number, style: string, thickness: number?): Prim
+function KitClass.platform(
+	self: Kit,
+	name: string,
+	x1: number,
+	z1: number,
+	x2: number,
+	z2: number,
+	top: number,
+	style: string,
+	thickness: number?
+): Prim
 	local t = thickness or top
 	return self:box(name, x1, top - t, z1, x2, top, z2, style)
 end
@@ -352,7 +539,18 @@ end
 	Rampe (WedgePart) sur l'emprise (x1,z1)-(x2,z2), montant de y1 à y2 dans `direction`
 	("+X", "-X", "+Z", "-Z"). Pente max conseillée : 35° (montée sans saut).
 ]]
-function KitClass.ramp(self: Kit, name: string, x1: number, z1: number, x2: number, z2: number, y1: number, y2: number, direction: string, style: string): Prim
+function KitClass.ramp(
+	self: Kit,
+	name: string,
+	x1: number,
+	z1: number,
+	x2: number,
+	z2: number,
+	y1: number,
+	y2: number,
+	direction: string,
+	style: string
+): Prim
 	local ax, bx = sorted(x1, x2)
 	local az, bz = sorted(z1, z2)
 	local rise = math.max(y2 - y1, 0.1)
@@ -370,17 +568,35 @@ function KitClass.ramp(self: Kit, name: string, x1: number, z1: number, x2: numb
 	end
 	-- Le WedgePart monte vers son +Z local : on oriente +Z selon `dir`.
 	local cframe = CFrame.lookAt(center, center - dir)
-	local prim = record(self, makePrim(self, name, "Wedge", cframe, Vector3.new(width, rise, length), style, "Geometry"))
+	local prim =
+		record(self, makePrim(self, name, "Wedge", cframe, Vector3.new(width, rise, length), style, "Geometry"))
 	prim.attributes.RampDirection = direction
 	return prim
 end
 
-function KitClass.pillar(self: Kit, x: number, z: number, width: number, height: number, style: string, baseY: number?): Prim
+function KitClass.pillar(
+	self: Kit,
+	x: number,
+	z: number,
+	width: number,
+	height: number,
+	style: string,
+	baseY: number?
+): Prim
 	local base = baseY or 0
 	return self:box("Pillar", x - width / 2, base, z - width / 2, x + width / 2, base + height, z + width / 2, style)
 end
 
-function KitClass.trim(self: Kit, x1: number, z1: number, x2: number, z2: number, y: number, color: Color3, thickness: number?): Prim
+function KitClass.trim(
+	self: Kit,
+	x1: number,
+	z1: number,
+	x2: number,
+	z2: number,
+	y: number,
+	color: Color3,
+	thickness: number?
+): Prim
 	local t = thickness or 0.3
 	local prim = self:box("Trim", x1, y - t / 2, z1, x2, y + t / 2, z2, "NeonCyan", "Trim")
 	prim.color = color
@@ -390,31 +606,67 @@ function KitClass.trim(self: Kit, x1: number, z1: number, x2: number, z2: number
 	return prim
 end
 
-function KitClass.light(self: Kit, x: number, y: number, z: number, color: Color3, brightness: number, range: number, shadows: boolean?): Prim
+function KitClass.light(
+	self: Kit,
+	x: number,
+	y: number,
+	z: number,
+	color: Color3,
+	brightness: number,
+	range: number,
+	shadows: boolean?
+): Prim
 	local prim = self:block("LightSource", Vector3.new(x, y, z), Vector3.new(0.4, 0.4, 0.4), "Invisible", "Lights")
 	prim.collide = false
 	prim.query = false
 	prim.shadow = false
-	prim.light = { kind = "Point", color = color, brightness = brightness, range = range, face = nil, angle = nil, shadows = shadows or false }
+	prim.light = {
+		kind = "Point",
+		color = color,
+		brightness = brightness,
+		range = range,
+		face = nil,
+		angle = nil,
+		shadows = shadows or false,
+	}
 	return prim
 end
 
 function KitClass.lamp(self: Kit, x: number, z: number, height: number, color: Color3, baseY: number?)
 	local base = baseY or 0
 	self:box("LampPole", x - 0.3, base, z - 0.3, x + 0.3, base + height, z + 0.3, "MetalDark", "Props")
-	local head = self:box("LampHead", x - 1, base + height, z - 0.6, x + 1, base + height + 0.5, z + 0.6, "NeonWhite", "Props")
+	local head =
+		self:box("LampHead", x - 1, base + height, z - 0.6, x + 1, base + height + 0.5, z + 0.6, "NeonWhite", "Props")
 	head.color = color
 	head.collide = false
 	local light = self:light(x, base + height - 0.6, z, color, 2.2, 38, true)
-	light.light = { kind = "Spot", color = color, brightness = 3, range = 40, face = "Bottom", angle = 110, shadows = true }
+	light.light =
+		{ kind = "Spot", color = color, brightness = 3, range = 40, face = "Bottom", angle = 110, shadows = true }
 end
 
-function KitClass.panelLight(self: Kit, x1: number, z1: number, x2: number, z2: number, y: number, color: Color3, brightness: number): Prim
+function KitClass.panelLight(
+	self: Kit,
+	x1: number,
+	z1: number,
+	x2: number,
+	z2: number,
+	y: number,
+	color: Color3,
+	brightness: number
+): Prim
 	local prim = self:box("PanelLight", x1, y - 0.2, z1, x2, y, z2, "NeonWhite", "Lights")
 	prim.color = color
 	prim.collide = false
 	prim.query = false
-	prim.light = { kind = "Surface", color = color, brightness = brightness, range = 22, face = "Bottom", angle = 120, shadows = false }
+	prim.light = {
+		kind = "Surface",
+		color = color,
+		brightness = brightness,
+		range = 22,
+		face = "Bottom",
+		angle = 120,
+		shadows = false,
+	}
 	return prim
 end
 
@@ -422,7 +674,18 @@ function KitClass.spawn(self: Kit, side: string, x: number, z: number, lookX: nu
 	local base = y or 0
 	local position = Vector3.new(x, base + 3, z)
 	local look = Vector3.new(lookX, base + 3, lookZ)
-	local marker = record(self, makePrim(self, "SpawnPoint", "Block", CFrame.lookAt(position, look), Vector3.new(2, 1, 2), "Invisible", "Markers"))
+	local marker = record(
+		self,
+		makePrim(
+			self,
+			"SpawnPoint",
+			"Block",
+			CFrame.lookAt(position, look),
+			Vector3.new(2, 1, 2),
+			"Invisible",
+			"Markers"
+		)
+	)
 	marker.collide = false
 	marker.query = false
 	marker.shadow = false
@@ -436,9 +699,28 @@ function KitClass.spawn(self: Kit, side: string, x: number, z: number, lookX: nu
 	return marker
 end
 
-function KitClass.barrier(self: Kit, side: string, x1: number, z1: number, x2: number, z2: number, height: number, baseY: number?): Prim
+function KitClass.barrier(
+	self: Kit,
+	side: string,
+	x1: number,
+	z1: number,
+	x2: number,
+	z2: number,
+	height: number,
+	baseY: number?
+): Prim
 	local base = baseY or 0
-	local prim = self:box("SpawnBarrier", x1, base, z1, x2, base + height, z2, if side == "Attack" then "BarrierAttack" else "BarrierDefense", "Markers")
+	local prim = self:box(
+		"SpawnBarrier",
+		x1,
+		base,
+		z1,
+		x2,
+		base + height,
+		z2,
+		if side == "Attack" then "BarrierAttack" else "BarrierDefense",
+		"Markers"
+	)
 	table.insert(prim.tags, "SpawnBarrier")
 	prim.attributes.Side = side
 	prim.attributes.Impenetrable = true
@@ -446,7 +728,15 @@ function KitClass.barrier(self: Kit, side: string, x1: number, z1: number, x2: n
 	return prim
 end
 
-function KitClass.modeBarrier(self: Kit, modes: { string }, x1: number, z1: number, x2: number, z2: number, height: number): Prim
+function KitClass.modeBarrier(
+	self: Kit,
+	modes: { string },
+	x1: number,
+	z1: number,
+	x2: number,
+	z2: number,
+	height: number
+): Prim
 	local prim = self:box("ModeBarrier", x1, 0, z1, x2, height, z2, "BarrierMode", "Markers")
 	table.insert(prim.tags, "ModeBarrier")
 	prim.attributes.Modes = table.concat(modes, ",")
@@ -455,7 +745,18 @@ function KitClass.modeBarrier(self: Kit, modes: { string }, x1: number, z1: numb
 	return prim
 end
 
-function KitClass.zone(self: Kit, tag: string, name: string, x1: number, y1: number, z1: number, x2: number, y2: number, z2: number, attributes: { [string]: any }?): Prim
+function KitClass.zone(
+	self: Kit,
+	tag: string,
+	name: string,
+	x1: number,
+	y1: number,
+	z1: number,
+	x2: number,
+	y2: number,
+	z2: number,
+	attributes: { [string]: any }?
+): Prim
 	local prim = self:box(name, x1, y1, z1, x2, y2, z2, "Invisible", "Markers")
 	prim.collide = false
 	prim.query = false
@@ -469,7 +770,16 @@ function KitClass.zone(self: Kit, tag: string, name: string, x1: number, y1: num
 	return prim
 end
 
-function KitClass.callout(self: Kit, name: string, x1: number, z1: number, x2: number, z2: number, y1: number?, y2: number?): Prim
+function KitClass.callout(
+	self: Kit,
+	name: string,
+	x1: number,
+	z1: number,
+	x2: number,
+	z2: number,
+	y1: number?,
+	y2: number?
+): Prim
 	return self:zone("CalloutZone", "Callout_" .. name, x1, y1 or -4, z1, x2, y2 or 40, z2, { Callout = name })
 end
 
@@ -486,7 +796,17 @@ function KitClass.site(self: Kit, id: string, x1: number, z1: number, x2: number
 	self:trim(bx - 0.4, az, bx, bz, base + 0.1, color, 0.2)
 end
 
-function KitClass.sign(self: Kit, text: string, x: number, y: number, z: number, width: number, height: number, facing: string, color: Color3): Prim
+function KitClass.sign(
+	self: Kit,
+	text: string,
+	x: number,
+	y: number,
+	z: number,
+	width: number,
+	height: number,
+	facing: string,
+	color: Color3
+): Prim
 	local size: Vector3
 	if facing == "+X" or facing == "-X" then
 		size = Vector3.new(0.3, height, width)
@@ -495,19 +815,32 @@ function KitClass.sign(self: Kit, text: string, x: number, y: number, z: number,
 	end
 	local prim = self:block("Sign", Vector3.new(x, y, z), size, "MetalDark", "Props")
 	prim.collide = false
-	local face = if facing == "+X" then "Right" elseif facing == "-X" then "Left" elseif facing == "+Z" then "Back" else "Front"
+	local face = if facing == "+X"
+		then "Right"
+		elseif facing == "-X" then "Left"
+		elseif facing == "+Z" then "Back"
+		else "Front"
 	prim.sign = { text = text, color = color, face = face, background = rgb(8, 10, 14) }
 	return prim
 end
 
 --[[ Terminal interactif du hub (ProximityPrompt créé par MapBuilder). ]]
-function KitClass.terminal(self: Kit, action: string, label: string, x: number, z: number, facing: string, color: Color3)
+function KitClass.terminal(
+	self: Kit,
+	action: string,
+	label: string,
+	x: number,
+	z: number,
+	facing: string,
+	color: Color3
+)
 	local base = self:box("Terminal", x - 1.5, 0, z - 1, x + 1.5, 3.4, z + 1, "MetalDark", "Props")
 	table.insert(base.tags, "HubTerminal")
 	base.attributes.Action = action
 	base.attributes.Label = label
 	local screenY = 4.4
-	local offset = if facing == "+X" then Vector3.new(0.6, 0, 0)
+	local offset = if facing == "+X"
+		then Vector3.new(0.6, 0, 0)
 		elseif facing == "-X" then Vector3.new(-0.6, 0, 0)
 		elseif facing == "+Z" then Vector3.new(0, 0, 0.6)
 		else Vector3.new(0, 0, -0.6)
@@ -520,13 +853,16 @@ function KitClass.bounds(self: Kit, x1: number, z1: number, x2: number, z2: numb
 	local ax, bx = sorted(x1, x2)
 	local az, bz = sorted(z1, z2)
 	local t = 4
-	for _, coords in {
-		{ ax - t, az - t, bx + t, az },
-		{ ax - t, bz, bx + t, bz + t },
-		{ ax - t, az, ax, bz },
-		{ bx, az, bx + t, bz },
-	} do
-		local wall = self:box("Boundary", coords[1], -20, coords[2], coords[3], height, coords[4], "Invisible", "Markers")
+	for _, coords in
+		{
+			{ ax - t, az - t, bx + t, az },
+			{ ax - t, bz, bx + t, bz + t },
+			{ ax - t, az, ax, bz },
+			{ bx, az, bx + t, bz },
+		}
+	do
+		local wall =
+			self:box("Boundary", coords[1], -20, coords[2], coords[3], height, coords[4], "Invisible", "Markers")
 		wall.attributes.Impenetrable = true
 		wall.shadow = false
 	end

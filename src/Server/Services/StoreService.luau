@@ -31,7 +31,11 @@ function StoreService.Start()
 		if request.action == "Buy" and request.item then
 			return InventoryService.purchase(player, request.item)
 		elseif request.action == "ClaimPass" and request.tier and request.track then
-			return ProgressionService.claimPass(player, request.tier, if request.track == "premium" then "premium" else "free")
+			return ProgressionService.claimPass(
+				player,
+				request.tier,
+				if request.track == "premium" then "premium" else "free"
+			)
 		end
 		return ServerNet.failure("Requête invalide")
 	end)

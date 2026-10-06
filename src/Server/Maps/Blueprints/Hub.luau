@@ -125,7 +125,8 @@ local function build(kit: Kit)
 	for index, z in { -26, -14, -2, 10 } do
 		kit:cover(-50, z - 5, -48, z + 5, 3.2, "MetalDark")
 		kit:trim(-50, z - 5, -48, z + 5, 3.25, GREEN, 0.1)
-		local lane = kit:zone("BotAnchor", "LaneAnchor", -96, 0, z - 1, -94, 4, z + 1, { Kind = "Static", Lane = index })
+		local lane =
+			kit:zone("BotAnchor", "LaneAnchor", -96, 0, z - 1, -94, 4, z + 1, { Kind = "Static", Lane = index })
 		lane.attributes.Distances = "15,30,45"
 	end
 	for _, z in { -20, -8, 4 } do

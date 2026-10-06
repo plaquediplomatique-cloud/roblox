@@ -191,7 +191,13 @@ local function validate(instance: MapInstance)
 			local eyeA = a.Position + Vector3.new(0, 1.7, 0)
 			local eyeD = d.Position + Vector3.new(0, 1.7, 0)
 			if Workspace:Raycast(eyeA, eyeD - eyeA, params) == nil then
-				log:warn(("[%s] ligne de vue directe entre spawns adverses %s <-> %s"):format(instance.id, tostring(a.Position), tostring(d.Position)))
+				log:warn(
+					("[%s] ligne de vue directe entre spawns adverses %s <-> %s"):format(
+						instance.id,
+						tostring(a.Position),
+						tostring(d.Position)
+					)
+				)
 			end
 		end
 	end
@@ -229,7 +235,11 @@ function MapBuilder.build(blueprint: Blueprint, origin: CFrame, parent: Instance
 	-- Spawns spécifiques au mode : s'il en existe pour un côté, ils remplacent les autres.
 	local modeSpecificSides: { [string]: boolean } = {}
 	for _, prim in kit.prims do
-		if table.find(prim.tags, "SpawnPoint") and prim.attributes.Modes ~= nil and modeAllowed(prim.attributes.Modes, modeId) then
+		if
+			table.find(prim.tags, "SpawnPoint")
+			and prim.attributes.Modes ~= nil
+			and modeAllowed(prim.attributes.Modes, modeId)
+		then
 			modeSpecificSides[prim.attributes.Side] = true
 		end
 	end
@@ -294,9 +304,13 @@ function MapBuilder.build(blueprint: Blueprint, origin: CFrame, parent: Instance
 			table.insert(list, worldCFrame)
 			instance.spawns[side] = list
 		elseif isSite then
-			instance.sites[tostring(prim.attributes.Site)] = { name = tostring(prim.attributes.Site), cframe = worldCFrame, size = prim.size }
+			instance.sites[tostring(prim.attributes.Site)] =
+				{ name = tostring(prim.attributes.Site), cframe = worldCFrame, size = prim.size }
 		elseif table.find(prim.tags, "CalloutZone") then
-			table.insert(instance.callouts, { name = tostring(prim.attributes.Callout), cframe = worldCFrame, size = prim.size })
+			table.insert(
+				instance.callouts,
+				{ name = tostring(prim.attributes.Callout), cframe = worldCFrame, size = prim.size }
+			)
 		elseif table.find(prim.tags, "SpawnBarrier") then
 			table.insert(instance.barriers, part)
 		end
@@ -310,7 +324,9 @@ function MapBuilder.build(blueprint: Blueprint, origin: CFrame, parent: Instance
 	if RunService:IsStudio() then
 		validate(instance)
 	end
-	log:info(("carte %s construite (%d parts, %.0f ms)"):format(blueprint.id, #kit.prims, (os.clock() - started) * 1000))
+	log:info(
+		("carte %s construite (%d parts, %.0f ms)"):format(blueprint.id, #kit.prims, (os.clock() - started) * 1000)
+	)
 	return instance
 end
 

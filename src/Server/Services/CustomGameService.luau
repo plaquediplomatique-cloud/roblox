@@ -59,7 +59,10 @@ local function sync(room: Room)
 		members[tostring(player.UserId)] = { name = player.DisplayName, team = team }
 		table.insert(list, player)
 	end
-	room.replica:SetValues({}, { code = room.code, host = room.host.UserId, mode = room.mode, map = room.map, members = members })
+	room.replica:SetValues(
+		{},
+		{ code = room.code, host = room.host.UserId, mode = room.mode, map = room.map, members = members }
+	)
 	room.replica:SetReplication(list)
 end
 
@@ -135,7 +138,10 @@ local function handle(player: Player, request: CustomAction): ServerNet.Response
 		end
 		leaveRoom(player)
 		local mode = GameModes.get(target.mode) :: GameModes.ModeDef
-		local team = if countTeam(target, "A") < mode.teamSize then "A" elseif countTeam(target, "B") < mode.teamSize then "B" else "Spectator"
+		local team = if countTeam(target, "A") < mode.teamSize
+			then "A"
+			elseif countTeam(target, "B") < mode.teamSize then "B"
+			else "Spectator"
 		target.teams[player] = team
 		roomOf[player] = target
 		sync(target)

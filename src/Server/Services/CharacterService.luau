@@ -58,7 +58,8 @@ export type DeathInfo = {
 }
 
 type DamageEntry = { attacker: Player, amount: number, t: number }
-type LookState = { yaw: number, pitch: number, t: number, previousYaw: number, previousPitch: number, previousT: number }
+type LookState =
+	{ yaw: number, pitch: number, t: number, previousYaw: number, previousPitch: number, previousT: number }
 
 local CharacterService = {
 	Spawned = Signal.new() :: Signal.Signal<Player, Model>,
@@ -124,7 +125,11 @@ function CharacterService.getLook(player: Player): LookState?
 end
 
 --[[ Historique de visée [from, to] (killcam). Échantillonné à la réception (~30 Hz). ]]
-function CharacterService.lookHistory(player: Player, from: number, to: number): { { t: number, yaw: number, pitch: number } }
+function CharacterService.lookHistory(
+	player: Player,
+	from: number,
+	to: number
+): { { t: number, yaw: number, pitch: number } }
 	local list = {}
 	local source: { { t: number, yaw: number, pitch: number } } = lookHistories[player] or {}
 	for _, sample in source do
@@ -157,7 +162,8 @@ local function buildDescription(player: Player): (HumanoidDescription, Types.Ite
 	description.BodyTypeScale = 0
 	description.ProportionScale = 0
 	local data = DataService.getData(player)
-	local operator = Cosmetics.get(if data then data.Cosmetics.Operator else "op_standard") or Cosmetics.get("op_standard")
+	local operator = Cosmetics.get(if data then data.Cosmetics.Operator else "op_standard")
+		or Cosmetics.get("op_standard")
 	if operator and operator.palette then
 		OperatorGear.bodyColors(description, operator.palette)
 	end
@@ -193,7 +199,10 @@ local function registerTarget(player: Player, character: Model, root: BasePart, 
 		lean = function(): number
 			return CharacterService.leanOf(character)
 		end,
-		receive = function(amount: number, info: LagCompensationService.DamageInfo): LagCompensationService.DamageResult
+		receive = function(
+			amount: number,
+			info: LagCompensationService.DamageInfo
+		): LagCompensationService.DamageResult
 			return CharacterService.applyDamage(player, amount, info)
 		end,
 	})
@@ -262,7 +271,11 @@ end
 -- Dégâts / mort
 ---------------------------------------------------------------------------------------------
 
-function CharacterService.applyDamage(player: Player, amount: number, info: LagCompensationService.DamageInfo): LagCompensationService.DamageResult
+function CharacterService.applyDamage(
+	player: Player,
+	amount: number,
+	info: LagCompensationService.DamageInfo
+): LagCompensationService.DamageResult
 	local character, humanoid = CharacterService.getCharacter(player)
 	if not (character and humanoid) or not CharacterService.isAlive(player) then
 		return { killed = false, health = 0, armor = 0, healthLoss = 0, armorLoss = 0 }
@@ -420,42 +433,52 @@ function CharacterService.Start()
 		LagCompensationService.unregister(player.UserId)
 	end)
 
-	ServerNet.onEvent("Stance", { capacity = 24, refill = 16 }, parseStance, function(player: Player, packet: Types.StancePacket)
-		local character = player.Character
-		if not character or character:GetAttribute("Alive") ~= true then
-			return
+	ServerNet.onEvent(
+		"Stance",
+		{ capacity = 24, refill = 16 },
+		parseStance,
+		function(player: Player, packet: Types.StancePacket)
+			local character = player.Character
+			if not character or character:GetAttribute("Alive") ~= true then
+				return
+			end
+			local lean = if packet.stance == "Slide" then 0 else packet.lean
+			character:SetAttribute("Stance", packet.stance)
+			character:SetAttribute("Lean", lean)
+			character:SetAttribute("Ads", packet.ads)
+			character:SetAttribute("Walking", packet.walking)
 		end
-		local lean = if packet.stance == "Slide" then 0 else packet.lean
-		character:SetAttribute("Stance", packet.stance)
-		character:SetAttribute("Lean", lean)
-		character:SetAttribute("Ads", packet.ads)
-		character:SetAttribute("Walking", packet.walking)
-	end)
+	)
 
-	ServerNet.onUnreliable("LookUpdate", { capacity = 40, refill = 34 }, function(value: any): { yaw: number, pitch: number }?
-		local yaw, pitch = LookCodec.decodeLocal(value)
-		if yaw == nil or pitch == nil then
-			return nil
+	ServerNet.onUnreliable(
+		"LookUpdate",
+		{ capacity = 40, refill = 34 },
+		function(value: any): { yaw: number, pitch: number }?
+			local yaw, pitch = LookCodec.decodeLocal(value)
+			if yaw == nil or pitch == nil then
+				return nil
+			end
+			return { yaw = yaw, pitch = pitch }
+		end,
+		function(player: Player, look: { yaw: number, pitch: number })
+			local now = Workspace:GetServerTimeNow()
+			local previous = looks[player]
+			local history = lookHistories[player] or {}
+			if #history >= 120 then
+				table.remove(history, 1)
+			end
+			table.insert(history, { t = now, yaw = look.yaw, pitch = look.pitch })
+			lookHistories[player] = history
+			looks[player] = {
+				yaw = look.yaw,
+				pitch = look.pitch,
+				t = now,
+				previousYaw = if previous then previous.yaw else look.yaw,
+				previousPitch = if previous then previous.pitch else look.pitch,
+				previousT = if previous then previous.t else now,
+			}
 		end
-		return { yaw = yaw, pitch = pitch }
-	end, function(player: Player, look: { yaw: number, pitch: number })
-		local now = Workspace:GetServerTimeNow()
-		local previous = looks[player]
-		local history = lookHistories[player] or {}
-		if #history >= 120 then
-			table.remove(history, 1)
-		end
-		table.insert(history, { t = now, yaw = look.yaw, pitch = look.pitch })
-		lookHistories[player] = history
-		looks[player] = {
-			yaw = look.yaw,
-			pitch = look.pitch,
-			t = now,
-			previousYaw = if previous then previous.yaw else look.yaw,
-			previousPitch = if previous then previous.pitch else look.pitch,
-			previousT = if previous then previous.t else now,
-		}
-	end)
+	)
 
 	ServerNet.onEvent("Emote", { capacity = 3, refill = 0.5 }, function(slot: any): number?
 		return if Guard.integer(1, 4)(slot) then slot :: number else nil

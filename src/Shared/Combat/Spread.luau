@@ -114,7 +114,8 @@ function Spread.directions(
 	for index = 1, pellets do
 		local fraction = math.sqrt((index - 0.5) / pellets)
 		local jitter = 0.85 + rng:NextNumber() * 0.3
-		directions[index] = offset(center, centerRight, centerUp, cone * fraction * jitter, rotation + index * GOLDEN_ANGLE)
+		directions[index] =
+			offset(center, centerRight, centerUp, cone * fraction * jitter, rotation + index * GOLDEN_ANGLE)
 	end
 	return directions
 end

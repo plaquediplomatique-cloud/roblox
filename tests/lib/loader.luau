@@ -232,7 +232,6 @@ function requireNode(node)
 	return result
 end
 
-
 return {
 	shared = shared,
 	maps = maps,

@@ -178,9 +178,19 @@ function ProgressionService.processMatch(result: MatchInstance.MatchResult)
 			PlayerService.set(player, { "Rank" }, ranked.state)
 			rrDelta = ranked.rrDelta
 			if ranked.promoted or ranked.placed then
-				PlayerService.notify(player, "RankUp", Ranks.displayName(ranked.state.RankIndex), { rankIndex = ranked.state.RankIndex })
+				PlayerService.notify(
+					player,
+					"RankUp",
+					Ranks.displayName(ranked.state.RankIndex),
+					{ rankIndex = ranked.state.RankIndex }
+				)
 			elseif ranked.demoted then
-				PlayerService.notify(player, "RankDown", Ranks.displayName(ranked.state.RankIndex), { rankIndex = ranked.state.RankIndex })
+				PlayerService.notify(
+					player,
+					"RankDown",
+					Ranks.displayName(ranked.state.RankIndex),
+					{ rankIndex = ranked.state.RankIndex }
+				)
 			end
 			LeaderboardService.submit(player)
 		end

@@ -65,7 +65,9 @@ local stats: { [Player]: ReplicaService.Replica } = {}
 local function inZone(part: BasePart, position: Vector3): boolean
 	local localPoint = part.CFrame:PointToObjectSpace(position)
 	local half = part.Size * 0.5
-	return math.abs(localPoint.X) <= half.X and math.abs(localPoint.Y) <= half.Y + 6 and math.abs(localPoint.Z) <= half.Z
+	return math.abs(localPoint.X) <= half.X
+		and math.abs(localPoint.Y) <= half.Y + 6
+		and math.abs(localPoint.Z) <= half.Z
 end
 
 ---------------------------------------------------------------------------------------------
@@ -209,7 +211,10 @@ local function createBot(home: CFrame, kind: "Static" | "Strafe", zone: MapBuild
 		lean = function(): number
 			return 0
 		end,
-		receive = function(amount: number, _info: LagCompensationService.DamageInfo): LagCompensationService.DamageResult
+		receive = function(
+			amount: number,
+			_info: LagCompensationService.DamageInfo
+		): LagCompensationService.DamageResult
 			return damageBot(bot, amount)
 		end,
 	})
@@ -221,8 +226,10 @@ local function createBot(home: CFrame, kind: "Static" | "Strafe", zone: MapBuild
 				if bot.alive then
 					-- Patrouille : chemin calculé vers un point aléatoire de la zone.
 					local half = zone.size * 0.5
-					local goal = zone.cframe * Vector3.new(rng:NextNumber(-half.X, half.X), 0, rng:NextNumber(-half.Z, half.Z))
-					local path = PathfindingService:CreatePath({ AgentRadius = 1.5, AgentHeight = 5, AgentCanJump = false })
+					local goal = zone.cframe
+						* Vector3.new(rng:NextNumber(-half.X, half.X), 0, rng:NextNumber(-half.Z, half.Z))
+					local path =
+						PathfindingService:CreatePath({ AgentRadius = 1.5, AgentHeight = 5, AgentCanJump = false })
 					local computed = pcall(function()
 						path:ComputeAsync(root.Position, goal)
 					end)

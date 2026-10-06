@@ -54,7 +54,12 @@ local function ensureMissions(player: Player)
 	end
 end
 
-local function advance(player: Player, eventName: string, amount: number, predicate: (Missions.MissionFilter) -> boolean)
+local function advance(
+	player: Player,
+	eventName: string,
+	amount: number,
+	predicate: (Missions.MissionFilter) -> boolean
+)
 	local data = DataService.getData(player)
 	if not data then
 		return
@@ -63,7 +68,13 @@ local function advance(player: Player, eventName: string, amount: number, predic
 		local list = (data.Missions :: any)[listName] :: { Types.MissionProgress }
 		for index, progress in list do
 			local def = Missions.byId[progress.id]
-			if def and def.event == eventName and not progress.claimed and progress.progress < progress.target and predicate(def.filter) then
+			if
+				def
+				and def.event == eventName
+				and not progress.claimed
+				and progress.progress < progress.target
+				and predicate(def.filter)
+			then
 				local value = math.min(progress.target, progress.progress + amount)
 				PlayerService.set(player, { "Missions", listName, index, "progress" }, value)
 				if value >= progress.target then
@@ -123,11 +134,16 @@ local function handle(player: Player, request: MissionAction): ServerNet.Respons
 		for _, progress in data.Missions.Daily do
 			exclude[progress.id] = true
 		end
-		local rolled = Missions.roll(Missions.daily, 1, player.UserId * 977 + data.Missions.Day * 13 + index, exclude)[1]
+		local rolled =
+			Missions.roll(Missions.daily, 1, player.UserId * 977 + data.Missions.Day * 13 + index, exclude)[1]
 		if not rolled then
 			return ServerNet.failure("Aucune mission disponible")
 		end
-		PlayerService.set(player, { "Missions", "Daily", index }, { id = rolled.id, progress = 0, target = rolled.target, claimed = false })
+		PlayerService.set(
+			player,
+			{ "Missions", "Daily", index },
+			{ id = rolled.id, progress = 0, target = rolled.target, claimed = false }
+		)
 		PlayerService.increment(player, { "Missions", "Rerolls" }, -1)
 		return ServerNet.success()
 	end
@@ -169,7 +185,10 @@ function MissionService.Start()
 			if filter.slide and not info.slide then
 				return false
 			end
-			if filter.category and not (weapon and Missions.categoryMatches(filter.category, weapon.category, weapon.slot)) then
+			if
+				filter.category
+				and not (weapon and Missions.categoryMatches(filter.category, weapon.category, weapon.slot))
+			then
 				return false
 			end
 			return true

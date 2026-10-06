@@ -26,8 +26,14 @@ end
 
 T.describe("RankMath", function()
 	T.it("victoire attendue contre plus faible rapporte moins que l'exploit", function()
-		local favored = RankMath.mmrDelta(rankState(), { won = true, draw = false, teamMMR = 1200, enemyMMR = 1000, performance = 0 })
-		local upset = RankMath.mmrDelta(rankState(), { won = true, draw = false, teamMMR = 1000, enemyMMR = 1200, performance = 0 })
+		local favored = RankMath.mmrDelta(
+			rankState(),
+			{ won = true, draw = false, teamMMR = 1200, enemyMMR = 1000, performance = 0 }
+		)
+		local upset = RankMath.mmrDelta(
+			rankState(),
+			{ won = true, draw = false, teamMMR = 1000, enemyMMR = 1200, performance = 0 }
+		)
 		T.expect(upset > favored, ("%d > %d"):format(upset, favored))
 	end)
 	T.it("promotion avec report du surplus", function()
@@ -47,7 +53,8 @@ T.describe("RankMath", function()
 	end)
 	T.it("placements : rang attribué au 5e match, bridé à Sentinel III", function()
 		local state = rankState({ Placements = 4, MMR = 2400, RankIndex = 0, RR = 0 })
-		local result = RankMath.process(state, { won = true, draw = false, teamMMR = 2400, enemyMMR = 2400, performance = 1 })
+		local result =
+			RankMath.process(state, { won = true, draw = false, teamMMR = 2400, enemyMMR = 2400, performance = 1 })
 		T.expect(result.placed, "placé")
 		T.eq(result.state.RankIndex, 14)
 	end)
@@ -59,8 +66,10 @@ T.describe("RankMath", function()
 	end)
 	T.it("bornes de RR respectées", function()
 		for perf = -1, 1, 0.5 do
-			local win = RankMath.rrDelta(0, 2000, { won = true, draw = false, teamMMR = 1, enemyMMR = 1, performance = perf })
-			local loss = RankMath.rrDelta(20, 600, { won = false, draw = false, teamMMR = 1, enemyMMR = 1, performance = perf })
+			local win =
+				RankMath.rrDelta(0, 2000, { won = true, draw = false, teamMMR = 1, enemyMMR = 1, performance = perf })
+			local loss =
+				RankMath.rrDelta(20, 600, { won = false, draw = false, teamMMR = 1, enemyMMR = 1, performance = perf })
 			T.expect(win >= 8 and win <= 35, "win " .. win)
 			T.expect(loss <= -6 and loss >= -32, "loss " .. loss)
 		end

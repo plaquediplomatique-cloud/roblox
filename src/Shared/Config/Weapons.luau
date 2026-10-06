@@ -26,7 +26,12 @@ local build = RecoilPatterns.build
 -- Gabarits partagés
 ---------------------------------------------------------------------------------------------
 
-local function viewmodel(hip: CFrame, adsDistance: number, inspect: Types.InspectStyle, bobScale: number): Types.ViewmodelProfile
+local function viewmodel(
+	hip: CFrame,
+	adsDistance: number,
+	inspect: Types.InspectStyle,
+	bobScale: number
+): Types.ViewmodelProfile
 	return {
 		hipOffset = hip,
 		adsDistance = adsDistance,
@@ -45,7 +50,16 @@ local function tracer(width: number, every: number, color: Color3?): Types.Trace
 	return { color = color or WARM_TRACER, width = width, speed = 950, length = 9, every = every }
 end
 
-local function audio(fire: string, tail: string, distant: string, mech: string, reloadOut: string, reloadIn: string, rack: string, equip: string): Types.WeaponAudio
+local function audio(
+	fire: string,
+	tail: string,
+	distant: string,
+	mech: string,
+	reloadOut: string,
+	reloadIn: string,
+	rack: string,
+	equip: string
+): Types.WeaponAudio
 	return {
 		fire = fire,
 		tail = tail,
@@ -165,7 +179,16 @@ register({
 	},
 	ammo = magazineAmmo(25, 75, 2.3, 2.7),
 	melee = nil,
-	audio = audio("Weapon.Rifle.Fire", "Weapon.Tail.Rifle", "Weapon.Distant.Rifle", "Weapon.Mech.Rifle", "Reload.MagOut", "Reload.MagIn", "Reload.Rack", "Equip.Rifle"),
+	audio = audio(
+		"Weapon.Rifle.Fire",
+		"Weapon.Tail.Rifle",
+		"Weapon.Distant.Rifle",
+		"Weapon.Mech.Rifle",
+		"Reload.MagOut",
+		"Reload.MagIn",
+		"Reload.Rack",
+		"Equip.Rifle"
+	),
 	model = WeaponModels.longGun({
 		receiver = Vector3.new(0.22, 0.3, 1.05),
 		handguardLength = 0.75,
@@ -257,7 +280,16 @@ register({
 	},
 	ammo = magazineAmmo(30, 90, 2.2, 2.6),
 	melee = nil,
-	audio = audio("Weapon.Rifle.Suppressed", "Weapon.Tail.Light", "Weapon.Distant.Light", "Weapon.Mech.Rifle", "Reload.MagOut", "Reload.MagIn", "Reload.Rack", "Equip.Rifle"),
+	audio = audio(
+		"Weapon.Rifle.Suppressed",
+		"Weapon.Tail.Light",
+		"Weapon.Distant.Light",
+		"Weapon.Mech.Rifle",
+		"Reload.MagOut",
+		"Reload.MagIn",
+		"Reload.Rack",
+		"Equip.Rifle"
+	),
 	model = WeaponModels.longGun({
 		receiver = Vector3.new(0.21, 0.28, 0.95),
 		handguardLength = 0.8,
@@ -344,7 +376,16 @@ register({
 	},
 	ammo = magazineAmmo(24, 72, 2.4, 2.8),
 	melee = nil,
-	audio = audio("Weapon.Rifle.Burst", "Weapon.Tail.Rifle", "Weapon.Distant.Rifle", "Weapon.Mech.Rifle", "Reload.MagOut", "Reload.MagIn", "Reload.Rack", "Equip.Rifle"),
+	audio = audio(
+		"Weapon.Rifle.Burst",
+		"Weapon.Tail.Rifle",
+		"Weapon.Distant.Rifle",
+		"Weapon.Mech.Rifle",
+		"Reload.MagOut",
+		"Reload.MagIn",
+		"Reload.Rack",
+		"Equip.Rifle"
+	),
 	model = WeaponModels.longGun({
 		receiver = Vector3.new(0.23, 0.32, 1.0),
 		handguardLength = 0.7,
@@ -379,7 +420,11 @@ register({
 		base = 24,
 		headMultiplier = 2.5,
 		limbMultiplier = 0.8,
-		falloff = { { range = 18, multiplier = 1 }, { range = 45, multiplier = 0.83 }, { range = 90, multiplier = 0.67 } },
+		falloff = {
+			{ range = 18, multiplier = 1 },
+			{ range = 45, multiplier = 0.83 },
+			{ range = 90, multiplier = 0.67 },
+		},
 		pellets = 1,
 		penetration = 0.8,
 		range = 500,
@@ -431,7 +476,16 @@ register({
 	},
 	ammo = magazineAmmo(30, 120, 2.0, 2.4),
 	melee = nil,
-	audio = audio("Weapon.SMG.Fire", "Weapon.Tail.Light", "Weapon.Distant.Light", "Weapon.Mech.Light", "Reload.MagOut", "Reload.MagIn", "Reload.Rack", "Equip.Light"),
+	audio = audio(
+		"Weapon.SMG.Fire",
+		"Weapon.Tail.Light",
+		"Weapon.Distant.Light",
+		"Weapon.Mech.Light",
+		"Reload.MagOut",
+		"Reload.MagIn",
+		"Reload.Rack",
+		"Equip.Light"
+	),
 	model = WeaponModels.longGun({
 		receiver = Vector3.new(0.2, 0.3, 0.75),
 		handguardLength = 0.35,
@@ -466,7 +520,11 @@ register({
 		base = 27,
 		headMultiplier = 2.8,
 		limbMultiplier = 0.8,
-		falloff = { { range = 25, multiplier = 1 }, { range = 55, multiplier = 0.89 }, { range = 100, multiplier = 0.74 } },
+		falloff = {
+			{ range = 25, multiplier = 1 },
+			{ range = 55, multiplier = 0.89 },
+			{ range = 100, multiplier = 0.74 },
+		},
 		pellets = 1,
 		penetration = 0.9,
 		range = 550,
@@ -518,7 +576,16 @@ register({
 	},
 	ammo = magazineAmmo(40, 120, 2.1, 2.5),
 	melee = nil,
-	audio = audio("Weapon.SMG.Fire", "Weapon.Tail.Light", "Weapon.Distant.Light", "Weapon.Mech.Light", "Reload.MagOut", "Reload.MagIn", "Reload.Rack", "Equip.Light"),
+	audio = audio(
+		"Weapon.SMG.Fire",
+		"Weapon.Tail.Light",
+		"Weapon.Distant.Light",
+		"Weapon.Mech.Light",
+		"Reload.MagOut",
+		"Reload.MagIn",
+		"Reload.Rack",
+		"Equip.Light"
+	),
 	model = WeaponModels.longGun({
 		receiver = Vector3.new(0.22, 0.32, 0.8),
 		handguardLength = 0.42,
@@ -622,7 +689,16 @@ register({
 		chamber = false,
 	},
 	melee = nil,
-	audio = audio("Weapon.LMG.Fire", "Weapon.Tail.Heavy", "Weapon.Distant.Heavy", "Weapon.Mech.Heavy", "Reload.BoxOut", "Reload.BoxIn", "Reload.Rack", "Equip.Heavy"),
+	audio = audio(
+		"Weapon.LMG.Fire",
+		"Weapon.Tail.Heavy",
+		"Weapon.Distant.Heavy",
+		"Weapon.Mech.Heavy",
+		"Reload.BoxOut",
+		"Reload.BoxIn",
+		"Reload.Rack",
+		"Equip.Heavy"
+	),
 	model = WeaponModels.longGun({
 		receiver = Vector3.new(0.28, 0.36, 1.2),
 		handguardLength = 0.9,
@@ -706,7 +782,16 @@ register({
 	},
 	ammo = magazineAmmo(5, 20, 3.0, 3.6),
 	melee = nil,
-	audio = audio("Weapon.Sniper.Fire", "Weapon.Tail.Heavy", "Weapon.Distant.Sniper", "Weapon.Mech.Heavy", "Reload.MagOut", "Reload.MagIn", "Reload.Bolt", "Equip.Heavy"),
+	audio = audio(
+		"Weapon.Sniper.Fire",
+		"Weapon.Tail.Heavy",
+		"Weapon.Distant.Sniper",
+		"Weapon.Mech.Heavy",
+		"Reload.MagOut",
+		"Reload.MagIn",
+		"Reload.Bolt",
+		"Equip.Heavy"
+	),
 	model = WeaponModels.longGun({
 		receiver = Vector3.new(0.22, 0.3, 1.1),
 		handguardLength = 0.85,
@@ -762,7 +847,10 @@ register({
 		pelletCone = 0,
 	},
 	recoil = {
-		pattern = build({ { count = 1, pitch = 1.6, yaw = 0.2 }, { count = 4, pitch = 1.75, yaw = -0.25, yawEnd = 0.3 } }),
+		pattern = build({
+			{ count = 1, pitch = 1.6, yaw = 0.2 },
+			{ count = 4, pitch = 1.75, yaw = -0.25, yawEnd = 0.3 },
+		}),
 		loopFrom = 2,
 		randomYaw = 0.3,
 		randomPitch = 0.15,
@@ -790,7 +878,16 @@ register({
 	},
 	ammo = magazineAmmo(10, 40, 2.6, 3.0),
 	melee = nil,
-	audio = audio("Weapon.DMR.Fire", "Weapon.Tail.Rifle", "Weapon.Distant.Sniper", "Weapon.Mech.Rifle", "Reload.MagOut", "Reload.MagIn", "Reload.Rack", "Equip.Rifle"),
+	audio = audio(
+		"Weapon.DMR.Fire",
+		"Weapon.Tail.Rifle",
+		"Weapon.Distant.Sniper",
+		"Weapon.Mech.Rifle",
+		"Reload.MagOut",
+		"Reload.MagIn",
+		"Reload.Rack",
+		"Equip.Rifle"
+	),
 	model = WeaponModels.longGun({
 		receiver = Vector3.new(0.22, 0.3, 1.05),
 		handguardLength = 0.95,
@@ -825,7 +922,11 @@ register({
 		base = 20,
 		headMultiplier = 2.0,
 		limbMultiplier = 0.8,
-		falloff = { { range = 10, multiplier = 1 }, { range = 20, multiplier = 0.65 }, { range = 35, multiplier = 0.35 } },
+		falloff = {
+			{ range = 10, multiplier = 1 },
+			{ range = 20, multiplier = 0.65 },
+			{ range = 35, multiplier = 0.35 },
+		},
 		pellets = 8,
 		penetration = 0.4,
 		range = 220,
@@ -883,7 +984,16 @@ register({
 		chamber = false,
 	},
 	melee = nil,
-	audio = audio("Weapon.Shotgun.Fire", "Weapon.Tail.Heavy", "Weapon.Distant.Heavy", "Weapon.Mech.Heavy", "Reload.Shell", "Reload.Shell", "Reload.Pump", "Equip.Heavy"),
+	audio = audio(
+		"Weapon.Shotgun.Fire",
+		"Weapon.Tail.Heavy",
+		"Weapon.Distant.Heavy",
+		"Weapon.Mech.Heavy",
+		"Reload.Shell",
+		"Reload.Shell",
+		"Reload.Pump",
+		"Equip.Heavy"
+	),
 	model = WeaponModels.longGun({
 		receiver = Vector3.new(0.24, 0.32, 0.9),
 		handguardLength = 0.0,
@@ -966,7 +1076,16 @@ register({
 	},
 	ammo = magazineAmmo(8, 32, 2.4, 2.8),
 	melee = nil,
-	audio = audio("Weapon.Shotgun.Auto", "Weapon.Tail.Heavy", "Weapon.Distant.Heavy", "Weapon.Mech.Heavy", "Reload.MagOut", "Reload.MagIn", "Reload.Rack", "Equip.Heavy"),
+	audio = audio(
+		"Weapon.Shotgun.Auto",
+		"Weapon.Tail.Heavy",
+		"Weapon.Distant.Heavy",
+		"Weapon.Mech.Heavy",
+		"Reload.MagOut",
+		"Reload.MagIn",
+		"Reload.Rack",
+		"Equip.Heavy"
+	),
 	model = WeaponModels.longGun({
 		receiver = Vector3.new(0.26, 0.34, 0.85),
 		handguardLength = 0.5,
@@ -1049,8 +1168,23 @@ register({
 	},
 	ammo = magazineAmmo(12, 48, 1.4, 1.7),
 	melee = nil,
-	audio = audio("Weapon.Pistol.Fire", "Weapon.Tail.Light", "Weapon.Distant.Light", "Weapon.Mech.Light", "Reload.MagOut", "Reload.MagIn", "Reload.Slide", "Equip.Pistol"),
-	model = WeaponModels.pistol({ slideLength = 0.72, slideHeight = 0.15, extendedMag = false, compensator = false, frontGrip = false }),
+	audio = audio(
+		"Weapon.Pistol.Fire",
+		"Weapon.Tail.Light",
+		"Weapon.Distant.Light",
+		"Weapon.Mech.Light",
+		"Reload.MagOut",
+		"Reload.MagIn",
+		"Reload.Slide",
+		"Equip.Pistol"
+	),
+	model = WeaponModels.pistol({
+		slideLength = 0.72,
+		slideHeight = 0.15,
+		extendedMag = false,
+		compensator = false,
+		frontGrip = false,
+	}),
 	viewmodel = viewmodel(PISTOL_HIP, 1.35, "Pistol", 0.8),
 	tracer = tracer(0.045, 1),
 })
@@ -1128,7 +1262,16 @@ register({
 		chamber = false,
 	},
 	melee = nil,
-	audio = audio("Weapon.Revolver.Fire", "Weapon.Tail.Heavy", "Weapon.Distant.Heavy", "Weapon.Mech.Light", "Reload.CylinderOut", "Reload.CylinderIn", "Reload.Hammer", "Equip.Pistol"),
+	audio = audio(
+		"Weapon.Revolver.Fire",
+		"Weapon.Tail.Heavy",
+		"Weapon.Distant.Heavy",
+		"Weapon.Mech.Light",
+		"Reload.CylinderOut",
+		"Reload.CylinderIn",
+		"Reload.Hammer",
+		"Equip.Pistol"
+	),
 	model = WeaponModels.revolver(),
 	viewmodel = viewmodel(CFrame.new(0.42, -0.52, -1.4), 1.4, "Pistol", 0.85),
 	tracer = tracer(0.06, 1),
@@ -1149,7 +1292,11 @@ register({
 		base = 18,
 		headMultiplier = 2.6,
 		limbMultiplier = 0.8,
-		falloff = { { range = 12, multiplier = 1 }, { range = 30, multiplier = 0.8 }, { range = 60, multiplier = 0.65 } },
+		falloff = {
+			{ range = 12, multiplier = 1 },
+			{ range = 30, multiplier = 0.8 },
+			{ range = 60, multiplier = 0.65 },
+		},
 		pellets = 1,
 		penetration = 0.4,
 		range = 320,
@@ -1169,7 +1316,10 @@ register({
 		pelletCone = 0,
 	},
 	recoil = {
-		pattern = build({ { count = 4, pitch = 0.5, yaw = 0.2 }, { count = 16, pitch = 0.5, yaw = -0.3, yawEnd = 0.3 } }),
+		pattern = build({
+			{ count = 4, pitch = 0.5, yaw = 0.2 },
+			{ count = 16, pitch = 0.5, yaw = -0.3, yawEnd = 0.3 },
+		}),
 		loopFrom = 5,
 		randomYaw = 0.5,
 		randomPitch = 0.15,
@@ -1197,8 +1347,23 @@ register({
 	},
 	ammo = magazineAmmo(20, 80, 1.6, 1.9),
 	melee = nil,
-	audio = audio("Weapon.MP.Fire", "Weapon.Tail.Light", "Weapon.Distant.Light", "Weapon.Mech.Light", "Reload.MagOut", "Reload.MagIn", "Reload.Slide", "Equip.Pistol"),
-	model = WeaponModels.pistol({ slideLength = 0.8, slideHeight = 0.16, extendedMag = true, compensator = true, frontGrip = true }),
+	audio = audio(
+		"Weapon.MP.Fire",
+		"Weapon.Tail.Light",
+		"Weapon.Distant.Light",
+		"Weapon.Mech.Light",
+		"Reload.MagOut",
+		"Reload.MagIn",
+		"Reload.Slide",
+		"Equip.Pistol"
+	),
+	model = WeaponModels.pistol({
+		slideLength = 0.8,
+		slideHeight = 0.16,
+		extendedMag = true,
+		compensator = true,
+		frontGrip = true,
+	}),
 	viewmodel = viewmodel(CFrame.new(0.44, -0.52, -1.32), 1.3, "Pistol", 0.85),
 	tracer = tracer(0.04, 2),
 })
@@ -1285,9 +1450,23 @@ register({
 		heavyCooldown = 1.0,
 		heavyWindup = 0.25,
 	},
-	audio = audio("Blade.Swing", "Blade.Heavy", "Blade.Hit", "Blade.Hit", "Equip.Blade", "Equip.Blade", "Equip.Blade", "Equip.Blade"),
+	audio = audio(
+		"Blade.Swing",
+		"Blade.Heavy",
+		"Blade.Hit",
+		"Blade.Hit",
+		"Equip.Blade",
+		"Equip.Blade",
+		"Equip.Blade",
+		"Equip.Blade"
+	),
 	model = WeaponModels.blade(),
-	viewmodel = viewmodel(CFrame.new(0.55, -0.6, -1.05) * CFrame.Angles(rad(10), rad(-20), rad(-30)), 1.0, "Blade", 0.7),
+	viewmodel = viewmodel(
+		CFrame.new(0.55, -0.6, -1.05) * CFrame.Angles(rad(10), rad(-20), rad(-30)),
+		1.0,
+		"Blade",
+		0.7
+	),
 	tracer = tracer(0, 0),
 })
 

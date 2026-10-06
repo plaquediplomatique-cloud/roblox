@@ -231,15 +231,21 @@ function MatchService.Start()
 		end
 	end)
 
-	ServerNet.onEvent("LoadoutSelect", { capacity = 8, refill = 3 }, function(payload: any): { slot: Types.WeaponSlot, weapon: string }?
-		local valid = Guard.shape({ slot = Guard.oneOf({ "Primary", "Secondary", "Melee" }), weapon = Guard.string(16) })
-		return if valid(payload) then payload :: { slot: Types.WeaponSlot, weapon: string } else nil
-	end, function(player: Player, payload: { slot: Types.WeaponSlot, weapon: string })
-		local match = playerMatch[player]
-		if match then
-			match:selectLoadout(player, payload.slot, payload.weapon)
+	ServerNet.onEvent(
+		"LoadoutSelect",
+		{ capacity = 8, refill = 3 },
+		function(payload: any): { slot: Types.WeaponSlot, weapon: string }?
+			local valid =
+				Guard.shape({ slot = Guard.oneOf({ "Primary", "Secondary", "Melee" }), weapon = Guard.string(16) })
+			return if valid(payload) then payload :: { slot: Types.WeaponSlot, weapon: string } else nil
+		end,
+		function(player: Player, payload: { slot: Types.WeaponSlot, weapon: string })
+			local match = playerMatch[player]
+			if match then
+				match:selectLoadout(player, payload.slot, payload.weapon)
+			end
 		end
-	end)
+	)
 
 	Players.PlayerRemoving:Connect(function(player)
 		local match = playerMatch[player]

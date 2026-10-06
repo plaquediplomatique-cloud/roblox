@@ -342,7 +342,11 @@ local function detonate(self: MatchInstance)
 	if corePosition then
 		for player in self.entries do
 			local _, _, root = CharacterService.getCharacter(player)
-			if root and CharacterService.isAlive(player) and (root.Position - corePosition).Magnitude <= DETONATION_RADIUS then
+			if
+				root
+				and CharacterService.isAlive(player)
+				and (root.Position - corePosition).Magnitude <= DETONATION_RADIUS
+			then
 				CharacterService.kill(player, {
 					attacker = nil,
 					weaponId = "uplink",
@@ -389,8 +393,11 @@ local function tickObjective(self: MatchInstance, t: number): (boolean, boolean,
 			local _, _, found = CharacterService.getCharacter(planter)
 			root = found
 		end
-		if not (planter and root and CharacterService.isAlive(planter)) or not siteAt(self, root.Position)
-			or (self.plantStart and (root.Position - (self.plantStart :: Vector3)).Magnitude > MOVE_CANCEL) then
+		if
+			not (planter and root and CharacterService.isAlive(planter))
+			or not siteAt(self, root.Position)
+			or (self.plantStart and (root.Position - (self.plantStart :: Vector3)).Magnitude > MOVE_CANCEL)
+		then
 			cancelPlant(self)
 		elseif t >= objective.plantEndsAt then
 			completePlant(self, planter)
@@ -406,9 +413,11 @@ local function tickObjective(self: MatchInstance, t: number): (boolean, boolean,
 			root = found
 		end
 		local corePosition = objective.position
-		if not (defuser and root and corePosition and CharacterService.isAlive(defuser))
+		if
+			not (defuser and root and corePosition and CharacterService.isAlive(defuser))
 			or (root.Position - corePosition).Magnitude > DEFUSE_RADIUS + 2
-			or (self.defuseStart and (root.Position - (self.defuseStart :: Vector3)).Magnitude > MOVE_CANCEL) then
+			or (self.defuseStart and (root.Position - (self.defuseStart :: Vector3)).Magnitude > MOVE_CANCEL)
+		then
 			cancelDefuse(self)
 		elseif t >= objective.defuseEndsAt then
 			setBusy(defuser, false)
@@ -622,7 +631,12 @@ local function finishMatch(self: MatchInstance, winner: TeamId?, forfeit: boolea
 	local mvp = computeMvp(self)
 	self.replica:SetValues({}, { winner = winner or "", mvp = if mvp then mvp.UserId else 0 })
 	setPhase(self, "MatchEnd", self.mode.matchEndTime)
-	event(self, { kind = "MatchEnd", team = winner, reason = if forfeit then "Forfeit" else nil, player = if mvp then mvp.UserId else nil })
+	event(self, {
+		kind = "MatchEnd",
+		team = winner,
+		reason = if forfeit then "Forfeit" else nil,
+		player = if mvp then mvp.UserId else nil,
+	})
 	for player in self.entries do
 		CombatService.disarm(player)
 	end
@@ -765,7 +779,9 @@ function MatchInstance.addPlayer(self: MatchInstance, player: Player): boolean
 			firstBloods = 0,
 			rankIndex = if data then data.Rank.RankIndex else 0,
 			level = if data then data.Level else 1,
-			loadout = if data then { Primary = data.Loadout.Primary, Secondary = data.Loadout.Secondary, Melee = data.Loadout.Melee } else {},
+			loadout = if data
+				then { Primary = data.Loadout.Primary, Secondary = data.Loadout.Secondary, Melee = data.Loadout.Melee }
+				else {},
 		}
 		self.replica:Set({ "players", key(player) }, record)
 	else
@@ -852,7 +868,10 @@ function MatchInstance.interact(self: MatchInstance, player: Player, action: Typ
 		if side ~= "Defense" or not objective.planted or objective.defuser ~= 0 or not corePosition then
 			return
 		end
-		if (root.Position - corePosition).Magnitude > DEFUSE_RADIUS + 1 or humanoid.FloorMaterial == Enum.Material.Air then
+		if
+			(root.Position - corePosition).Magnitude > DEFUSE_RADIUS + 1
+			or humanoid.FloorMaterial == Enum.Material.Air
+		then
 			return
 		end
 		local duration = if objective.halfDefused then self.mode.defuseTime / 2 else self.mode.defuseTime
@@ -906,7 +925,11 @@ function MatchInstance.update(self: MatchInstance, t: number)
 			setPhase(self, "Intro", self.mode.introTime)
 			event(self, { kind = "Intro", text = self.spec.map })
 		elseif t >= state.phaseEndsAt then
-			finishMatch(self, if connectedCount(self, "A") > 0 then "A" elseif connectedCount(self, "B") > 0 then "B" else nil, true)
+			finishMatch(
+				self,
+				if connectedCount(self, "A") > 0 then "A" elseif connectedCount(self, "B") > 0 then "B" else nil,
+				true
+			)
 		end
 	elseif phase == "Intro" then
 		if t >= state.phaseEndsAt then

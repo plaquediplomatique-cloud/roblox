@@ -108,7 +108,20 @@ T.describe("Hub", function()
 		end
 	end
 	T.it("tous les terminaux de zone existent", function()
-		for _, action in { "Play", "Ranked", "Casual", "Custom", "Armory", "Training", "Leaderboard", "Missions", "Pass", "Settings" } do
+		for _, action in
+			{
+				"Play",
+				"Ranked",
+				"Casual",
+				"Custom",
+				"Armory",
+				"Training",
+				"Leaderboard",
+				"Missions",
+				"Pass",
+				"Settings",
+			}
+		do
 			T.expect(terminals[action], "terminal " .. action)
 		end
 	end)

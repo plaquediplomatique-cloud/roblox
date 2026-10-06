@@ -41,7 +41,10 @@ for _, name in { "Hub", "Kestrel", "Helix", "Spire", "Monolith" } do
 				sign = if prim.sign then prim.sign.text else nil,
 			})
 		end
-		fs.writeFile(("build/maps/%s.json"):format(blueprint.id), serde.encode("json", { id = blueprint.id, prims = prims }))
+		fs.writeFile(
+			("build/maps/%s.json"):format(blueprint.id),
+			serde.encode("json", { id = blueprint.id, prims = prims })
+		)
 		print(("%-10s %4d primitives"):format(blueprint.id, #prims))
 	end
 end

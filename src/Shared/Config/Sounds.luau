@@ -49,7 +49,15 @@ local FALL = "rbxasset://sounds/action_falling.mp3"
 local WHOOSH = "rbxasset://sounds/Rocket whoosh.wav"
 local SPLAT = "rbxasset://sounds/splat.wav"
 
-local function def(ids: { string }, volume: number, pitchMin: number, pitchMax: number, group: SoundGroupName, rolloff: Vector2?, looped: boolean?): SoundDef
+local function def(
+	ids: { string },
+	volume: number,
+	pitchMin: number,
+	pitchMax: number,
+	group: SoundGroupName,
+	rolloff: Vector2?,
+	looped: boolean?
+): SoundDef
 	return {
 		ids = ids,
 		volume = volume,

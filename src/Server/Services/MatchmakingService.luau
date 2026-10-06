@@ -433,7 +433,8 @@ local function runCloudLeader()
 			end
 			local key = GameModes.queueKey(modeId, ranked)
 			local ok, items = cloudCall("range", function()
-				return MemoryStoreService:GetSortedMap(QUEUE_PREFIX .. key):GetRangeAsync(Enum.SortDirection.Ascending, 200)
+				return MemoryStoreService:GetSortedMap(QUEUE_PREFIX .. key)
+					:GetRangeAsync(Enum.SortDirection.Ascending, 200)
 			end)
 			if not ok or type(items) ~= "table" then
 				continue
@@ -495,8 +496,12 @@ local function pollAssignments()
 		if os.clock() - entry.lastRefresh > 25 then
 			entry.lastRefresh = os.clock()
 			task.spawn(cloudCall, "refresh", function()
-				MemoryStoreService:GetSortedMap(QUEUE_PREFIX .. entry.key)
-					:SetAsync(entry.ticket.id, HttpService:JSONEncode(entry.ticket), TICKET_TTL, math.floor(entry.ticket.mmr))
+				MemoryStoreService:GetSortedMap(QUEUE_PREFIX .. entry.key):SetAsync(
+					entry.ticket.id,
+					HttpService:JSONEncode(entry.ticket),
+					TICKET_TTL,
+					math.floor(entry.ticket.mmr)
+				)
 				return true
 			end)
 		end

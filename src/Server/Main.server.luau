@@ -59,4 +59,6 @@ for _, entry in ORDER do
 end
 
 Workspace:SetAttribute("ServerReady", true)
-log:info(("serveur prêt [%s] en %.0f ms — %d services"):format(ServerRole.get(), (os.clock() - started) * 1000, #ORDER))
+log:info(
+	("serveur prêt [%s] en %.0f ms — %d services"):format(ServerRole.get(), (os.clock() - started) * 1000, #ORDER)
+)

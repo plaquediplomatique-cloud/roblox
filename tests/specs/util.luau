@@ -143,7 +143,13 @@ end)
 
 T.describe("Profil", function()
 	T.it("réconcilie un vieux profil incomplet et corrompu", function()
-		local old = { Version = 1, Level = 12, XP = 40, Settings = { Controls = "corrompu" }, Cosmetics = { Emotes = { "em_salute" } } }
+		local old = {
+			Version = 1,
+			Level = 12,
+			XP = 40,
+			Settings = { Controls = "corrompu" },
+			Cosmetics = { Emotes = { "em_salute" } },
+		}
 		local data = ProfileTemplate.reconcile(ProfileTemplate.migrate(old))
 		T.eq(data.Version, ProfileTemplate.VERSION)
 		T.eq(data.Level, 12, "niveau conservé")

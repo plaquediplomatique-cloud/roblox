@@ -157,10 +157,12 @@ local function build(kit: Kit)
 	end
 
 	-- HANGAR (spawn attaque) / BRIDGE (spawn défense) -----------------------------------
-	for _, info in {
-		{ sz = -1, side = "Attack", name = "HANGAR" },
-		{ sz = 1, side = "Defense", name = "BRIDGE" },
-	} do
+	for _, info in
+		{
+			{ sz = -1, side = "Attack", name = "HANGAR" },
+			{ sz = 1, side = "Defense", name = "BRIDGE" },
+		}
+	do
 		local sz = info.sz
 		local function Z(z: number): number
 			return z * sz

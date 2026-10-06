@@ -36,7 +36,14 @@ export type StanceProfile = {
 	broadphaseRadius: number,
 }
 
-local function part(name: string, zone: Types.HitZone, position: Vector3, size: Vector3, upper: boolean, rotation: CFrame?): HitboxPart
+local function part(
+	name: string,
+	zone: Types.HitZone,
+	position: Vector3,
+	size: Vector3,
+	upper: boolean,
+	rotation: CFrame?
+): HitboxPart
 	local offset = CFrame.new(position)
 	if rotation then
 		offset *= rotation
@@ -83,7 +90,14 @@ Stances.profiles = {
 		broadphaseRadius = 3.0,
 		parts = {
 			part("Head", "Head", Vector3.new(0, 1.25, 0.75), Vector3.new(1.05, 1.1, 1.05), true),
-			part("Torso", "Body", Vector3.new(0, 0.35, 0.35), Vector3.new(1.9, 1.15, 1.0), true, CFrame.Angles(math.rad(30), 0, 0)),
+			part(
+				"Torso",
+				"Body",
+				Vector3.new(0, 0.35, 0.35),
+				Vector3.new(1.9, 1.15, 1.0),
+				true,
+				CFrame.Angles(math.rad(30), 0, 0)
+			),
 			part("Pelvis", "Body", Vector3.new(0, -0.3, 0), Vector3.new(1.8, 0.5, 0.95), false),
 			part("LeftLeg", "Limb", Vector3.new(-0.45, -0.95, -1.0), Vector3.new(0.8, 0.7, 2.2), false),
 			part("RightLeg", "Limb", Vector3.new(0.45, -0.95, -1.0), Vector3.new(0.8, 0.7, 2.2), false),

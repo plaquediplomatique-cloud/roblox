@@ -52,7 +52,15 @@ end
 
 function T.near(actual, expected, epsilon, message)
 	if math.abs(actual - expected) > epsilon then
-		error(("%s: expected %s ± %s, got %s"):format(message or "near", tostring(expected), tostring(epsilon), tostring(actual)), 2)
+		error(
+			("%s: expected %s ± %s, got %s"):format(
+				message or "near",
+				tostring(expected),
+				tostring(epsilon),
+				tostring(actual)
+			),
+			2
+		)
 	end
 end
 

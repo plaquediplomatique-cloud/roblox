@@ -146,7 +146,13 @@ function MathUtil.rayBoxLocal(origin: Vector3, direction: Vector3, half: Vector3
 end
 
 --[[ Intersection rayon / boîte orientée (OBB) définie par un CFrame et une demi-taille. ]]
-function MathUtil.rayOBB(origin: Vector3, direction: Vector3, cframe: CFrame, half: Vector3, maxDistance: number): number?
+function MathUtil.rayOBB(
+	origin: Vector3,
+	direction: Vector3,
+	cframe: CFrame,
+	half: Vector3,
+	maxDistance: number
+): number?
 	local localOrigin = cframe:PointToObjectSpace(origin)
 	local localDirection = cframe:VectorToObjectSpace(direction)
 	return MathUtil.rayBoxLocal(localOrigin, localDirection, half, maxDistance)

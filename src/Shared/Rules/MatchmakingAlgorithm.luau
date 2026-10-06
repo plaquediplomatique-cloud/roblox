@@ -61,7 +61,7 @@ local function teamAverage(tickets: { MatchTicket }): number
 end
 
 --[[ Meilleure partition de `group` en deux équipes de `teamSize` joueurs. ]]
-function MatchmakingAlgorithm.bestSplit(group: { MatchTicket }, teamSize: number): (MatchProposal?)
+function MatchmakingAlgorithm.bestSplit(group: { MatchTicket }, teamSize: number): MatchProposal?
 	local count = #group
 	local best: MatchProposal? = nil
 	local bestDiff = math.huge
@@ -108,7 +108,12 @@ end
 	Cherche, parmi `candidates` (triés par proximité), un groupe contenant l'ancre et
 	totalisant `needed` joueurs. DFS bornée par candidateLimit.
 ]]
-local function findGroups(anchor: MatchTicket, candidates: { MatchTicket }, needed: number, callback: ({ MatchTicket }) -> ())
+local function findGroups(
+	anchor: MatchTicket,
+	candidates: { MatchTicket },
+	needed: number,
+	callback: ({ MatchTicket }) -> ()
+)
 	local chosen: { MatchTicket } = { anchor }
 	local function dfs(start: number, remaining: number)
 		if remaining == 0 then
