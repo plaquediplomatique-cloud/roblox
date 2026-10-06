@@ -99,23 +99,26 @@ function Quests.ensure(state: State, now: number, seed: number): boolean
 	return changed
 end
 
--- Enregistre `amount` pour une métrique. Renvoie les identifiants de quêtes TERMINÉES par cet appel.
-function Quests.record(state: State, metric: string, amount: number): { string }
+-- Enregistre `amount` pour une métrique. Renvoie (quêtes TERMINÉES par cet appel, progression modifiée ?).
+function Quests.record(state: State, metric: string, amount: number): ({ string }, boolean)
 	local completed: { string } = {}
+	local changed = false
 	for _, item in state.Items do
 		local def = Config.ById[item.Id]
 		if def and def.Metric == metric and item.Progress < def.Target then
+			local before = item.Progress
 			if MAX_METRICS[metric] then
 				item.Progress = math.min(def.Target, math.max(item.Progress, amount))
 			else
 				item.Progress = math.min(def.Target, item.Progress + amount)
 			end
+			changed = changed or item.Progress ~= before
 			if item.Progress >= def.Target then
 				table.insert(completed, item.Id)
 			end
 		end
 	end
-	return completed
+	return completed, changed
 end
 
 -- Réclamation idempotente : renvoie la récompense la première fois seulement.

@@ -134,6 +134,7 @@ function ShopService.ascend(state: State)
 	state.Combo.Count = 0
 	GameEvents.Ascended:Fire(state)
 	PlayerService.mark(state, "Level", "XP", "Zones", "Weapons", "Stars", "Stats", "Equipped")
+	lastTravel[state.Player] = 0 -- le retour à la base n'est jamais bloqué par le délai de téléportation
 	ProgressionService.notify(state, "Rare", ("ASCENSION %d!"):format(state.Profile.Stars), {
 		l = { "+10% XP, +10% coins, +25% damage per star" },
 	})
@@ -147,11 +148,12 @@ function ShopService.openChest(state: State, chestId: string)
 		fail(state, "No chest to open")
 		return
 	end
-	chests[chestId] -= 1
-	PlayerService.mark(state, "Chests")
+	-- Tirage d'abord (sans effet de bord), débit ensuite : une erreur ne consomme jamais le coffre.
 	-- Pas de butin plus puissant que la progression : palier de la meilleure arme principale + 2.
 	local best = WeaponCatalog.bestOwned(state.Profile.Weapons)
 	local drop = Loot.rollChest(chestId, state.Profile.Weapons, best.Tier + 2, math.random)
+	chests[chestId] -= 1
+	PlayerService.mark(state, "Chests")
 	local payload: { [string]: any } = { id = chestId }
 	if drop.Kind == "Weapon" then
 		WeaponService.grant(state, drop.WeaponId, "Chest")

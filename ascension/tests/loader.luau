@@ -111,6 +111,9 @@ local function environmentFor(node)
 end
 
 function requireNode(node)
+	if type(node) == "string" then
+		return require(node) -- modules Lune (@lune/fs…) pour les tests de contrôle statique
+	end
 	local cached = loaded[node]
 	if cached ~= nil then
 		return cached

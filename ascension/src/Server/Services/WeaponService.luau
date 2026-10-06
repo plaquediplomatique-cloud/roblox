@@ -31,7 +31,7 @@ local function applyToCharacter(state: State, character: Model)
 		old:Destroy()
 	end
 	local weapon = PlayerService.weapon(state)
-	local hand = character:FindFirstChild("RightHand") :: BasePart?
+	local hand = character:WaitForChild("RightHand", 5) :: BasePart?
 	if not hand then
 		return
 	end

@@ -26,9 +26,10 @@ local log = Logger.new("Data")
 
 local DataService = {}
 
-type Entry = { Profile: Profile.Profile, Dirty: boolean, Saving: boolean, Released: boolean }
+type Entry = { Profile: Profile.Profile, Dirty: boolean, Saving: boolean, Released: boolean, Refused: number }
 
 local entries: { [Player]: Entry } = {}
+local releasing: { [number]: boolean } = {} -- userId en cours de libération (un rechargement attend)
 local memoryStore: { [string]: any } = {}
 local useMemory = false
 local store: GlobalDataStore? = nil
@@ -106,6 +107,12 @@ end
 -- Charge (et verrouille) le profil. Yield. Renvoie nil + raison en cas d'échec.
 function DataService.load(player: Player): (Profile.Profile?, string?)
 	local key = keyFor(player.UserId)
+	-- Une libération précédente du même joueur sur ce serveur doit finir avant de relire le profil.
+	local waited = 0
+	while releasing[player.UserId] and waited < 20 do
+		task.wait(0.25)
+		waited += 0.25
+	end
 	local locked = false
 	local ok, record = retry(Game.SaveRetries, function()
 		local success, result = update(key, function(old: any)
@@ -123,7 +130,7 @@ function DataService.load(player: Player): (Profile.Profile?, string?)
 	end
 	local raw = if type(record) == "table" then (record :: any).Data else nil
 	local profile = Profile.load(raw, os.time())
-	entries[player] = { Profile = profile, Dirty = raw == nil, Saving = false, Released = false }
+	entries[player] = { Profile = profile, Dirty = raw == nil, Saving = false, Released = false, Refused = 0 }
 	return profile, nil
 end
 
@@ -143,13 +150,26 @@ end
 -- Sauvegarde
 ---------------------------------------------------------------------------------------------
 
+local function deepCopy(value: any): any
+	if type(value) ~= "table" then
+		return value
+	end
+	local copy = {}
+	for key, item in value :: { [any]: any } do
+		copy[key] = deepCopy(item)
+	end
+	return copy
+end
+
+-- Écrit le profil. Si une écriture est déjà en cours, ATTEND (jamais de sauvegarde finale perdue).
 local function write(player: Player, entry: Entry, release: boolean): boolean
-	if entry.Saving then
-		return false
+	while entry.Saving do
+		task.wait(0.1)
 	end
 	entry.Saving = true
+	entry.Dirty = false -- remis à true si l'écriture échoue ; un `mark` pendant l'écriture le re-salira
 	entry.Profile.LastSeen = os.time()
-	local snapshot = table.clone(entry.Profile) :: any -- les sous-tables sont sérialisées par le DataStore
+	local snapshot = deepCopy(entry.Profile) -- instantané cohérent AVANT tout yield
 	local committed = true
 	local ok = retry(Game.SaveRetries, function()
 		local success = update(keyFor(player.UserId), function(old: any)
@@ -161,11 +181,17 @@ local function write(player: Player, entry: Entry, release: boolean): boolean
 	end)
 	entry.Saving = false
 	if ok and committed then
-		entry.Dirty = false
+		entry.Refused = 0
 		return true
 	end
+	entry.Dirty = true
 	if ok and not committed then
+		entry.Refused += 1
 		log:error("verrou perdu : écriture refusée pour", player.Name)
+		if entry.Refused >= 3 and not release then
+			-- Un autre serveur détient le profil : continuer à jouer ici ne serait jamais sauvegardé.
+			player:Kick("Your session was taken over by another server. Please rejoin.")
+		end
 	else
 		log:error("échec de sauvegarde pour", player.Name)
 	end
@@ -187,8 +213,11 @@ function DataService.release(player: Player)
 		return
 	end
 	entry.Released = true
+	local userId = player.UserId
+	releasing[userId] = true
 	write(player, entry, true)
 	entries[player] = nil
+	releasing[userId] = nil
 end
 
 function DataService.start()
@@ -196,13 +225,17 @@ function DataService.start()
 		task.spawn(DataService.release, player)
 	end)
 
-	-- Autosave : un joueur à la fois pour lisser le budget de requêtes.
+	-- Autosave : un joueur à la fois (liste copiée : `entries` change pendant les yields), protégé par pcall.
 	task.spawn(function()
 		while true do
 			task.wait(Game.AutosaveSeconds)
+			local list: { { Player: Player, Entry: Entry } } = {}
 			for player, entry in entries do
-				if entry.Dirty and not entry.Released then
-					write(player, entry, false)
+				table.insert(list, { Player = player, Entry = entry })
+			end
+			for _, item in list do
+				if item.Entry.Dirty and not item.Entry.Released then
+					pcall(write, item.Player, item.Entry, false)
 					task.wait(0.25)
 				end
 			end
@@ -212,12 +245,16 @@ function DataService.start()
 	-- Arrêt du serveur : tout le monde en parallèle, budget borné.
 	game:BindToClose(function()
 		local pending = 0
+		local list: { { Player: Player, Entry: Entry } } = {}
 		for player, entry in entries do
-			if not entry.Released then
+			table.insert(list, { Player = player, Entry = entry })
+		end
+		for _, item in list do
+			if not item.Entry.Released then
 				pending += 1
 				task.spawn(function()
-					entry.Released = true
-					write(player, entry, true)
+					item.Entry.Released = true
+					write(item.Player, item.Entry, true)
 					pending -= 1
 				end)
 			end

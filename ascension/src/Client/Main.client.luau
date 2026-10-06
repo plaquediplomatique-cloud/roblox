@@ -33,11 +33,12 @@ Vfx.start()
 DummyView.start()
 SwingAnimator.start()
 
+Popups.start() -- branché avant l'attente du profil : aucune notification de connexion perdue
+
 Store.waitReady()
 Hud.start()
 DummyView.BossSeen:Connect(Hud.setBoss)
 HitFeedback.start()
 InputController.start()
-Popups.start()
 ZoneController.start()
 MenuController.start()

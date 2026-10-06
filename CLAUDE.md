@@ -63,3 +63,18 @@ Commandes : `/roblox-review` (revue), `/roblox-new-system` (nouveau système), a
 (ou ouvrir `build/AetherStrike.rbxl`). *Test → Clients and Servers* (2 à 6 joueurs) pour la
 boucle complète : en Studio les matchs sont locaux et les profils utilisent un magasin en
 mémoire sans « Enable Studio Access to API Services ».
+
+## Second jeu : SMASH ASCENSION (`ascension/`)
+
+Jeu de progression de frappe (style jouet / brique), projet Rojo **indépendant** :
+`ascension.project.json`, sources dans `ascension/src`, tests dans `ascension/tests`. Il réutilise
+seulement `src/Shared/Util` (Guard, Signal, Janitor, Pool, RateLimiter, Spring, Logger). Mêmes
+conventions que ci-dessus (Luau strict, serveur autoritaire, règles pures testées, nombres dans
+`Config/`, sons par clés, UI par jetons). Détails : `ascension/README.md` et `ascension/docs/`.
+
+```bash
+stylua ascension
+./ascension/scripts/analyze.sh     # 0 erreur, 0 avertissement
+./ascension/scripts/test.sh        # tests Lune (dont la simulation de rythme de progression)
+./ascension/scripts/build.sh       # build/SmashAscension.rbxl
+```

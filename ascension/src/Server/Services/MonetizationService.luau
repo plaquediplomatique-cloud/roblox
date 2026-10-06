@@ -22,6 +22,7 @@ local PlayerService = require(script.Parent.PlayerService)
 local ProgressionService = require(script.Parent.ProgressionService)
 local DataService = require(script.Parent.DataService)
 local BaseService = require(script.Parent.BaseService)
+local CharacterService = require(script.Parent.CharacterService)
 
 local log = Logger.new("Monetization")
 
@@ -41,11 +42,17 @@ end
 function MonetizationService.refreshPasses(state: PlayerService.State)
 	for _, pass in Products.Passes do
 		if pass.PassId > 0 and not state.Passes[pass.Id] then
-			local ok, owns = pcall(function()
-				return MarketplaceService:UserOwnsGamePassAsync(state.Player.UserId, pass.PassId)
-			end)
-			if ok and owns then
-				applyPass(state, pass.Id)
+			for attempt = 1, 3 do
+				local ok, owns = pcall(function()
+					return MarketplaceService:UserOwnsGamePassAsync(state.Player.UserId, pass.PassId)
+				end)
+				if ok then
+					if owns then
+						applyPass(state, pass.Id)
+					end
+					break
+				end
+				task.wait(attempt)
 			end
 		end
 	end
@@ -72,7 +79,11 @@ local function processReceipt(info: { [string]: any }): Enum.ProductPurchaseDeci
 	end
 	local receiptId = tostring(info.PurchaseId)
 	if not Profile.recordPurchase(state.Profile, receiptId) then
-		return Enum.ProductPurchaseDecision.PurchaseGranted -- déjà accordé
+		-- Déjà accordé en mémoire : on ne confirme à Roblox qu'une fois le profil réellement écrit.
+		PlayerService.mark(state, "Boosts", "Coins")
+		return if DataService.save(player)
+			then Enum.ProductPurchaseDecision.PurchaseGranted
+			else Enum.ProductPurchaseDecision.NotProcessedYet
 	end
 	local grant = product.Grant
 	if grant.Kind == "XPBoostMinutes" then
@@ -105,6 +116,13 @@ function MonetizationService.start()
 				applyPass(state, pass.Id)
 				PlayerService.fullSync(state)
 			end
+		end
+	end)
+
+	-- L'aura (cosmétique) est réappliquée à chaque apparition du personnage.
+	CharacterService.onCharacter(function(state, character)
+		if state.Passes.AuraPack then
+			character:SetAttribute("Aura", true)
 		end
 	end)
 

@@ -28,8 +28,10 @@ local QuestService = {}
 local TICK = 5
 
 local function record(state: State, metric: string, amount: number)
-	local done = Quests.record(state.Profile.Quests, metric, amount)
-	PlayerService.mark(state, "Quests")
+	local done, changed = Quests.record(state.Profile.Quests, metric, amount)
+	if changed then
+		PlayerService.mark(state, "Quests")
+	end
 	for _, id in done do
 		local def = QuestConfig.ById[id]
 		ProgressionService.notify(

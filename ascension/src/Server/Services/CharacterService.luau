@@ -47,26 +47,34 @@ end
 
 local function setup(state: PlayerService.State, character: Model)
 	local player = state.Player
-	local humanoid = character:WaitForChild("Humanoid", 10) :: Humanoid?
-	local root = character:WaitForChild("HumanoidRootPart", 10) :: BasePart?
-	if not humanoid or not root then
-		return
-	end
-	character:PivotTo(spawnProvider(state))
-	setCollisionGroup(character)
 	local janitor = janitors[player]
-	if janitor then
-		janitor:Add(character.DescendantAdded:Connect(function(descendant)
-			if descendant:IsA("BasePart") then
-				descendant.CollisionGroup = GROUP
-			end
-		end))
+	-- La réapparition est branchée AVANT toute attente : un personnage qui meurt ne reste jamais mort.
+	local humanoid = character:WaitForChild("Humanoid", 10) :: Humanoid?
+	if humanoid and janitor then
 		janitor:Add(humanoid.Died:Connect(function()
 			task.delay(1.5, function()
 				if player.Parent and PlayerService.get(player) then
 					pcall(player.LoadCharacterAsync, player)
 				end
 			end)
+		end))
+	end
+	local root = character:WaitForChild("HumanoidRootPart", 10) :: BasePart?
+	if not humanoid or not root then
+		task.delay(2, function()
+			if player.Parent and player.Character == character and PlayerService.get(player) then
+				pcall(player.LoadCharacterAsync, player)
+			end
+		end)
+		return
+	end
+	character:PivotTo(spawnProvider(state))
+	setCollisionGroup(character)
+	if janitor then
+		janitor:Add(character.DescendantAdded:Connect(function(descendant)
+			if descendant:IsA("BasePart") then
+				descendant.CollisionGroup = GROUP
+			end
 		end))
 	end
 	for _, callback in onCharacter do

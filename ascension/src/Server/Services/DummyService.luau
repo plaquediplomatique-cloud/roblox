@@ -80,6 +80,7 @@ local function build(dummy: Dummy)
 	if dummy.Owner then
 		model:SetAttribute("OwnerId", dummy.Owner.UserId)
 	end
+	model.ModelStreamingMode = Enum.ModelStreamingMode.Atomic -- le client reçoit le mannequin entier (barre, effondrement)
 	model:PivotTo(dummy.Pivot)
 	CollectionService:AddTag(model, "Dummy")
 	model.Parent = root()
