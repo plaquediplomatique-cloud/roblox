@@ -428,6 +428,8 @@ export type MatchPlayerData = {
 	plants: number,
 	defuses: number,
 	firstBloods: number,
+	clutches: number,
+	aces: number,
 	rankIndex: number,
 	level: number,
 	loadout: { [string]: string },

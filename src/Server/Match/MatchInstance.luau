@@ -579,10 +579,12 @@ local function endRound(self: MatchInstance, winner: TeamId?, reason: string)
 	end
 	if clutch then
 		bump(self, clutch, "score", 150)
+		bump(self, clutch, "clutches", 1)
 		event(self, { kind = "Clutch", player = clutch.UserId })
 	end
 	if ace then
 		bump(self, ace, "score", 200)
+		bump(self, ace, "aces", 1)
 		event(self, { kind = "Ace", player = ace.UserId })
 	end
 	GameEvents.RoundEnd:Fire({
@@ -777,6 +779,8 @@ function MatchInstance.addPlayer(self: MatchInstance, player: Player): boolean
 			plants = 0,
 			defuses = 0,
 			firstBloods = 0,
+			clutches = 0,
+			aces = 0,
 			rankIndex = if data then data.Rank.RankIndex else 0,
 			level = if data then data.Level else 1,
 			loadout = if data
