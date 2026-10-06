@@ -142,3 +142,19 @@ whoosh, glitch.
 > upload. Le pack final (enregistrements d'armes, Foley, musique) se branche en
 > remplaçant les `ids` de chaque clé — **aucune ligne de code à modifier**. Le groupe
 > `Music` est câblé (volume, ducking) mais aucune piste n'est fournie.
+
+## Météo et ambiance (refonte)
+
+- **Météo** (`Client/Controllers/WeatherController.luau`, profil `weather` de
+  `Shared/Config/Maps.luau`) : pluie striée (particules étirées dans le sens de la vitesse)
+  à Kestrel, neige à Spire, poussière en suspension à Helix et au hub, étincelles magenta à
+  Monolith. L'émetteur suit la caméra, un rayon vers le ciel coupe pluie et neige sous un
+  toit. Éclairs lointains à Kestrel : éclaircissement bleuté bref puis tonnerre retardé
+  selon la distance ; jamais avec « flashs réduits ». Réglage vidéo dédié.
+- **Ciel et nuages** : étoiles, tailles du soleil et de la lune, nuages volumétriques
+  (`Terrain.Clouds`) teintés par carte ; ombres plus douces sous la pluie.
+- **Ambiance sonore** (`AudioController.setMapAmbience`, profil `ambience`) : sons
+  ponctuels placés autour de l'auditeur (grincements, gouttes, rafales, craquements de
+  glace, impulsions de la station, trafic aérien, annonces du hub) et réverbération de
+  lieu choisie parmi des préréglages courts, intérieur ou extérieur selon un rayon vers le
+  ciel — la localisation des pas reste nette.

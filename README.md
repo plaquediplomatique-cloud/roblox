@@ -38,7 +38,7 @@ services, avec une logique de jeu pure testée hors moteur.
 ```bash
 rokit install                 # rojo 7.7.1, luau-lsp 1.70.1, StyLua 2.5.2, Lune 0.10.5
 ./scripts/analyze.sh          # analyse Luau stricte de src/ (télécharge les définitions Roblox)
-./scripts/test.sh             # 91 tests unitaires (Lune)
+./scripts/test.sh             # 116 tests unitaires (Lune)
 ./scripts/build.sh            # → build/AetherStrike.rbxl
 ```
 
@@ -62,6 +62,9 @@ serveurs réservés par le matchmaker sont des **serveurs de match**
 | `stylua --check src tests` | formatage |
 | `python3 tools/require_graph.py --check` | aucun cycle ni `require` non résolu |
 | `python3 tools/doc_excerpts.py --check` | extraits de code de la documentation conformes au code |
+| `python3 tools/check_skills.py --run-tests` | skills Claude Code : structure, liens, snippets typés, tests |
+| `lune run tools/audit_maps.luau` | coût de chaque carte (SceneAudit) + `build/maps/<id>.rbxm` |
+| `lune run tools/export_maps.luau` puis `python3 tools/render_view.py all` | rendus 3D de prévisualisation des cartes (hors Studio) |
 
 ## Organisation
 
@@ -74,14 +77,18 @@ src/
 │                lobby, interface
 └── ReplicatedFirst/   écran de chargement (démarrage et téléportations)
 tests/           tests Lune (specs + chargeur de modules hors moteur)
-tools/           tables d'armes, plans des cartes, graphe de dépendances, extraits de documentation
-docs/            dossier de conception en 11 sections
+tools/           tables d'armes, plans et rendus des cartes, audit de scène, graphe de dépendances,
+                 extraits de documentation, vérification des skills
+docs/            dossier de conception (11 sections + audit de refonte)
+.claude/         équipe de skills Claude Code (voir docs/skills-claude-code.md)
 ```
 
 ## Documentation
 
 Le dossier de conception complet est dans [docs/](docs/README.md) : skills, architecture,
-modules, hub, level design, mouvement, armes, HUD, juice, **code prioritaire** et **roadmap**.
+modules, hub, level design, mouvement, armes, HUD, juice, **code prioritaire**, **roadmap** et
+**audit de refonte** ([docs/12-audit-refonte.md](docs/12-audit-refonte.md) : diagnostic,
+corrections, habillage des cartes, éclairage, météo, ambiance sonore, accessibilité, avant/après).
 
 ## État
 

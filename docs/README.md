@@ -18,6 +18,7 @@ chaque affirmation renvoie au code de `src/`, et la section 10 en contient des e
 | 9 | [Effets, juice, caméra, son](09-juice.md) | Chargements, intro, punch/secousse/FOV, hit-stop, killcam, post-processing, mixage |
 | 10 | [Code prioritaire](10-code.md) | Les fondations critiques, code réel commenté : réseau, tir prédit, validation, compensation de latence, rang MMR/RR, persistance, réplication, règles, matchmaking, mouvement, anti-exploit |
 | 11 | [Roadmap d'implémentation](11-roadmap.md) | Phases dans l'ordre exact, critères de sortie, état, prochaine étape (play-tests), risques, ordre de construction fichier par fichier |
+| 12 | [Audit et refonte](12-audit-refonte.md) | Diagnostic complet avant modification, corrections P0, habillage des cartes, éclairage, météo, ambiance sonore, accessibilité, budgets, avant/après |
 | — | [Skills Claude Code](skills-claude-code.md) | L'équipe de skills installée dans `.claude/skills` : rôles, outils, utilisation, limites |
 
 ## Plans des cartes
@@ -31,7 +32,7 @@ puis `tools/render_maps.py`).
 
 ## Ce qui est vérifié, et ce qui ne l'est pas encore
 
-- **Vérifié automatiquement** : analyse Luau **stricte** de tout `src/` (0 erreur), 91 tests
+- **Vérifié automatiquement** : analyse Luau **stricte** de tout `src/` (0 erreur), 116 tests
   unitaires hors moteur, build Rojo de la place complète, graphe de dépendances sans cycle,
   extraits de la section 10 conformes au code.
 - **Pas encore vérifié** : le jeu n'a pas été exécuté dans Roblox Studio. Le ressenti, les

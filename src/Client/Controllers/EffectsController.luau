@@ -208,8 +208,10 @@ end
 function EffectsController.bulletHole(position: Vector3, normal: Vector3)
 	local hole = holePool:get()
 	local token = claim(hole)
+	local diameter = rng:NextNumber(0.24, 0.38)
+	hole.Size = Vector3.new(0.04, diameter, diameter)
 	hole.CFrame = CFrame.lookAt(position + normal * 0.02, position + normal * 2) * CFrame.Angles(0, math.pi / 2, 0)
-	hole.Transparency = 0.15
+	hole.Transparency = rng:NextNumber(0.08, 0.22)
 	task.delay(10, function()
 		if hole.Parent and current(hole, token) then
 			TweenService:Create(hole, TweenInfo.new(1.5), { Transparency = 1 }):Play()

@@ -256,3 +256,19 @@ deux murs pleins : ligne de vue impossible (test automatique).
 | Hub | streaming standard ; vitrines et mur de classement attachés à l'arrivée des pièces |
 | Client | tout repose sur les signaux de tags (pas d'énumération figée au démarrage) |
 | Budget | 169–246 primitives par carte, matériaux natifs, aucun mesh : chargement < 1 s |
+
+## Habillage (refonte)
+
+Les plans restent des blockouts jouables testés ; l'habillage est une couche séparée
+(`src/Server/Maps/Dressing/<Carte>.luau`, recettes dans `src/Server/Maps/Decor.luau`)
+appelée à la fin de chaque plan. Trois catégories :
+
+| Groupe | Règle (testée) | Exemples |
+|---|---|---|
+| `Decor` | ni collision ni requête ; fin (≤ 1 stud) ou base ≥ 12 studs | joints, plinthes, nervures de conteneurs, arêtes de caisses, tuyaux, câbles, marquages, appliques, écrans, poutres, portiques |
+| `Backdrop` | ni collision ni requête ; hors des limites ou sous le sol | tours, grues, montagnes, téléphérique, coque de station, planète |
+| `Props` | vraie géométrie (collision, lignes de vue) ; seulement en zone de spawn ou au hub | canapés, plantes, bar, trophées, bornes |
+
+Ainsi, ce qu'on voit est ce qui bloque : aucune fausse couverture, aucune cachette
+visuelle, et les métriques du plan (lignes de vue, temps de rotation) sont inchangées.
+Rendus avant/après : `docs/renders/`, outil `tools/render_view.py`.

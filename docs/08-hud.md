@@ -189,3 +189,14 @@ masqué ; profondeur de champ dédiée côté éclairage (premier plan flouté, 
 HUD masqué pendant l'intro de carte, la killcam et l'écran de fin ; réapparition au
 spawn (flash noir 0.35 s) ; bannières et killfeed persistants ; aucun élément ne « saute »
 (tweens `Theme.tween.fast/medium/slow/bounce`).
+
+## Accessibilité (refonte)
+
+- Contraste : `textFaint` (états désactivés, indices) relevé à ≥ 3:1 ; toute information
+  lisible utilise `text` ou `textDim` (≥ 5:1). Contrôle : `contrast.py` du skill
+  `roblox-ui-design-system`.
+- `GuiService.ReducedMotionEnabled` : animations d'interface instantanées, secousses et
+  balancement de caméra atténués (la visée et le recul réel ne changent jamais).
+- `GuiService.PreferredTransparency` : panneaux plus opaques si l'utilisateur le demande.
+- Zone sûre : santé, munitions, boussole et killfeed restent hors des encoches et coins
+  arrondis des téléphones ; les overlays plein écran couvrent tout l'écran.

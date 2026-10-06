@@ -30,7 +30,7 @@ précisément l'objet de la phase 9, la prochaine étape.
 | 7 | Boucle de match : règles, objectif, killcam, spectateur, HUD, transitions | ✅ 🔶 | 4, 5, 6 |
 | 8 | Méta et hub : progression, rang, missions, inventaire, party, matchmaking, lobby | ✅ 🔶 | 2, 7 |
 | 9 | **Intégration Studio et premiers play-tests** | ⬜ **prochaine étape** | 0–8 |
-| 10 | Production audio et visuelle | ⬜ | 9 |
+| 10 | Production audio et visuelle | 🔶 habillage, éclairage, météo, ambiances faits (assets finaux à produire) | 9 |
 | 11 | Équilibrage piloté par la télémétrie (bêta fermée) | ⬜ | 9 |
 | 12 | Performance, réseau, mobile | ⬜ | 9 |
 | 13 | Sécurité : test d'intrusion autorisé | ⬜ | 9 |
@@ -202,8 +202,13 @@ priorisée et vide de bloquants.
 - **Boutique** : création des Developer Products et report des `productId` dans
   `Shared/Config/Products.luau` (une offre à 0 reste masquée).
 
+**Déjà fait (refonte, docs/12) :** habillage des 4 cartes et du hub (décor non bloquant,
+horizons), ciel, nuages, `LightingStyle` réaliste, matériaux 2022, météo et particules
+d'ambiance, ambiance sonore par carte (sons ponctuels, réverbération de lieu), sons de pas
+par matériau, accessibilité de l'interface.
+
 **Critères de sortie :** plus aucun son provisoire ; revue de cohérence de la direction
-artistique « futuriste froid et premium » sur toutes les cartes et menus.
+artistique « futuriste froid et premium » sur toutes les cartes et menus, **en jeu**.
 
 ## Phase 11 — Équilibrage piloté par la télémétrie ⬜
 
