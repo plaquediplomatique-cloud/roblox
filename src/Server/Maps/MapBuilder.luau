@@ -225,11 +225,20 @@ function MapBuilder.build(
 	model.Name = "Map_" .. blueprint.id
 	model:SetAttribute("MapId", blueprint.id)
 	model:SetAttribute("Mode", modeId or "")
-	local folders: { [string]: Folder } = {}
-	local function folderFor(group: string): Folder
+	local folders: { [string]: Instance } = {}
+	local function folderFor(group: string): Instance
 		local folder = folders[group]
 		if not folder then
-			local created = Instance.new("Folder")
+			local created: Instance
+			if group == "Backdrop" and streamingMode == nil then
+				-- Hub (streaming par défaut) : l'horizon est toujours chargé, sans quoi les
+				-- tours lointaines apparaîtraient et disparaîtraient au gré des déplacements.
+				local backdrop = Instance.new("Model")
+				backdrop.ModelStreamingMode = Enum.ModelStreamingMode.Persistent
+				created = backdrop
+			else
+				created = Instance.new("Folder")
+			end
 			created.Name = group
 			created.Parent = model
 			folders[group] = created

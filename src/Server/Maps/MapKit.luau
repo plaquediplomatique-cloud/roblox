@@ -14,6 +14,12 @@
 	    (cache un joueur accroupi, pas debout), porte ≥ 6 studs, murs 14+ studs, etc.
 
 	Repère : sol à y = 0, carte centrée sur l'origine, +Y vers le haut.
+
+	Décor (habillage) : `decor` / `decorBox` enregistrent des primitives PUREMENT VISUELLES
+	(ni collision, ni requête : les tirs et les déplacements les ignorent), dans le groupe
+	"Decor" (dans l'espace de jeu : fines ou au-dessus des têtes) ou "Backdrop" (hors des
+	limites : horizon, bâtiments lointains). Les règles sont vérifiées par les tests de
+	cartes : le décor ne crée jamais de fausse couverture.
 ]]
 
 export type SignSpec = {
@@ -59,8 +65,23 @@ export type Style = {
 	reflectance: number?,
 }
 
+export type Shape = "Block" | "Wedge" | "Cylinder" | "Ball"
+
+export type DecorOptions = {
+	shape: Shape?,
+	group: string?, -- "Decor" (défaut) ou "Backdrop"
+	shadow: boolean?,
+	color: Color3?,
+	transparency: number?,
+	reflectance: number?,
+	light: LightSpec?,
+}
+
+export type Limits = { x1: number, z1: number, x2: number, z2: number, height: number }
+
 export type Kit = {
 	prims: { Prim },
+	limits: Limits?, -- rectangle jouable (posé par bounds) : le décor massif reste au-delà
 	style: (self: Kit, name: string) -> Style,
 	defineStyle: (self: Kit, name: string, style: Style) -> (),
 	block: (self: Kit, name: string, center: Vector3, size: Vector3, style: string, group: string?) -> Prim,
@@ -243,6 +264,19 @@ export type Kit = {
 	) -> Prim,
 	terminal: (self: Kit, action: string, label: string, x: number, z: number, facing: string, color: Color3) -> (),
 	bounds: (self: Kit, x1: number, z1: number, x2: number, z2: number, height: number) -> (),
+	decor: (self: Kit, name: string, cframe: CFrame, size: Vector3, style: string, options: DecorOptions?) -> Prim,
+	decorBox: (
+		self: Kit,
+		name: string,
+		x1: number,
+		y1: number,
+		z1: number,
+		x2: number,
+		y2: number,
+		z2: number,
+		style: string,
+		options: DecorOptions?
+	) -> Prim,
 }
 
 local function rgb(r: number, g: number, b: number): Color3
@@ -283,6 +317,45 @@ local BASE_STYLES: { [string]: Style } = {
 	NeonWhite = { material = "Neon", color = rgb(235, 240, 255) },
 	NeonRed = { material = "Neon", color = rgb(255, 70, 85) },
 	Invisible = { material = "SmoothPlastic", color = rgb(255, 255, 255), transparency = 1 },
+	-- Habillage (décor) : peintures, câbles, tuyauteries, végétation, horizon.
+	PaintYellow = { material = "SmoothPlastic", color = rgb(214, 168, 38) },
+	PaintBlack = { material = "SmoothPlastic", color = rgb(22, 22, 24) },
+	PaintWhite = { material = "SmoothPlastic", color = rgb(196, 200, 204) },
+	Rubber = { material = "Rubber", color = rgb(26, 27, 29) },
+	Cable = { material = "Rubber", color = rgb(14, 14, 16) },
+	Pipe = { material = "Metal", color = rgb(104, 108, 112) },
+	PipeRust = { material = "CorrodedMetal", color = rgb(118, 72, 50) },
+	PipeCopper = { material = "Metal", color = rgb(150, 96, 62) },
+	Steel = { material = "Metal", color = rgb(70, 74, 80) },
+	SteelDark = { material = "Metal", color = rgb(30, 32, 36) },
+	Concrete = { material = "Concrete", color = rgb(74, 76, 80) },
+	ConcreteDark = { material = "Concrete", color = rgb(40, 42, 46) },
+	Asphalt = { material = "Asphalt", color = rgb(34, 35, 38) },
+	Wet = { material = "SmoothPlastic", color = rgb(14, 16, 20), reflectance = 0.32 },
+	Brass = { material = "Metal", color = rgb(190, 150, 70), reflectance = 0.1 },
+	Leather = { material = "Leather", color = rgb(36, 30, 28) },
+	FabricDark = { material = "Fabric", color = rgb(44, 48, 56) },
+	Wood = { material = "Wood", color = rgb(92, 64, 44) },
+	WoodLight = { material = "WoodPlanks", color = rgb(150, 112, 74) },
+	Foliage = { material = "Grass", color = rgb(46, 92, 52) },
+	FoliageDark = { material = "Grass", color = rgb(28, 62, 38) },
+	Soil = { material = "Ground", color = rgb(58, 46, 36) },
+	Water = { material = "Glass", color = rgb(70, 130, 160), transparency = 0.35, reflectance = 0.2 },
+	Plaster = { material = "Plaster", color = rgb(196, 192, 184) },
+	Tiles = { material = "CeramicTiles", color = rgb(180, 184, 188) },
+	Screen = { material = "Neon", color = rgb(40, 120, 160) },
+	ScreenDim = { material = "SmoothPlastic", color = rgb(16, 30, 40), reflectance = 0.15 },
+	Tower = { material = "Concrete", color = rgb(24, 26, 32) },
+	TowerGlass = { material = "Glass", color = rgb(40, 52, 66), reflectance = 0.25 },
+	WindowWarm = { material = "Neon", color = rgb(255, 196, 120) },
+	WindowCool = { material = "Neon", color = rgb(150, 205, 255) },
+	Beacon = { material = "Neon", color = rgb(255, 40, 40) },
+	RockDark = { material = "Rock", color = rgb(52, 54, 62) },
+	Basalt = { material = "Basalt", color = rgb(44, 44, 50) },
+	SnowPack = { material = "Snow", color = rgb(214, 222, 232) },
+	HullPlate = { material = "DiamondPlate", color = rgb(56, 52, 66) },
+	Solar = { material = "Glass", color = rgb(30, 50, 96), reflectance = 0.35 },
+	Planet = { material = "SmoothPlastic", color = rgb(36, 70, 110) },
 	BarrierAttack = { material = "ForceField", color = rgb(255, 90, 54), transparency = 0.2 },
 	BarrierDefense = { material = "ForceField", color = rgb(61, 200, 255), transparency = 0.2 },
 	BarrierMode = { material = "ForceField", color = rgb(150, 120, 255), transparency = 0.25 },
@@ -852,6 +925,7 @@ end
 function KitClass.bounds(self: Kit, x1: number, z1: number, x2: number, z2: number, height: number)
 	local ax, bx = sorted(x1, x2)
 	local az, bz = sorted(z1, z2)
+	self.limits = { x1 = ax, z1 = az, x2 = bx, z2 = bz, height = height }
 	local t = 4
 	for _, coords in
 		{
@@ -872,8 +946,58 @@ function KitClass.bounds(self: Kit, x1: number, z1: number, x2: number, z2: numb
 	self:zone("KillVolume", "KillVolume", ax - 50, -400, az - 50, bx + 50, -30, bz + 50, nil)
 end
 
+--[[
+	Primitive de décor : jamais de collision ni de requête (tirs, raycasts, déplacements
+	l'ignorent). Ombre désactivée par défaut (détails fins, horizon lointain).
+]]
+function KitClass.decor(
+	self: Kit,
+	name: string,
+	cframe: CFrame,
+	size: Vector3,
+	style: string,
+	options: DecorOptions?
+): Prim
+	local opts: DecorOptions = options or {}
+	local prim = makePrim(self, name, opts.shape or "Block", cframe, size, style, opts.group or "Decor")
+	prim.collide = false
+	prim.query = false
+	prim.shadow = opts.shadow == true
+	if opts.color then
+		prim.color = opts.color
+	end
+	if opts.transparency then
+		prim.transparency = opts.transparency
+	end
+	if opts.reflectance then
+		prim.reflectance = opts.reflectance
+	end
+	prim.light = opts.light
+	return record(self, prim)
+end
+
+function KitClass.decorBox(
+	self: Kit,
+	name: string,
+	x1: number,
+	y1: number,
+	z1: number,
+	x2: number,
+	y2: number,
+	z2: number,
+	style: string,
+	options: DecorOptions?
+): Prim
+	local ax, bx = sorted(x1, x2)
+	local ay, by = sorted(y1, y2)
+	local az, bz = sorted(z1, z2)
+	local size = Vector3.new(math.max(bx - ax, 0.02), math.max(by - ay, 0.02), math.max(bz - az, 0.02))
+	local center = Vector3.new((ax + bx) / 2, (ay + by) / 2, (az + bz) / 2)
+	return self:decor(name, CFrame.new(center), size, style, options)
+end
+
 function MapKit.new(): Kit
-	local self = setmetatable({ prims = {}, _styles = table.clone(BASE_STYLES) }, KitClass)
+	local self = setmetatable({ prims = {}, limits = nil, _styles = table.clone(BASE_STYLES) }, KitClass)
 	return (self :: any) :: Kit
 end
 

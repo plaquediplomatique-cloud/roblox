@@ -44,7 +44,8 @@ def shade(color, top):
 
 def render(path):
     data = json.loads(path.read_text())
-    prims = data["prims"]
+    # Vue de level design : l'habillage (Decor/Backdrop, sans collision) est ignoré.
+    prims = [p for p in data["prims"] if p["group"] not in ("Decor", "Backdrop")]
     xs, zs = [], []
     for p in prims:
         if p["group"] == "Markers" and p["name"] in ("KillVolume", "Boundary", "BoundaryRoof"):

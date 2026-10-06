@@ -24,6 +24,7 @@
 ]]
 
 local MapKit = require(script.Parent.Parent.MapKit)
+local dress = require(script.Parent.Parent.Dressing.Kestrel)
 
 type Kit = MapKit.Kit
 
@@ -48,7 +49,7 @@ local function build(kit: Kit)
 	kit:crate(0, -3, 7, 4, "Crate")
 	kit:trim(-7, -7.1, 7, -6.9, 7.05, CYAN)
 	kit:trim(-7, 6.9, 7, 7.1, 7.05, CYAN)
-	kit:light(0, 14, 0, ORANGE, 1.6, 30, true)
+	kit:light(0, 14, 0, ORANGE, 1.6, 30, false) -- sans ombre : budget mobile (6 ombres max)
 
 	-- Conteneur central nord + double caisse anti-ligne-longue (pièces centrales)
 	kit:box("ContainerCenter", -8, 0, 36, 8, 8, 44, "ContainerOrange")
@@ -155,6 +156,9 @@ local function build(kit: Kit)
 
 	kit:sign("KESTREL YARD", 0, 16, 45, 30, 4, "-Z", ORANGE)
 	kit:sign("SECTOR 7 — FREIGHT", 0, 12, -45, 26, 3, "+Z", AMBER)
+
+	-- Habillage (décor non bloquant) : voir Maps/Dressing/Kestrel
+	dress(kit)
 end
 
 return {

@@ -141,10 +141,21 @@ function EffectsController.muzzleFlash(cframe: CFrame, color: Color3, scale: num
 	end
 	local part = flashPool:get()
 	local size = scale * rng:NextNumber(0.55, 0.95)
+	local roll = rng:NextNumber(0, math.pi * 2)
 	part.Size = Vector3.new(size, size, size * 1.6)
-	part.CFrame = cframe * CFrame.Angles(0, 0, rng:NextNumber(0, math.pi * 2))
+	part.CFrame = cframe * CFrame.Angles(0, 0, roll)
 	part.Color = color
 	part.Transparency = 0.1
+	-- Deux "pétales" croisés le long du canon : la silhouette en étoile qui se lit
+	-- de profil comme de face (une sphère seule ressemble à une ampoule).
+	for index, name in { "PetalA", "PetalB" } do
+		local petal = part:FindFirstChild(name) :: BasePart
+		local length = size * rng:NextNumber(1.7, 2.6)
+		petal.Size = Vector3.new(0.02, size * rng:NextNumber(0.45, 0.75), length)
+		petal.CFrame = cframe * CFrame.Angles(0, 0, roll + index * math.pi / 2) * CFrame.new(0, 0, -length * 0.42)
+		petal.Color = color
+		petal.Transparency = 0.18
+	end
 	local light = part:FindFirstChildOfClass("PointLight") :: PointLight
 	light.Color = color
 	light.Enabled = true
@@ -549,6 +560,10 @@ function EffectsController.start()
 		light.Shadows = false
 		light.Enabled = false
 		light.Parent = part
+		for _, name in { "PetalA", "PetalB" } do
+			local petal = basePart(name)
+			petal.Parent = part
+		end
 		emitter(
 			part,
 			"Sparks",
@@ -576,6 +591,12 @@ function EffectsController.start()
 		return part
 	end, function(part: BasePart)
 		part.Transparency = 1
+		for _, name in { "PetalA", "PetalB" } do
+			local petal = part:FindFirstChild(name)
+			if petal and petal:IsA("BasePart") then
+				petal.Transparency = 1
+			end
+		end
 	end, 24)
 
 	tracerPool = Pool.new(function(): BasePart

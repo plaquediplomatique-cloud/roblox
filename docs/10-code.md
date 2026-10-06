@@ -115,7 +115,7 @@ end
 Le paquet de tir est ainsi validé avant d'atteindre la moindre ligne de gameplay :
 
 ```lua
--- src/Server/Services/CombatService.luau (l. 685–693)
+-- src/Server/Services/CombatService.luau (l. 682–690)
 local isFire = Guard.shape({
     w = Guard.string(16),
     n = Guard.integer(1, 2 ^ 31),
@@ -309,7 +309,7 @@ impossibles pour un client légitime ajoutent des points de suspicion (un lag is
 rien).
 
 ```lua
--- src/Server/Services/CombatService.luau (l. 699–805)
+-- src/Server/Services/CombatService.luau (l. 696–802)
 local function onFire(player: Player, packet: Types.FirePacket)
     local state = states[player]
     if not state or not CharacterService.isAlive(player) or not combatAllowed(player) then
@@ -483,7 +483,7 @@ de poses et un rembobinage **borné**.
   jusqu'à ≈ 500 ms d'aller-retour, le tireur n'a pas à anticiper.
 
 ```lua
--- src/Server/Services/LagCompensationService.luau (l. 149–153)
+-- src/Server/Services/LagCompensationService.luau (l. 165–169)
 --[[ Borne un temps de tir client à la fenêtre de rembobinage autorisée. ]]
 function LagCompensationService.rewindTime(clientShotTime: number): number
     local now = Workspace:GetServerTimeNow()
@@ -492,7 +492,7 @@ end
 ```
 
 ```lua
--- src/Server/Services/LagCompensationService.luau (l. 114–147)
+-- src/Server/Services/LagCompensationService.luau (l. 130–163)
 --[[ Pose d'une cible à l'instant `t` (interpolée), ou la plus proche disponible. ]]
 function LagCompensationService.poseAt(target: Target, t: number): (CFrame, Types.Stance, number)
     local history = histories[target.id]
@@ -530,7 +530,7 @@ end
 ```
 
 ```lua
--- src/Server/Services/LagCompensationService.luau (l. 160–187)
+-- src/Server/Services/LagCompensationService.luau (l. 176–203)
 --[[
     Rayon contre toutes les cibles acceptées par `filter`, chacune dans sa pose
     interpolée à l'instant rembobiné `t` ; garde la touche la plus proche. La tolérance
@@ -622,7 +622,7 @@ par un rayon retour, coût = épaisseur × résistance du matériau, 2 surfaces 
 plombs touchant une même cible sont **cumulés** (un seul impact, zone la plus haute).
 
 ```lua
--- src/Server/Services/CombatService.luau (l. 600–667)
+-- src/Server/Services/CombatService.luau (l. 597–664)
 local rewind = LagCompensationService.rewindTime(packet.t)
 local params = worldParams()
 local filter = enemyFilter(shooter)
@@ -1821,7 +1821,7 @@ end
 ```
 
 ```lua
--- src/Server/Services/CombatService.luau (l. 795–803)
+-- src/Server/Services/CombatService.luau (l. 792–800)
 local audit = audits[player]
 if not audit then
     audit = SpreadAudit.new()

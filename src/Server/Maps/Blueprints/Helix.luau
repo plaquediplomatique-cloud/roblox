@@ -22,6 +22,7 @@
 ]]
 
 local MapKit = require(script.Parent.Parent.MapKit)
+local dress = require(script.Parent.Parent.Dressing.Helix)
 
 type Kit = MapKit.Kit
 
@@ -208,6 +209,9 @@ local function build(kit: Kit)
 	kit:callout("SAFE", 24, 24, 36, 36)
 	kit:callout("CORRIDOR", -8, 46, 30, 54)
 	kit:callout("SECURITY", -40, 46, -8, 62)
+
+	-- Habillage (décor non bloquant, mobilier solide en zone de spawn) : Maps/Dressing/Helix
+	dress(kit)
 end
 
 return {

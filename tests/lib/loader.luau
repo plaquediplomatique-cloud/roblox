@@ -88,6 +88,21 @@ local taskShim = {
 	cancel = function() end,
 }
 
+-- Lune 0.10 : CFrame.lookAt (et CFrame.new(pos, cible)) renvoient une rotation erronée
+-- (axe Z inversé). Les modules chargés reçoivent un CFrame dont lookAt est reconstruit
+-- par fromMatrix, conforme au moteur : rampes, murs en biais et caméras d'intro exacts.
+local function lookAt(at, target, up)
+	local look = (target - at).Unit
+	local right = look:Cross(up or roblox.Vector3.yAxis)
+	if right.Magnitude < 1e-6 then
+		right = look:Cross(roblox.Vector3.zAxis)
+	end
+	right = right.Unit
+	return roblox.CFrame.fromMatrix(at, right, right:Cross(look), -look)
+end
+
+local CFrameShim = setmetatable({ lookAt = lookAt }, { __index = roblox.CFrame })
+
 local fakeSignal = {
 	Connect = function()
 		return { Disconnect = function() end, Connected = true }
@@ -200,7 +215,7 @@ local function environmentFor(node)
 		game = game,
 		Vector3 = roblox.Vector3,
 		Vector2 = roblox.Vector2,
-		CFrame = roblox.CFrame,
+		CFrame = CFrameShim,
 		Color3 = roblox.Color3,
 		NumberRange = roblox.NumberRange,
 		UDim = roblox.UDim,
@@ -239,4 +254,5 @@ return {
 	environmentFor = environmentFor,
 	newNode = newNode,
 	Random = RandomShim,
+	CFrame = CFrameShim,
 }

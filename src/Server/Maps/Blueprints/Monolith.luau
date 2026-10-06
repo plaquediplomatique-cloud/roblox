@@ -23,6 +23,7 @@
 ]]
 
 local MapKit = require(script.Parent.Parent.MapKit)
+local dress = require(script.Parent.Parent.Dressing.Monolith)
 
 type Kit = MapKit.Kit
 
@@ -214,6 +215,9 @@ local function build(kit: Kit)
 	kit:callout("NORTH CONCOURSE", -86, 34, 86, 56)
 	kit:callout("HANGAR", -24, -76, 24, -56)
 	kit:callout("BRIDGE", -24, 56, 24, 76)
+
+	-- Habillage (décor non bloquant) : Maps/Dressing/Monolith
+	dress(kit)
 end
 
 return {

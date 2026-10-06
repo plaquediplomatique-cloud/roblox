@@ -24,6 +24,7 @@
 ]]
 
 local MapKit = require(script.Parent.Parent.MapKit)
+local dress = require(script.Parent.Parent.Dressing.Spire)
 
 type Kit = MapKit.Kit
 
@@ -240,6 +241,9 @@ local function build(kit: Kit)
 	kit:callout("A HEAVEN", -96, 47, -52, 55, 6.5, 30)
 	kit:callout("B SITE", 46, 4, 96, 52)
 	kit:callout("B NORTH", 56, 52, 96, 64)
+
+	-- Habillage (décor non bloquant) : Maps/Dressing/Spire
+	dress(kit)
 end
 
 return {

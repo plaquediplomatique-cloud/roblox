@@ -223,25 +223,37 @@ function AudioController.impact(material: Enum.Material, position: Vector3, isCh
 	AudioController.playAt(key, position, { volume = 0.8 })
 end
 
+-- Famille de pas par matériau de sol : on entend OÙ marche l'adversaire (grille de la
+-- passerelle, marbre de la banque, neige de la falaise…), information tactique majeure.
+local STEP_BY_MATERIAL: { [Enum.Material]: string } = {
+	[Enum.Material.Metal] = "Step.Metal",
+	[Enum.Material.DiamondPlate] = "Step.Metal",
+	[Enum.Material.CorrodedMetal] = "Step.Metal",
+	[Enum.Material.Foil] = "Step.Metal",
+	[Enum.Material.Snow] = "Step.Soft",
+	[Enum.Material.Grass] = "Step.Soft",
+	[Enum.Material.LeafyGrass] = "Step.Soft",
+	[Enum.Material.Fabric] = "Step.Soft",
+	[Enum.Material.Sand] = "Step.Soft",
+	[Enum.Material.Mud] = "Step.Soft",
+	[Enum.Material.Carpet] = "Step.Soft",
+	[Enum.Material.Wood] = "Step.Wood",
+	[Enum.Material.WoodPlanks] = "Step.Wood",
+	[Enum.Material.Marble] = "Step.Hard",
+	[Enum.Material.Granite] = "Step.Hard",
+	[Enum.Material.Slate] = "Step.Hard",
+	[Enum.Material.Glass] = "Step.Hard",
+	[Enum.Material.Ice] = "Step.Hard",
+	[Enum.Material.Glacier] = "Step.Hard",
+	[Enum.Material.CeramicTiles] = "Step.Hard",
+	[Enum.Material.SmoothPlastic] = "Step.Hard",
+}
+
 function AudioController.footstep(position: Vector3, material: Enum.Material, volume: number, isLocal: boolean)
 	if volume <= 0.01 then
 		return
 	end
-	local key = "Step.Default"
-	if
-		material == Enum.Material.Metal
-		or material == Enum.Material.DiamondPlate
-		or material == Enum.Material.CorrodedMetal
-	then
-		key = "Step.Metal"
-	elseif
-		material == Enum.Material.Snow
-		or material == Enum.Material.Grass
-		or material == Enum.Material.Fabric
-		or material == Enum.Material.Sand
-	then
-		key = "Step.Soft"
-	end
+	local key = STEP_BY_MATERIAL[material] or "Step.Default"
 	if isLocal then
 		AudioController.play(key, { volume = volume * 0.55 })
 	else

@@ -22,6 +22,7 @@
 ]]
 
 local MapKit = require(script.Parent.Parent.MapKit)
+local dress = require(script.Parent.Parent.Dressing.Hub)
 
 type Kit = MapKit.Kit
 
@@ -187,6 +188,9 @@ local function build(kit: Kit)
 	kit:light(-40, 9, 0, GREEN, 1, 16, false)
 	kit:light(40, 9, 0, CYAN, 1, 16, false)
 	kit:light(0, 9, -40, RED, 0.6, 12, false)
+
+	-- Habillage (mégapole, charpente, salons, zones) : Maps/Dressing/Hub
+	dress(kit)
 end
 
 return {
