@@ -446,50 +446,78 @@ local function buildTopBar()
 		Parent = gui,
 	})
 	UI.gradient(topBar, ColorSequence.new(colors.void), 90, NumberSequence.new(0.1, 1))
-	UI.text({
-		Text = "AETHER STRIKE",
-		FontFace = fonts.brand,
-		TextSize = 18,
-		TextXAlignment = Enum.TextXAlignment.Left,
-		Position = UDim2.fromOffset(24, 0),
-		Size = UDim2.fromOffset(230, 58),
-		TextColor3 = colors.primary,
+	-- Carte d'identité biseautée, posée juste après les boutons Roblox (jamais dessous).
+	local identity = UI.glass(440, 50, 14, {
+		Name = "Identity",
+		Position = UDim2.fromOffset(160, 4),
 		Parent = topBar,
+	}).root
+	local portraitFrame = UI.frame({
+		BackgroundColor3 = colors.void,
+		BackgroundTransparency = 0.25,
+		Position = UDim2.fromOffset(20, 5),
+		Size = UDim2.fromOffset(40, 40),
+		ClipsDescendants = true,
+		Parent = identity,
 	})
+	UI.corner(4, portraitFrame)
+	UI.stroke(portraitFrame, colors.primary, 1, 0.45)
+	local portrait = Instance.new("ImageLabel")
+	portrait.BackgroundTransparency = 1
+	portrait.Size = UDim2.fromScale(1, 1)
+	portrait.Image = ("rbxthumb://type=AvatarHeadShot&id=%d&w=150&h=150"):format(math.max(player.UserId, 1))
+	portrait.Parent = portraitFrame
 	identityName = UI.text({
 		Text = player.DisplayName,
-		FontFace = fonts.heading,
-		TextSize = 18,
+		FontFace = fonts.headingHeavy,
+		TextSize = 17,
 		TextXAlignment = Enum.TextXAlignment.Left,
-		Position = UDim2.fromOffset(260, 6),
-		Size = UDim2.fromOffset(360, 24),
-		Parent = topBar,
+		TextTruncate = Enum.TextTruncate.AtEnd,
+		Position = UDim2.fromOffset(70, 5),
+		Size = UDim2.fromOffset(200, 20),
+		Parent = identity,
 	})
 	levelLabel = UI.text({
 		Text = "NIV 1",
 		FontFace = fonts.monoBold,
-		TextSize = 14,
+		TextSize = 12,
 		TextColor3 = colors.primary,
 		TextXAlignment = Enum.TextXAlignment.Left,
-		Position = UDim2.fromOffset(260, 32),
-		Size = UDim2.fromOffset(70, 18),
-		Parent = topBar,
+		Position = UDim2.fromOffset(70, 27),
+		Size = UDim2.fromOffset(56, 16),
+		Parent = identity,
 	})
 	local track = UI.frame({
 		BackgroundColor3 = colors.panelLight,
-		Position = UDim2.fromOffset(334, 39),
-		Size = UDim2.fromOffset(160, 5),
+		Position = UDim2.fromOffset(128, 33),
+		Size = UDim2.fromOffset(150, 5),
+		Parent = identity,
+	})
+	UI.corner(2, track)
+	levelFill = UI.frame({ BackgroundColor3 = colors.primary, Size = UDim2.fromScale(0, 1), Parent = track })
+	UI.corner(2, levelFill)
+	-- Logotype discret au centre : le coin gauche appartient à Roblox.
+	UI.text({
+		Text = "AETHER STRIKE",
+		FontFace = fonts.brand,
+		TextSize = 14,
+		TextColor3 = colors.primary,
+		TextTransparency = 0.25,
+		AnchorPoint = Vector2.new(0.5, 0),
+		Position = UDim2.new(0.5, 0, 0, 0),
+		Size = UDim2.fromOffset(260, 58),
 		Parent = topBar,
 	})
-	levelFill = UI.frame({ BackgroundColor3 = colors.primary, Size = UDim2.fromScale(0, 1), Parent = track })
 	rankLabel = UI.text({
 		Text = "",
 		FontFace = fonts.heading,
-		TextSize = 16,
-		TextXAlignment = Enum.TextXAlignment.Left,
-		Position = UDim2.fromOffset(520, 18),
-		Size = UDim2.fromOffset(300, 22),
-		Parent = topBar,
+		TextSize = 14,
+		TextXAlignment = Enum.TextXAlignment.Right,
+		AnchorPoint = Vector2.new(1, 0),
+		Position = UDim2.fromOffset(426, 7),
+		Size = UDim2.fromOffset(140, 18),
+		TextTruncate = Enum.TextTruncate.AtEnd,
+		Parent = identity,
 	})
 	walletLabel = UI.text({
 		Text = "",
@@ -498,6 +526,7 @@ local function buildTopBar()
 		TextColor3 = colors.gold,
 		TextXAlignment = Enum.TextXAlignment.Right,
 		AnchorPoint = Vector2.new(1, 0),
+		Name = "Wallet",
 		Position = UDim2.new(1, -66, 0, 6),
 		Size = UDim2.fromOffset(300, 22),
 		Parent = topBar,
@@ -509,11 +538,20 @@ local function buildTopBar()
 		TextColor3 = colors.textDim,
 		TextXAlignment = Enum.TextXAlignment.Right,
 		AnchorPoint = Vector2.new(1, 0),
+		Name = "Party",
 		Position = UDim2.new(1, -66, 0, 32),
 		Size = UDim2.fromOffset(520, 18),
 		TextTruncate = Enum.TextTruncate.AtEnd,
 		Parent = topBar,
 	})
+	-- Suivre la zone libre entre les boutons Roblox (gauche) et le bouton d'options (droite).
+	UI.onTopbarChanged(gui, function()
+		local left, right = UI.topbarClearance(gui)
+		identity.Position = UDim2.fromOffset(math.max(left, 16) + 8, 4)
+		local margin = right + 66 -- engrenage d'options compris
+		walletLabel.Position = UDim2.new(1, -margin, 0, 6)
+		partyLabel.Position = UDim2.new(1, -margin, 0, 32)
+	end)
 	local keysHint = UI.text({
 		Text = "",
 		FontFace = fonts.mono,

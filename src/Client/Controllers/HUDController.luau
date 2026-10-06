@@ -625,11 +625,12 @@ local function updateAmmo(state: WeaponController.HudState)
 		widget.fireMode.Text = FIRE_MODE_NAMES[def.fire.mode] or def.fire.mode
 		local slots = WeaponController.slots()
 		for index, slotName in { "Primary", "Secondary", "Melee" } do
-			local chip = widget.slots[slotName]
+			local slot = widget.slots[slotName]
 			local ammo = slots[slotName]
 			local slotDef = if ammo then Weapons.get(ammo.w) else nil
-			chip.Text = ("%d  %s"):format(index, if slotDef then slotDef.shortName else "—")
-			HudWidgets.styleSlot(chip, state.slot == slotName)
+			slot.key.Text = tostring(index)
+			slot.name.Text = if slotDef then string.upper(slotDef.shortName) else "—"
+			HudWidgets.styleSlot(slot, state.slot == slotName)
 		end
 		lastMag = -1
 	end
@@ -1267,6 +1268,8 @@ local function buildHealth(parent: Instance)
 	armorText = vitals.armor
 	healthBar = vitals.healthBar
 	armorBar = vitals.armorBar
+	-- Portrait : la tête de l'avatar Roblox du joueur (miniature servie par Roblox).
+	vitals.portrait.Image = ("rbxthumb://type=AvatarHeadShot&id=%d&w=150&h=150"):format(math.max(player.UserId, 1))
 end
 
 local function buildAmmo(parent: Instance)

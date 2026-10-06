@@ -283,15 +283,14 @@ def rounded_mask(w, h, radius, inset=0.0):
 
 
 def gradient_field(w, h, rotation):
-    """t ∈ [0, 1] le long de la direction du dégradé (coins extrêmes = 0 et 1)."""
+    """t ∈ [0, 1] le long du dégradé, calculé en espace UV comme Roblox (coins extrêmes = 0 et 1)."""
     angle = math.radians(rotation)
     dx, dy = math.cos(angle), math.sin(angle)
     ys, xs = np.mgrid[0:h, 0:w].astype(np.float32)
-    cx, cy = (w - 1) / 2, (h - 1) / 2
-    projection = (xs - cx) * dx + (ys - cy) * dy
-    half = abs(cx * dx) + abs(cy * dy)
-    if half < 1e-6:
-        return np.full((h, w), 0.5, dtype=np.float32)
+    u = (xs + 0.5) / max(w, 1) - 0.5
+    v = (ys + 0.5) / max(h, 1) - 0.5
+    projection = u * dx + v * dy
+    half = 0.5 * abs(dx) + 0.5 * abs(dy)
     return np.clip(projection / (2 * half) + 0.5, 0, 1)
 
 

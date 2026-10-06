@@ -239,10 +239,10 @@ local function hudScene()
 	ammo.mag.Text = "23"
 	ammo.reserve.Text = "/ 90"
 	HudWidgets.renderPips(ammo.pips, 23, 30)
-	ammo.slots.Primary.Text = "1  VK-12"
+	ammo.slots.Primary.name.Text = "VK-12"
 	HudWidgets.styleSlot(ammo.slots.Primary, true)
-	ammo.slots.Secondary.Text = "2  P-10"
-	ammo.slots.Melee.Text = "3  LAME"
+	ammo.slots.Secondary.name.Text = "P-10"
+	ammo.slots.Melee.name.Text = "LAME"
 
 	local bar = HudWidgets.matchBar(gui)
 	bar.timer.Text = "1:24"
@@ -320,10 +320,10 @@ local function trainingScene()
 	ammo.mag.Text = "71"
 	ammo.reserve.Text = "/ ∞"
 	HudWidgets.renderPips(ammo.pips, 71, 100)
-	ammo.slots.Primary.Text = "1  HMG-40"
+	ammo.slots.Primary.name.Text = "HMG-40"
 	HudWidgets.styleSlot(ammo.slots.Primary, true)
-	ammo.slots.Secondary.Text = "2  R-44"
-	ammo.slots.Melee.Text = "3  LAME"
+	ammo.slots.Secondary.name.Text = "R-44"
+	ammo.slots.Melee.name.Text = "LAME"
 	local stats = HudWidgets.statPanel(safe, "STAND DE TIR", colors.success, {
 		{ "Shots", "Tirs" },
 		{ "Accuracy", "Précision" },

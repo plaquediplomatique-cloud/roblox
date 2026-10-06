@@ -264,6 +264,90 @@ end
 -- Composants
 ---------------------------------------------------------------------------------------------
 
+--[[
+	Zone libre à côté des boutons Roblox (menu, chat, sac…) en unités UIScale : marge à
+	gauche et à droite de la barre du haut. `GuiService.TopbarInset` décrit la bande libre
+	entre ces boutons ; tout ce qui s'aligne en haut de l'écran part de là pour ne jamais
+	recouvrir l'interface Roblox.
+]]
+function UI.topbarClearance(gui: ScreenGui): (number, number, number)
+	local inset = GuiService.TopbarInset
+	local scale = gui:FindFirstChildOfClass("UIScale")
+	local factor = if scale and scale.Scale > 0 then scale.Scale else 1
+	local width = gui.AbsoluteSize.X
+	local left = inset.Min.X
+	local right = if inset.Max.X > 0 and width > 0 then math.max(width - inset.Max.X, 0) else 0
+	local height = math.max(inset.Height, 0)
+	return left / factor, right / factor, height / factor
+end
+
+--[[ Rappelle `callback` à chaque changement de la barre Roblox (taille d'écran, boutons). ]]
+function UI.onTopbarChanged(gui: ScreenGui, callback: () -> ()): RBXScriptConnection
+	callback()
+	gui:GetPropertyChangedSignal("AbsoluteSize"):Connect(callback)
+	return GuiService:GetPropertyChangedSignal("TopbarInset"):Connect(callback)
+end
+
+export type Glass = { root: Frame, gradient: UIGradient }
+
+--[[
+	Panneau de verre biseauté (parallélogramme « / ») : un seul Frame dont les deux bords
+	obliques sont découpés par un UIGradient à paliers nets. La rotation du dégradé est en
+	espace UV (0..1) : l'angle est calculé pour que la découpe tombe exactement à `slant`
+	pixels sur la hauteur, quelle que soit la largeur. Le verre s'éclaircit à gauche.
+	`width`/`height` en pixels (référence 1080p), `slant` > 0.
+]]
+function UI.glass(width: number, height: number, slant: number, props: Props?): Glass
+	local frame = UI.frame({
+		BackgroundColor3 = Color3.new(1, 1, 1),
+		BackgroundTransparency = 0,
+		Size = UDim2.fromOffset(width, height),
+	})
+	local angle = math.atan(slant / width)
+	local cosine, sine = math.cos(angle), math.sin(angle)
+	local half = 0.5 * cosine + 0.5 * sine
+	local edge = (slant / (2 * width) - 0.5) * cosine / (2 * half) + 0.5
+	local epsilon = 0.8 / width
+	local opacity = Theme.transparency.glass
+	local gradient = UI.gradient(
+		frame,
+		ColorSequence.new(Theme.colors.glassLight, Theme.colors.glass),
+		math.deg(angle),
+		NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 1),
+			NumberSequenceKeypoint.new(edge, 1),
+			NumberSequenceKeypoint.new(edge + epsilon, opacity),
+			NumberSequenceKeypoint.new(1 - edge - epsilon, math.min(opacity + 0.16, 1)),
+			NumberSequenceKeypoint.new(1 - edge, 1),
+			NumberSequenceKeypoint.new(1, 1),
+		})
+	)
+	-- Liseré lumineux sur le bord oblique gauche + filet clair en haut.
+	local length = math.sqrt(height * height + slant * slant)
+	UI.frame({
+		Name = "Edge",
+		BackgroundColor3 = Theme.colors.primary,
+		BackgroundTransparency = 0.15,
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Position = UDim2.fromOffset(slant / 2 + 1, height / 2),
+		Size = UDim2.fromOffset(3, length),
+		Rotation = math.deg(math.atan(slant / height)),
+		ZIndex = 2,
+		Parent = frame,
+	})
+	UI.frame({
+		Name = "Highlight",
+		BackgroundColor3 = Color3.new(1, 1, 1),
+		BackgroundTransparency = 0.86,
+		Position = UDim2.fromOffset(slant + 2, 0),
+		Size = UDim2.new(1, -slant - 2, 0, 1),
+		ZIndex = 2,
+		Parent = frame,
+	})
+	UI.apply(frame, props)
+	return { root = frame, gradient = gradient }
+end
+
 --[[ Panneau "verre" : fond sombre translucide, liseré lumineux et dégradé vertical. ]]
 function UI.panel(props: Props?): Frame
 	local panel = UI.frame({

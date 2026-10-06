@@ -42,6 +42,8 @@ local Theme = {
 		armor = rgb(110, 200, 255),
 		health = rgb(235, 240, 245),
 		healthLow = rgb(255, 70, 85),
+		glass = rgb(9, 15, 25), -- verre biseauté du HUD (côté sombre)
+		glassLight = rgb(22, 36, 54), -- verre biseauté du HUD (côté éclairé)
 		shadow = rgb(3, 5, 8), -- plaques d'ombre du HUD (dégradés, jamais de boîte pleine)
 	},
 	fonts = {
@@ -63,6 +65,7 @@ local Theme = {
 		panel = 0.18,
 		panelSoft = 0.35,
 		overlay = 0.4,
+		glass = 0.2, -- opacité du verre biseauté (côté éclairé)
 	},
 	corner = UDim.new(0, 4),
 	-- Seuils de retour joueur communs au HUD, à l'audio et à l'éclairage.

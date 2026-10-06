@@ -6,9 +6,14 @@
 	construit hors Studio et tools/render_ui.py en fait une image (docs/renders/hud_*.png)
 	pour juger la composition sans lancer le jeu.
 
-	Direction : minimal et premium (« futuriste froid »).
-	  * aucune boîte cerclée : des plaques d'ombre en dégradé diagonal derrière les blocs,
-	    nulles aux bords (pas d'arête visible) ;
+	Direction : verre sombre biseauté (« futuriste froid et premium »).
+	  * blocs du bas en parallélogrammes « / » (UI.glass) : verre bleu nuit, liseré cyan sur
+	    le bord oblique, filet lumineux au pied ; plaques d'ombre douces derrière pour la
+	    lisibilité sur ciel clair ;
+	  * bas-gauche : portrait de l'avatar + santé / bouclier ; bas-centre : barre d'armes ;
+	    bas-droite : munitions ; tout reste dans la zone sûre, rien en haut à gauche ni en
+	    haut à droite (boutons Roblox) ;
+	  * icônes vectorielles en frames (croix, écusson, cartouche) : aucun asset à charger ;
 	  * gros chiffres Builder Sans ExtraBold, libellés courts en capitales, gris clair ;
 	  * une seule couleur d'accent (cyan) + couleurs d'équipe ; le rouge reste l'alerte ;
 	  * barres fines segmentées : les paliers (25 PV, 25 bouclier) se lisent d'un coup d'oeil.
@@ -182,117 +187,239 @@ function HudWidgets.segmentBar(color: Color3, segments: number, props: { [string
 end
 
 ---------------------------------------------------------------------------------------------
--- Santé et bouclier (bas-gauche)
+-- Icônes vectorielles (frames simples : aucun asset à charger)
+---------------------------------------------------------------------------------------------
+
+--[[ Croix de santé. ]]
+local function crossIcon(parent: Instance, position: UDim2, size: number, color: Color3): Frame
+	local icon = UI.frame({ Name = "CrossIcon", BackgroundTransparency = 1, Position = position, Parent = parent })
+	icon.Size = UDim2.fromOffset(size, size)
+	local thickness = math.max(math.floor(size * 0.32 + 0.5), 2)
+	for _, bar in { UDim2.fromOffset(size, thickness), UDim2.fromOffset(thickness, size) } do
+		local piece = UI.frame({
+			BackgroundColor3 = color,
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			Position = UDim2.fromScale(0.5, 0.5),
+			Size = bar,
+			Parent = icon,
+		})
+		UI.corner(1, piece)
+	end
+	return icon
+end
+
+--[[ Écusson de bouclier : losange plein avec un coeur sombre. ]]
+local function shieldIcon(parent: Instance, position: UDim2, size: number, color: Color3): Frame
+	local icon = UI.frame({ Name = "ShieldIcon", BackgroundTransparency = 1, Position = position, Parent = parent })
+	icon.Size = UDim2.fromOffset(size, size)
+	local side = size * 0.72
+	local outer = UI.frame({
+		BackgroundColor3 = color,
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Position = UDim2.fromScale(0.5, 0.5),
+		Size = UDim2.fromOffset(side, side),
+		Rotation = 45,
+		Parent = icon,
+	})
+	UI.corner(2, outer)
+	UI.frame({
+		BackgroundColor3 = colors.glass,
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Position = UDim2.fromScale(0.5, 0.5),
+		Size = UDim2.fromOffset(side * 0.4, side * 0.4),
+		Rotation = 45,
+		Parent = icon,
+	})
+	return icon
+end
+
+--[[ Cartouche : douille + ogive. ]]
+local function bulletIcon(parent: Instance, position: UDim2, color: Color3): Frame
+	local icon = UI.frame({ Name = "BulletIcon", BackgroundTransparency = 1, Position = position, Parent = parent })
+	icon.Size = UDim2.fromOffset(12, 30)
+	local tip = UI.frame({
+		BackgroundColor3 = color,
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Position = UDim2.fromOffset(6, 8),
+		Size = UDim2.fromOffset(8, 8),
+		Rotation = 45,
+		Parent = icon,
+	})
+	UI.corner(2, tip)
+	UI.frame({
+		BackgroundColor3 = color,
+		Position = UDim2.fromOffset(0, 8),
+		Size = UDim2.fromOffset(12, 6),
+		Parent = icon,
+	})
+	local case = UI.frame({
+		BackgroundColor3 = color,
+		BackgroundTransparency = 0.35,
+		Position = UDim2.fromOffset(0, 16),
+		Size = UDim2.fromOffset(12, 14),
+		Parent = icon,
+	})
+	UI.corner(1, case)
+	return icon
+end
+
+--[[ Ligne lumineuse au pied d'un panneau biseauté (fondue aux deux bouts). ]]
+local function glowLine(parent: Instance, slant: number, color: Color3): Frame
+	local line = UI.frame({
+		Name = "Glow",
+		BackgroundColor3 = color,
+		AnchorPoint = Vector2.new(0, 1),
+		Position = UDim2.new(0, 2, 1, 0),
+		Size = UDim2.new(1, -slant - 4, 0, 2),
+		ZIndex = 3,
+		Parent = parent,
+	})
+	UI.gradient(
+		line,
+		ColorSequence.new(WHITE),
+		0,
+		NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 0.1),
+			NumberSequenceKeypoint.new(0.7, 0.35),
+			NumberSequenceKeypoint.new(1, 1),
+		})
+	)
+	return line
+end
+
+---------------------------------------------------------------------------------------------
+-- Santé et bouclier (bas-gauche) : portrait + deux jauges sur verre biseauté
 ---------------------------------------------------------------------------------------------
 
 export type Vitals = {
 	root: Frame,
+	portrait: ImageLabel,
 	health: TextLabel,
 	armor: TextLabel,
 	healthBar: SegmentBar,
 	armorBar: SegmentBar,
 }
 
+local VITALS_W, VITALS_H, SLANT = 420, 96, 18
+
 function HudWidgets.vitals(parent: Instance): Vitals
 	HudWidgets.shadow(parent, {
 		Name = "VitalsShadow",
 		AnchorPoint = Vector2.new(0, 1),
 		Position = UDim2.new(0, -80, 1, 80),
-		Size = UDim2.fromOffset(1000, 1000),
-	}, -45, 0.62)
-	local root = UI.frame({
+		Size = UDim2.fromOffset(900, 900),
+	}, -45, 0.45)
+	local glass = UI.glass(VITALS_W, VITALS_H, SLANT, {
 		Name = "Vitals",
-		BackgroundTransparency = 1,
 		AnchorPoint = Vector2.new(0, 1),
-		Position = UDim2.new(0, 40, 1, -34),
-		Size = UDim2.fromOffset(360, 64),
+		Position = UDim2.new(0, 28, 1, -26),
 		Parent = parent,
 	})
-	-- Croix de santé (deux barres) devant le chiffre.
-	local cross = UI.frame({
-		Name = "Cross",
-		BackgroundTransparency = 1,
-		Position = UDim2.fromOffset(0, 30),
-		Size = UDim2.fromOffset(16, 16),
+	local root = glass.root
+	glowLine(root, SLANT, colors.primary)
+	-- Portrait : tête de l'avatar Roblox du joueur (silhouette tant que l'image charge).
+	local frame = UI.frame({
+		Name = "PortraitFrame",
+		BackgroundColor3 = colors.void,
+		BackgroundTransparency = 0.25,
+		Position = UDim2.fromOffset(24, 10),
+		Size = UDim2.fromOffset(76, 76),
+		ClipsDescendants = true,
+		ZIndex = 2,
 		Parent = root,
 	})
-	for _, size in { UDim2.fromOffset(16, 5), UDim2.fromOffset(5, 16) } do
-		local bar = UI.frame({
-			BackgroundColor3 = colors.text,
-			AnchorPoint = Vector2.new(0.5, 0.5),
-			Position = UDim2.fromScale(0.5, 0.5),
-			Size = size,
-			Parent = cross,
-		})
-		UI.corner(1, bar)
-	end
+	UI.corner(4, frame)
+	UI.stroke(frame, colors.primary, 1, 0.45)
+	local head = UI.frame({
+		BackgroundColor3 = colors.strokeBright,
+		AnchorPoint = Vector2.new(0.5, 0),
+		Position = UDim2.fromOffset(38, 14),
+		Size = UDim2.fromOffset(30, 30),
+		ZIndex = 2,
+		Parent = frame,
+	})
+	UI.corner(15, head)
+	local shoulders = UI.frame({
+		BackgroundColor3 = colors.strokeBright,
+		AnchorPoint = Vector2.new(0.5, 0),
+		Position = UDim2.fromOffset(38, 50),
+		Size = UDim2.fromOffset(56, 40),
+		ZIndex = 2,
+		Parent = frame,
+	})
+	UI.corner(18, shoulders)
+	local portrait = Instance.new("ImageLabel")
+	portrait.Name = "Portrait"
+	portrait.BackgroundTransparency = 1
+	portrait.Size = UDim2.fromScale(1, 1)
+	portrait.ScaleType = Enum.ScaleType.Crop
+	portrait.ZIndex = 3
+	portrait.Parent = frame
+
+	-- Santé : croix + gros chiffre + barre en 4 paliers.
+	crossIcon(root, UDim2.fromOffset(118, 26), 16, colors.text)
 	local health = label({
 		Name = "Health",
 		Text = "100",
 		FontFace = fonts.number,
-		TextSize = 58,
+		TextSize = 40,
 		TextXAlignment = Enum.TextXAlignment.Left,
-		TextYAlignment = Enum.TextYAlignment.Bottom,
-		Position = UDim2.fromOffset(24, 0),
-		Size = UDim2.fromOffset(112, 60),
+		Position = UDim2.fromOffset(142, 12),
+		Size = UDim2.fromOffset(78, 42),
+		ZIndex = 2,
 		Parent = root,
 	})
 	HudWidgets.textShadow(health)
+	local healthBar = HudWidgets.segmentBar(colors.health, 4, {
+		Name = "HealthBar",
+		Position = UDim2.fromOffset(222, 28),
+		Size = UDim2.fromOffset(VITALS_W - 222 - 36, 10),
+		ZIndex = 2,
+		Parent = root,
+	})
+	-- Bouclier : écusson + chiffre + barre en 2 paliers.
+	shieldIcon(root, UDim2.fromOffset(117, 58), 18, colors.armor)
 	local armor = label({
 		Name = "Armor",
 		Text = "50",
 		FontFace = fonts.number,
-		TextSize = 18,
+		TextSize = 24,
 		TextColor3 = colors.armor,
 		TextXAlignment = Enum.TextXAlignment.Left,
-		Position = UDim2.fromOffset(160, 4),
-		Size = UDim2.fromOffset(60, 20),
+		Position = UDim2.fromOffset(142, 54),
+		Size = UDim2.fromOffset(78, 26),
+		ZIndex = 2,
 		Parent = root,
 	})
 	HudWidgets.textShadow(armor)
-	local armorIcon = label({
-		Name = "ArmorIcon",
-		Text = "◆",
-		FontFace = fonts.heading,
-		TextSize = 13,
-		TextColor3 = colors.armor,
-		Position = UDim2.fromOffset(144, 5),
-		Size = UDim2.fromOffset(14, 18),
-		Parent = root,
-	})
-	armorIcon.TextXAlignment = Enum.TextXAlignment.Left
-	local caption = label({
-		Name = "Caption",
-		Text = "BOUCLIER",
-		FontFace = fonts.heading,
-		TextSize = 11,
-		TextColor3 = colors.text,
-		TextTransparency = 0.3,
-		TextXAlignment = Enum.TextXAlignment.Right,
-		AnchorPoint = Vector2.new(1, 0),
-		Position = UDim2.new(1, 0, 0, 8),
-		Size = UDim2.fromOffset(120, 14),
-		Parent = root,
-	})
-	HudWidgets.textShadow(caption, 0.55)
 	local armorBar = HudWidgets.segmentBar(colors.armor, 2, {
 		Name = "ArmorBar",
-		Position = UDim2.fromOffset(144, 30),
-		Size = UDim2.new(1, -144, 0, 5),
+		Position = UDim2.fromOffset(222, 64),
+		Size = UDim2.fromOffset(VITALS_W - 222 - 44, 6),
+		ZIndex = 2,
 		Parent = root,
 	})
-	local healthBar = HudWidgets.segmentBar(colors.health, 4, {
-		Name = "HealthBar",
-		Position = UDim2.fromOffset(144, 40),
-		Size = UDim2.new(1, -144, 0, 12),
-		Parent = root,
-	})
-	return { root = root, health = health, armor = armor, healthBar = healthBar, armorBar = armorBar }
+	return {
+		root = root,
+		portrait = portrait,
+		health = health,
+		armor = armor,
+		healthBar = healthBar,
+		armorBar = armorBar,
+	}
 end
 
 ---------------------------------------------------------------------------------------------
--- Munitions et arme (bas-droite)
+-- Munitions (bas-droite) et barre d'armes (bas-centre)
 ---------------------------------------------------------------------------------------------
+
+export type WeaponSlot = {
+	root: Frame,
+	gradient: UIGradient,
+	key: TextLabel,
+	name: TextLabel,
+	glow: Frame,
+}
 
 export type Ammo = {
 	root: Frame,
@@ -303,67 +430,107 @@ export type Ammo = {
 	pips: Frame,
 	reloadTrack: Frame,
 	reloadFill: Frame,
-	slots: { [string]: TextLabel },
+	slots: { [string]: WeaponSlot },
 	reloadHint: TextLabel,
 }
 
 local MAX_PIPS = 40
-local PIP_AREA = 300
+local PIP_AREA = 240
+local PIP_HEIGHT = 6
+local AMMO_W, AMMO_H = 360, 96
+local SLOT_W, SLOT_H, SLOT_SLANT, SLOT_GAP = 150, 56, 12, 6
+local SLOT_NAMES = { "Primary", "Secondary", "Melee" }
+
+local function weaponSlot(parent: Instance, index: number): WeaponSlot
+	local glass = UI.glass(SLOT_W, SLOT_H, SLOT_SLANT, {
+		Name = SLOT_NAMES[index],
+		Position = UDim2.fromOffset((index - 1) * (SLOT_W + SLOT_GAP - SLOT_SLANT / 2), 0),
+		LayoutOrder = index,
+		Parent = parent,
+	})
+	local root = glass.root
+	local key = label({
+		Name = "Key",
+		Text = tostring(index),
+		FontFace = fonts.monoBold,
+		TextSize = 11,
+		TextColor3 = colors.textDim,
+		TextXAlignment = Enum.TextXAlignment.Left,
+		Position = UDim2.fromOffset(SLOT_SLANT + 6, 7),
+		Size = UDim2.fromOffset(20, 12),
+		ZIndex = 2,
+		Parent = root,
+	})
+	local name = label({
+		Name = "WeaponName",
+		Text = "—",
+		FontFace = fonts.headingHeavy,
+		TextSize = 18,
+		TextXAlignment = Enum.TextXAlignment.Left,
+		TextTruncate = Enum.TextTruncate.AtEnd,
+		Position = UDim2.fromOffset(SLOT_SLANT + 2, 22),
+		Size = UDim2.fromOffset(SLOT_W - SLOT_SLANT - 18, 24),
+		ZIndex = 2,
+		Parent = root,
+	})
+	HudWidgets.textShadow(name, 0.75)
+	local glow = glowLine(root, SLOT_SLANT, colors.primary)
+	return { root = root, gradient = glass.gradient, key = key, name = name, glow = glow }
+end
 
 function HudWidgets.ammo(parent: Instance): Ammo
 	HudWidgets.shadow(parent, {
 		Name = "AmmoShadow",
 		AnchorPoint = Vector2.new(1, 1),
 		Position = UDim2.new(1, 80, 1, 80),
-		Size = UDim2.fromOffset(1000, 1000),
-	}, -135, 0.62)
-	local root = UI.frame({
+		Size = UDim2.fromOffset(900, 900),
+	}, -135, 0.45)
+	local glass = UI.glass(AMMO_W, AMMO_H, SLANT, {
 		Name = "Ammo",
-		BackgroundTransparency = 1,
 		AnchorPoint = Vector2.new(1, 1),
-		Position = UDim2.new(1, -40, 1, -30),
-		Size = UDim2.fromOffset(380, 126),
+		Position = UDim2.new(1, -28, 1, -26),
 		Parent = parent,
 	})
-	local header = UI.frame({
-		Name = "Header",
-		BackgroundTransparency = 1,
-		Size = UDim2.new(1, 0, 0, 20),
+	local root = glass.root
+	glowLine(root, SLANT, colors.primary)
+	local weaponName = label({
+		Name = "WeaponName",
+		Text = "VK-12 VEKTOR",
+		FontFace = fonts.headingHeavy,
+		TextSize = 16,
+		TextXAlignment = Enum.TextXAlignment.Left,
+		TextTruncate = Enum.TextTruncate.AtEnd,
+		Position = UDim2.fromOffset(SLANT + 14, 9),
+		Size = UDim2.fromOffset(220, 18),
+		ZIndex = 2,
 		Parent = root,
 	})
-	UI.list(header, Enum.FillDirection.Horizontal, 8, Enum.HorizontalAlignment.Right, Enum.VerticalAlignment.Center)
+	HudWidgets.textShadow(weaponName, 0.75)
 	local fireMode = chip({
 		Name = "FireMode",
 		Text = "AUTO",
 		TextSize = 11,
 		TextColor3 = colors.primary,
-		BackgroundTransparency = 0.88,
+		BackgroundTransparency = 0.85,
 		BackgroundColor3 = colors.primary,
+		AnchorPoint = Vector2.new(1, 0),
+		Position = UDim2.fromOffset(AMMO_W - 26, 9),
 		Size = UDim2.fromOffset(0, 18),
-		LayoutOrder = 1,
-		Parent = header,
+		ZIndex = 2,
+		Parent = root,
 	}, 6)
-	local weaponName = label({
-		Name = "WeaponName",
-		Text = "VK-12 VEKTOR",
-		TextSize = 15,
-		TextColor3 = colors.text,
-		AutomaticSize = Enum.AutomaticSize.X,
-		Size = UDim2.fromOffset(0, 20),
-		LayoutOrder = 2,
-		Parent = header,
-	})
-	HudWidgets.textShadow(weaponName, 0.75)
+	bulletIcon(root, UDim2.fromOffset(SLANT + 14, 38), colors.primary)
 	local mag = label({
 		Name = "Mag",
 		Text = "30",
 		FontFace = fonts.number,
-		TextSize = 62,
+		TextSize = 54,
 		TextXAlignment = Enum.TextXAlignment.Right,
 		TextYAlignment = Enum.TextYAlignment.Bottom,
 		AnchorPoint = Vector2.new(1, 0),
-		Position = UDim2.new(1, -78, 0, 18),
-		Size = UDim2.fromOffset(170, 62),
+		Position = UDim2.fromOffset(AMMO_W - 104, 22),
+		Size = UDim2.fromOffset(150, 54),
+		ZIndex = 2,
 		Parent = root,
 	})
 	HudWidgets.textShadow(mag)
@@ -372,13 +539,12 @@ function HudWidgets.ammo(parent: Instance): Ammo
 		Text = "/ 90",
 		FontFace = fonts.number,
 		TextSize = 24,
-		TextColor3 = colors.text,
-		TextTransparency = 0.4,
+		TextColor3 = colors.textDim,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		TextYAlignment = Enum.TextYAlignment.Bottom,
-		AnchorPoint = Vector2.new(1, 0),
-		Position = UDim2.new(1, 0, 0, 18),
-		Size = UDim2.fromOffset(72, 56),
+		Position = UDim2.fromOffset(AMMO_W - 100, 22),
+		Size = UDim2.fromOffset(76, 48),
+		ZIndex = 2,
 		Parent = root,
 	})
 	HudWidgets.textShadow(reserve, 0.75)
@@ -386,8 +552,9 @@ function HudWidgets.ammo(parent: Instance): Ammo
 		Name = "Pips",
 		BackgroundTransparency = 1,
 		AnchorPoint = Vector2.new(1, 0),
-		Position = UDim2.new(1, 0, 0, 84),
-		Size = UDim2.fromOffset(PIP_AREA, 10),
+		Position = UDim2.fromOffset(AMMO_W - 30, 80),
+		Size = UDim2.fromOffset(PIP_AREA, PIP_HEIGHT),
+		ZIndex = 2,
 		Parent = root,
 	})
 	UI.list(pips, Enum.FillDirection.Horizontal, 2, Enum.HorizontalAlignment.Right)
@@ -396,36 +563,32 @@ function HudWidgets.ammo(parent: Instance): Ammo
 		BackgroundColor3 = WHITE,
 		BackgroundTransparency = 0.8,
 		AnchorPoint = Vector2.new(1, 0),
-		Position = UDim2.new(1, 0, 0, 97),
+		Position = UDim2.fromOffset(AMMO_W - 30, 89),
 		Size = UDim2.fromOffset(PIP_AREA, 2),
 		Visible = false,
+		ZIndex = 2,
 		Parent = root,
 	})
 	local reloadFill = UI.frame({
 		BackgroundColor3 = colors.primary,
-		Size = UDim2.fromScale(0, 1),
+		Size = UDim2.fromScale(1, 1),
+		ZIndex = 2,
 		Parent = reloadTrack,
 	})
-	local slotRow = UI.frame({
-		Name = "Slots",
+	reloadFill.Size = UDim2.fromScale(0, 1)
+	-- Barre d'armes centrée en bas : un panneau biseauté par emplacement.
+	local barWidth = #SLOT_NAMES * (SLOT_W + SLOT_GAP - SLOT_SLANT / 2) - SLOT_GAP + SLOT_SLANT / 2
+	local slotBar = UI.frame({
+		Name = "WeaponBar",
 		BackgroundTransparency = 1,
-		AnchorPoint = Vector2.new(1, 1),
-		Position = UDim2.fromScale(1, 1),
-		Size = UDim2.new(1, 0, 0, 22),
-		Parent = root,
+		AnchorPoint = Vector2.new(0.5, 1),
+		Position = UDim2.new(0.5, 0, 1, -26),
+		Size = UDim2.fromOffset(barWidth, SLOT_H),
+		Parent = parent,
 	})
-	UI.list(slotRow, Enum.FillDirection.Horizontal, 6, Enum.HorizontalAlignment.Right, Enum.VerticalAlignment.Center)
-	local slots: { [string]: TextLabel } = {}
-	for index, slotName in { "Primary", "Secondary", "Melee" } do
-		slots[slotName] = chip({
-			Name = slotName,
-			Text = tostring(index) .. "  —",
-			TextSize = 12,
-			BackgroundColor3 = colors.shadow,
-			Size = UDim2.fromOffset(0, 22),
-			LayoutOrder = index,
-			Parent = slotRow,
-		}, 8)
+	local slots: { [string]: WeaponSlot } = {}
+	for index, slotName in SLOT_NAMES do
+		slots[slotName] = weaponSlot(slotBar, index)
 		HudWidgets.styleSlot(slots[slotName], false)
 	end
 	local reloadHint = label({
@@ -455,12 +618,17 @@ function HudWidgets.ammo(parent: Instance): Ammo
 	}
 end
 
---[[ Emplacement d'arme : actif = pastille sombre et texte blanc, sinon atténué. ]]
-function HudWidgets.styleSlot(slot: TextLabel, active: boolean)
-	slot.BackgroundColor3 = colors.shadow
-	slot.BackgroundTransparency = if active then 0.2 else 0.55
-	slot.TextColor3 = colors.text
-	slot.TextTransparency = if active then 0 else 0.45
+--[[
+	Emplacement d'arme : actif = verre teinté cyan, liseré bas lumineux, texte blanc ;
+	inactif = verre sombre et texte atténué.
+]]
+function HudWidgets.styleSlot(slot: WeaponSlot, active: boolean)
+	slot.gradient.Color = if active
+		then ColorSequence.new(colors.primaryDeep, colors.glass)
+		else ColorSequence.new(colors.glassLight, colors.glass)
+	slot.glow.Visible = active
+	slot.name.TextTransparency = if active then 0 else 0.45
+	slot.key.TextColor3 = if active then colors.primary else colors.textDim
 end
 
 --[[
@@ -487,14 +655,21 @@ function HudWidgets.renderPips(pips: Frame, mag: number, capacity: number)
 		for index = 1, count do
 			local cell = UI.frame({
 				BackgroundColor3 = WHITE,
-				Size = UDim2.fromOffset(width, 10),
+				Size = UDim2.fromOffset(width, PIP_HEIGHT),
+				ZIndex = 2,
 				LayoutOrder = index,
 				Parent = pips,
 			})
 			UI.corner(1, cell)
 			if count == 1 then
 				cell.BackgroundTransparency = 0.82
-				UI.frame({ Name = "Fill", BackgroundColor3 = WHITE, Size = UDim2.fromScale(1, 1), Parent = cell })
+				UI.frame({
+					Name = "Fill",
+					BackgroundColor3 = WHITE,
+					Size = UDim2.fromScale(1, 1),
+					ZIndex = 2,
+					Parent = cell,
+				})
 			end
 			table.insert(cells, cell)
 		end

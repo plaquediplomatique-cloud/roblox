@@ -61,9 +61,10 @@ Match → Party → Matchmaking → CustomGame → TrainingRange.
 2. `StarterPlayerScripts/Client/Main.client.luau` : désactive l'UI Roblox superflue (garde le
    chat), démarre les contrôleurs, câble l'audio des déplacements, applique le mode de
    caméra de l'arène, pose `ClientBooted` quand le profil est reçu (ou après 30 s).
-3. `StarterCharacterScripts/Animate` et `Health`, `StarterPlayerScripts/RbxCharacterSounds`
-   sont **neutralisés** (fichiers vides) : animation procédurale maison, santé autoritaire,
-   sons de pas maison.
+3. `StarterCharacterScripts/Animate` joue les animations Roblox standard (ou le pack de
+   l'avatar) : repos, marche, course, saut, chute ; en combat, `CharacterAnimator` réécrit
+   les articulations par-dessus. `Health` et `StarterPlayerScripts/RbxCharacterSounds` sont
+   **neutralisés** : santé autoritaire, sons de pas maison.
 
 ## 2.3 Flux d'un tir, de la souris au killfeed
 
@@ -193,7 +194,7 @@ roblox/
     │   │                       PostMatch · HubWorld · Remote
     │   └── UI/                 UI (kit) · SettingsPanel
     ├── StarterPlayerScripts/   RbxCharacterSounds neutralisé
-    └── StarterCharacterScripts/ Animate et Health neutralisés
+    └── StarterCharacterScripts/ Animate (locomotion standard), Health neutralisé
 ```
 
 ## 2.7 Conventions

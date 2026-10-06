@@ -161,7 +161,7 @@ end
 local function buildGui()
 	gui = UI.screen("AS_Options", 70)
 
-	-- Engrenage : toujours au même endroit (coin haut-droit), cliquable dès que la souris est libre.
+	-- Engrenage : toujours au même endroit (coin haut-droit, après les boutons Roblox), cliquable dès que la souris est libre.
 	gear = UI.button({
 		Name = "Gear",
 		Text = "⚙",
@@ -177,6 +177,11 @@ local function buildGui()
 	})
 	UI.corner(20, gear)
 	UI.stroke(gear, colors.strokeBright, 1, 0.3)
+	-- Jamais sous les boutons Roblox de droite : on se cale sur la zone libre de la barre.
+	UI.onTopbarChanged(gui, function()
+		local _, right = UI.topbarClearance(gui)
+		gear.Position = UDim2.new(1, -(right + 12), 0, 9)
+	end)
 	gear.Activated:Connect(function()
 		OptionsController.open()
 	end)
