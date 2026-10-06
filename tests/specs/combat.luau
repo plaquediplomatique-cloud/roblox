@@ -342,3 +342,15 @@ T.describe("Audio des armes", function()
 		end
 	end)
 end)
+
+local SoundPack = req(Shared.Config.SoundPack)
+local SoundDefs = req(Shared.Config.Sounds).defs
+
+T.describe("SoundPack", function()
+	T.it("chaque entrée du pack vise un son logique existant", function()
+		for key, entry in SoundPack do
+			T.expect(SoundDefs[key] ~= nil, "clé inconnue " .. key)
+			T.expect(#entry.files > 0, key .. " : aucun fichier")
+		end
+	end)
+end)

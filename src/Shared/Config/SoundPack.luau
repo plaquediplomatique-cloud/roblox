@@ -1,7 +1,8 @@
 --!strict
 --[[
-	SoundPack — sons de tir maison (assets/sounds/weapons/*.mp3, générés par
-	tools/gen_weapon_sounds.py) : « pew / thock » courts et ronds, sans traîne ni écho.
+	SoundPack — sons maison générés par code : tirs (assets/sounds/weapons,
+	tools/gen_weapon_sounds.py), pas par matériau (assets/sounds/foley) et interface
+	(assets/sounds/ui, tools/gen_foley_sounds.py). Courts, secs, sans traîne ni écho.
 
 	Roblox ne lit que des sons importés : importer les .mp3 (Creator Hub → Création →
 	Audio, ou Studio → Asset Manager → Bulk Import), puis coller ici les identifiants
@@ -12,10 +13,20 @@
 
 export type PackEntry = { files: { string }, ids: { string }, volume: number }
 
-local function entry(file: string, volume: number): PackEntry
+-- `count` variations numérotées (file_1.mp3 …) ; 0 = un seul fichier sans numéro.
+local function entry(file: string, volume: number, count: number?): PackEntry
+	local variations = count or 3
+	local files = {}
+	if variations == 0 then
+		files = { file .. ".mp3" }
+	else
+		for index = 1, variations do
+			table.insert(files, ("%s_%d.mp3"):format(file, index))
+		end
+	end
 	return {
-		files = { file .. "_1.mp3", file .. "_2.mp3", file .. "_3.mp3" },
-		ids = {}, -- ← coller ici les rbxassetid:// des trois fichiers
+		files = files,
+		ids = {}, -- ← coller ici les rbxassetid:// des fichiers ci-dessus
 		volume = volume,
 	}
 end
@@ -39,6 +50,22 @@ local SoundPack: { [string]: PackEntry } = {
 	["Weapon.Distant.Sniper"] = entry("distant", 0.45),
 	["Weapon.Mech.Rifle"] = entry("mech", 0.2),
 	["Weapon.Mech.Light"] = entry("mech", 0.16),
+
+	-- Pas par matériau (assets/sounds/foley, tools/gen_foley_sounds.py) : 4 variations.
+	["Step.Default"] = entry("step_concrete", 0.4, 4),
+	["Step.Hard"] = entry("step_concrete", 0.42, 4),
+	["Step.Metal"] = entry("step_metal", 0.42, 4),
+	["Step.Wood"] = entry("step_wood", 0.42, 4),
+	["Step.Soft"] = entry("step_soft", 0.3, 4),
+
+	-- Interface (assets/sounds/ui) : bips ronds, discrets.
+	["UI.Hover"] = entry("ui_hover", 0.25, 0),
+	["UI.Click"] = entry("ui_click", 0.4, 0),
+	["UI.Back"] = entry("ui_back", 0.35, 0),
+	["UI.Confirm"] = entry("ui_confirm", 0.4, 0),
+	["UI.Error"] = entry("ui_error", 0.4, 0),
+	["UI.Tick"] = entry("ui_tick", 0.3, 0),
+	["UI.Reward"] = entry("ui_reward", 0.45, 0),
 }
 
 return SoundPack
