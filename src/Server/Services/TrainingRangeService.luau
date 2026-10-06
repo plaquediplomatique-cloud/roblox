@@ -117,6 +117,8 @@ local function resetBot(bot: Bot)
 	bot.humanoid.HipHeight = bot.standHip
 	bot.home = bot.pickHome()
 	bot.model:PivotTo(bot.home)
+	bot.root.Anchored = bot.kind == "Static"
+	bot.root.AssemblyLinearVelocity = Vector3.zero
 	for _, descendant in bot.model:GetDescendants() do
 		if descendant:IsA("BasePart") and descendant.Name ~= "HumanoidRootPart" then
 			descendant.Transparency = 0
@@ -142,6 +144,8 @@ local function damageBot(bot: Bot, amount: number): LagCompensationService.Damag
 				descendant.Transparency = 1
 			end
 		end
+		-- Ancré pendant l'absence : un bot mobile ne tombe pas dans le vide sous la carte.
+		bot.root.Anchored = true
 		bot.model:PivotTo(bot.home + Vector3.new(0, -200, 0))
 		task.delay(RESPAWN_DELAY, function()
 			if bots[bot.id] == bot then
