@@ -528,9 +528,21 @@ function ArmoryTab.build(parent: Instance): Tab
 		end
 	end)
 
+	-- Aperçu 3D : ne tourne que si l'onglet est réellement affiché (le menu fermé est
+	-- seulement masqué : frame.Visible reste vrai).
+	local function shown(): boolean
+		local node: Instance? = frame
+		while node and node:IsA("GuiObject") do
+			if not node.Visible then
+				return false
+			end
+			node = node.Parent
+		end
+		return true
+	end
 	RunService.RenderStepped:Connect(function(dt: number)
 		local built = preview
-		if built and frame.Visible then
+		if built and shown() then
 			spin += dt * 0.6
 			built.model:PivotTo(CFrame.Angles(0, spin, 0) * CFrame.Angles(0, 0, math.sin(spin * 0.7) * 0.06))
 		end

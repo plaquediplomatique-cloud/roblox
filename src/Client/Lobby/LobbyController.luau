@@ -640,8 +640,7 @@ local function buildTopBar()
 		return best
 	end
 	task.spawn(function()
-		while true do
-			task.wait(0.25)
+		local function updateGuide()
 			if ClientState.arena() == "Training" then
 				trainedThisSession = true
 			end
@@ -666,6 +665,14 @@ local function buildTopBar()
 				guideText.Text = step.text
 				local distance = if step.target then nearestTarget(step.target) else nil
 				guideDistance.Text = if distance then ("%d m"):format(math.floor(distance / 3.57 + 0.5)) else ""
+			end
+		end
+		-- Une erreur ponctuelle (profil en cours de chargement…) n'arrête pas le guide.
+		while true do
+			task.wait(0.25)
+			local ok, err: any = pcall(updateGuide)
+			if not ok then
+				warn("[Lobby] guide :", err)
 			end
 		end
 	end)

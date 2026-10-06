@@ -614,6 +614,10 @@ local function track(instance: Instance)
 		if name == "Team" or name == "Alive" then
 			refreshPresentation(entry)
 		end
+		if name == "Alive" then
+			-- La réaction au tir mortel ne doit pas rejouer à la réapparition.
+			entry.flinch = 0
+		end
 		if name == "Alive" and entry.isBot and model:GetAttribute("Alive") == true then
 			spawnFlash(model)
 		end
@@ -859,13 +863,16 @@ local function animate(entry: Entry, dt: number, now: number, isLocal: boolean)
 		else CFrame.Angles(-flinch * rad(6), 0, 0)
 	if not entry.weapon and not entry.emote and stance == "Stand" then
 		if flinch > 0 then
-			-- Écrit après l'Animator (PreSimulation) : s'ajoute à la pose de marche Roblox ;
-			-- une dernière écriture à l'identité quand la réaction est finie.
-			rig.waist.Transform = rig.waist.Transform * flinchWaist
-			rig.neck.Transform = rig.neck.Transform * flinchNeck
-			if entry.flinch <= 0 then
-				rig.waist.Transform = CFrame.identity
-				rig.neck.Transform = CFrame.identity
+			if entry.isBot then
+				-- Bot : aucun Animator ne réécrit les articulations, valeurs absolues (sinon la
+				-- rotation s'accumulerait d'une frame à l'autre) ; retombe d'elle-même à l'identité.
+				rig.waist.Transform = flinchWaist
+				rig.neck.Transform = flinchNeck
+			else
+				-- Joueur : l'Animator réécrit la pose chaque frame (PreAnimation) ; la réaction
+				-- s'y ajoute après lui (PreSimulation) sans rien accumuler.
+				rig.waist.Transform = rig.waist.Transform * flinchWaist
+				rig.neck.Transform = rig.neck.Transform * flinchNeck
 			end
 		end
 		return

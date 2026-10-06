@@ -281,11 +281,26 @@ function UI.topbarClearance(gui: ScreenGui): (number, number, number)
 	return left / factor, right / factor, height / factor
 end
 
---[[ Rappelle `callback` à chaque changement de la barre Roblox (taille d'écran, boutons). ]]
-function UI.onTopbarChanged(gui: ScreenGui, callback: () -> ()): RBXScriptConnection
+--[[
+	Rappelle `callback` à chaque changement de la barre Roblox (taille d'écran, boutons,
+	échelle de l'interface). Renvoie une fonction de nettoyage.
+]]
+function UI.onTopbarChanged(gui: ScreenGui, callback: () -> ()): () -> ()
 	callback()
-	gui:GetPropertyChangedSignal("AbsoluteSize"):Connect(callback)
-	return GuiService:GetPropertyChangedSignal("TopbarInset"):Connect(callback)
+	local connections = {
+		gui:GetPropertyChangedSignal("AbsoluteSize"):Connect(callback),
+		GuiService:GetPropertyChangedSignal("TopbarInset"):Connect(callback),
+	}
+	-- La marge est exprimée en unités UIScale : un changement d'échelle HUD la modifie.
+	local scale = gui:FindFirstChildOfClass("UIScale")
+	if scale then
+		table.insert(connections, scale:GetPropertyChangedSignal("Scale"):Connect(callback))
+	end
+	return function()
+		for _, connection in connections do
+			connection:Disconnect()
+		end
+	end
 end
 
 export type Glass = { root: Frame, gradient: UIGradient }

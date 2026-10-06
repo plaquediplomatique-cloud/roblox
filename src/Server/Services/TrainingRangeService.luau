@@ -51,6 +51,7 @@ type Bot = {
 	health: number,
 	armor: number,
 	alive: boolean,
+	life: number, -- incrémenté à chaque réapparition : invalide une patrouille en cours
 	standHip: number,
 }
 
@@ -110,6 +111,7 @@ local function resetBot(bot: Bot)
 	bot.health = Ballistics.MAX_HEALTH
 	bot.armor = if armorEnabled then Ballistics.MAX_ARMOR else 0
 	bot.alive = true
+	bot.life += 1
 	bot.humanoid.Health = bot.health
 	bot.model:SetAttribute("Armor", bot.armor)
 	bot.model:SetAttribute("Alive", true)
@@ -132,7 +134,7 @@ local function damageBot(bot: Bot, amount: number): LagCompensationService.Damag
 	end
 	local health, armor, healthLoss, armorLoss = Ballistics.apply(bot.health, bot.armor, amount)
 	bot.health, bot.armor = health, armor
-	bot.humanoid.Health = math.max(health, 0)
+	bot.humanoid.Health = math.max(health, 1)
 	bot.model:SetAttribute("Armor", armor)
 	if health <= 0.5 then
 		bot.alive = false
@@ -177,6 +179,10 @@ local function createBot(pickHome: () -> CFrame, kind: "Static" | "Strafe", zone
 	botModel.Name = "TrainingBot"
 	humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
 	humanoid.BreakJointsOnDeath = false
+	-- Un bot est réutilisé à chaque réapparition : il ne doit jamais entrer dans l'état Dead
+	-- (remettre Health à 100 ne l'en fait pas sortir, le bot resterait inerte). Les PV réels
+	-- vivent dans bot.health.
+	humanoid:SetStateEnabled(Enum.HumanoidStateType.Dead, false)
 	humanoid.MaxHealth = Ballistics.MAX_HEALTH
 	humanoid.WalkSpeed = 14
 	styleBot(botModel)
@@ -198,6 +204,7 @@ local function createBot(pickHome: () -> CFrame, kind: "Static" | "Strafe", zone
 		health = Ballistics.MAX_HEALTH,
 		armor = Ballistics.MAX_ARMOR,
 		alive = true,
+		life = 0,
 		standHip = humanoid.HipHeight,
 	}
 	bots[id] = bot
@@ -249,14 +256,19 @@ local function createBot(pickHome: () -> CFrame, kind: "Static" | "Strafe", zone
 						path:ComputeAsync(root.Position, goal)
 					end)
 					if computed and path.Status == Enum.PathStatus.Success then
+						local life = bot.life
 						for _, waypoint in path:GetWaypoints() do
-							if not bot.alive or bots[id] ~= bot then
+							if not bot.alive or bots[id] ~= bot or bot.life ~= life then
 								break
 							end
 							humanoid:MoveTo(waypoint.Position)
 							-- Rafales de strafe pendant le déplacement
 							local deadline = os.clock() + 1.2
-							while os.clock() < deadline and (root.Position - waypoint.Position).Magnitude > 2.5 do
+							while
+								os.clock() < deadline
+								and bot.life == life
+								and (root.Position - waypoint.Position).Magnitude > 2.5
+							do
 								if rng:NextNumber() < 0.25 then
 									local side = root.CFrame.RightVector * (if rng:NextNumber() < 0.5 then -1 else 1)
 									humanoid:Move(side, false)
@@ -329,8 +341,12 @@ end
 -- Zone et statistiques
 ---------------------------------------------------------------------------------------------
 
-local function statsReplica(player: Player): ReplicaService.Replica
+-- nil pour un joueur déjà parti : un événement tardif ne doit pas recréer de réplique.
+local function statsReplica(player: Player): ReplicaService.Replica?
 	local replica = stats[player]
+	if not replica and player.Parent == nil then
+		return nil
+	end
 	if not replica then
 		replica = ReplicaService.new({
 			token = "TrainingStats",
@@ -405,11 +421,17 @@ function TrainingRangeService.Start()
 
 	GameEvents.ShotFired:Connect(function(player: Player, _weapon: string, _count: number)
 		if ArenaService.get(player) == "Training" then
-			statsReplica(player):Increment({ "shots" }, 1)
+			local replica = statsReplica(player)
+			if replica then
+				replica:Increment({ "shots" }, 1)
+			end
 		end
 	end)
 	GameEvents.TrainingHit:Connect(function(info: GameEvents.TrainingHitInfo)
 		local replica = statsReplica(info.player)
+		if not replica then
+			return
+		end
 		replica:Increment({ "hits" }, 1)
 		if info.headshot then
 			replica:Increment({ "headshots" }, 1)
@@ -420,7 +442,10 @@ function TrainingRangeService.Start()
 	end)
 	GameEvents.Damage:Connect(function(info: GameEvents.DamageInfo)
 		if info.victimBotId and info.attacker then
-			statsReplica(info.attacker):Increment({ "damage" }, math.floor(info.amount + 0.5))
+			local replica = statsReplica(info.attacker)
+			if replica then
+				replica:Increment({ "damage" }, math.floor(info.amount + 0.5))
+			end
 		end
 	end)
 
@@ -430,12 +455,20 @@ function TrainingRangeService.Start()
 	end, function(player: Player, payload: { action: string }): ServerNet.Response
 		if payload.action == "ResetStats" then
 			local replica = statsReplica(player)
-			replica:SetValues({}, { shots = 0, hits = 0, headshots = 0, kills = 0, damage = 0 })
+			if replica then
+				replica:SetValues({}, { shots = 0, hits = 0, headshots = 0, kills = 0, damage = 0 })
+			end
 		elseif payload.action == "ToggleArmor" then
+			-- Réservé aux joueurs du stand (sinon n'importe qui au hub change les bots des autres).
+			if ArenaService.get(player) ~= "Training" then
+				return ServerNet.failure("NotInTraining")
+			end
 			armorEnabled = not armorEnabled
 			for _, bot in bots do
 				if bot.alive then
-					resetBot(bot)
+					-- Bouclier seul : pas de téléportation des bots en cours d'entraînement.
+					bot.armor = if armorEnabled then Ballistics.MAX_ARMOR else 0
+					bot.model:SetAttribute("Armor", bot.armor)
 				end
 			end
 			for _, replica in stats do

@@ -109,9 +109,11 @@ local function stopAll()
 end
 
 loadTracks()
--- Le pack d'animations de l'avatar peut arriver après le démarrage du script.
+-- Le pack d'animations de l'avatar peut arriver après le démarrage du script : Roblox
+-- ajoute des valeurs (`walk` > Animation) ou modifie l'AnimationId d'animations existantes.
+-- Les deux cas rechargent les pistes (regroupés en un seul rechargement).
 local reloadQueued = false
-script.ChildAdded:Connect(function()
+local function queueReload()
 	if reloadQueued then
 		return
 	end
@@ -120,6 +122,18 @@ script.ChildAdded:Connect(function()
 		reloadQueued = false
 		loadTracks()
 	end)
+end
+local function watch(instance: Instance)
+	if instance:IsA("Animation") then
+		instance:GetPropertyChangedSignal("AnimationId"):Connect(queueReload)
+	end
+end
+for _, descendant in script:GetDescendants() do
+	watch(descendant)
+end
+script.DescendantAdded:Connect(function(descendant: Instance)
+	watch(descendant)
+	queueReload()
 end)
 
 humanoid.StateChanged:Connect(function(_, new: Enum.HumanoidStateType)
