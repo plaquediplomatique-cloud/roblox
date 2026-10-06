@@ -44,6 +44,7 @@ local AudioController = require(script.Parent.AudioController)
 local LightingController = require(script.Parent.LightingController)
 
 local colors = Theme.colors
+local LOW_HEALTH = Theme.feedback.lowHealth
 local fonts = Theme.fonts
 local player = Players.LocalPlayer
 
@@ -578,13 +579,13 @@ local function updateHealth()
 	healthText.Text = tostring(math.ceil(health))
 	armorText.Text = tostring(math.ceil(armor))
 	local fraction = health / Ballistics.MAX_HEALTH
-	healthText.TextColor3 = if fraction <= 0.35 then colors.healthLow else colors.health
-	healthBar.fill.BackgroundColor3 = if fraction <= 0.35 then colors.healthLow else colors.health
+	healthText.TextColor3 = if fraction <= LOW_HEALTH then colors.healthLow else colors.health
+	healthBar.fill.BackgroundColor3 = if fraction <= LOW_HEALTH then colors.healthLow else colors.health
 	AudioController.setLowHealth(if health > 0 then fraction else 1)
 	LightingController.setLowHealth(if health > 0 then fraction else 1)
 
 	local now = os.clock()
-	local low = math.clamp((0.35 - fraction) / 0.35, 0, 1)
+	local low = math.clamp((LOW_HEALTH - fraction) / LOW_HEALTH, 0, 1)
 	local pulse = if low > 0 then (0.5 + 0.5 * math.sin(now * (4 + 4 * low))) else 0
 	local intensity = math.max(low * (0.45 + 0.35 * pulse), if now < damageFlashUntil then 0.55 else 0)
 	if health <= 0 then

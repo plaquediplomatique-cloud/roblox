@@ -526,7 +526,7 @@ couture entre lobby et match — et ne s'efface que lorsque le client est **rée
 | `./scripts/test.sh` | 91 tests unitaires hors moteur (Lune) |
 | `./scripts/build.sh` | build Rojo de la place complète (`build/AetherStrike.rbxl`) |
 | `stylua --check src tests` | formatage |
-| `python3 tools/require_graph.py --check` | aucun cycle ni `require` non résolu (104 modules, 511 dépendances) |
+| `python3 tools/require_graph.py --check` | aucun cycle ni `require` non résolu (104 modules, 513 dépendances) |
 | `python3 tools/doc_excerpts.py --check` | les extraits de ce document correspondent au code |
 
 | Suite | Tests | Exemples |

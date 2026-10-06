@@ -88,7 +88,7 @@ Menus : glissement de caméra vers le cadrage « personnage à gauche », flou d
 | Profil de carte | `Lighting` (heure, luminosité, ambiances, exposition, shift), `Atmosphere`, `AS_Grade` (contraste, saturation, teinte), `AS_Bloom`, `AS_SunRays` — valeurs en [05-level-design.md](05-level-design.md) |
 | Dégâts | teinte rouge transitoire + contraste +0.15 (réduite en mode flashs réduits) |
 | Élimination | saturation +0.35, luminosité +0.06, retour amorti |
-| Bas PV (< 40 %) | désaturation jusqu'à −0.55, teinte rouge, assombrissement |
+| Bas PV (< 35 %, seuil commun au HUD et à l'audio) | désaturation jusqu'à −0.55, teinte rouge, assombrissement |
 | Menu | flou 14 + profondeur de champ lointaine |
 | Lunette | profondeur de champ du premier plan |
 | Aberration chromatique | **simulée** (pas d'effet natif Roblox) : franges cyan/rouge en bord d'écran, décalées de 6 px, 0.18 s, sur impact et élimination |

@@ -61,6 +61,10 @@ local Theme = {
 		overlay = 0.4,
 	},
 	corner = UDim.new(0, 4),
+	-- Seuils de retour joueur communs au HUD, à l'audio et à l'éclairage.
+	feedback = {
+		lowHealth = 0.35, -- fraction de PV sous laquelle tous les effets de bas PV démarrent
+	},
 	tween = {
 		fast = TweenInfo.new(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
 		medium = TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out),

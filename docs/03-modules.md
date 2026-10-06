@@ -156,7 +156,7 @@ Chemins relatifs à `src/`. « Pur » = aucune dépendance moteur, testé sous L
 
 ## 3.5 Graphe de dépendances
 
-Vérifié automatiquement (`python3 tools/require_graph.py --check`) : **aucun cycle de `require`** et aucun `require` non résolu sur les 104 modules (511 dépendances).
+Vérifié automatiquement (`python3 tools/require_graph.py --check`) : **aucun cycle de `require`** et aucun `require` non résolu sur les 104 modules (513 dépendances).
 Couches (une couche ne dépend que des couches inférieures) :
 
 ```

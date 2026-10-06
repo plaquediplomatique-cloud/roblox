@@ -20,6 +20,7 @@ local RunService = game:GetService("RunService")
 local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
 local Types = require(Shared.Types)
 local Maps = require(Shared.Config.Maps)
+local Theme = require(Shared.Config.Theme)
 local MathUtil = require(Shared.Util.MathUtil)
 local ClientState = require(script.Parent.Parent.Core.ClientState)
 local SettingsController = require(script.Parent.SettingsController)
@@ -93,7 +94,8 @@ function LightingController.killPop()
 end
 
 function LightingController.setLowHealth(fraction: number)
-	lowHealth = math.clamp((0.4 - fraction) / 0.4, 0, 1)
+	local threshold = Theme.feedback.lowHealth
+	lowHealth = math.clamp((threshold - fraction) / threshold, 0, 1)
 end
 
 function LightingController.setMenuBlur(enabled: boolean)

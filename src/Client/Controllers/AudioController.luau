@@ -24,6 +24,7 @@ local Workspace = game:GetService("Workspace")
 local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
 local Types = require(Shared.Types)
 local Sounds = require(Shared.Config.Sounds)
+local Theme = require(Shared.Config.Theme)
 local SettingsController = require(script.Parent.SettingsController)
 
 export type PlayOptions = {
@@ -263,9 +264,10 @@ function AudioController.duck(amount: number, duration: number)
 	end
 end
 
---[[ fraction = PV restants / max ; sous 35 % : étouffement progressif + battement. ]]
+--[[ fraction = PV restants / max ; sous le seuil de bas PV : étouffement progressif + battement. ]]
 function AudioController.setLowHealth(fraction: number)
-	local intensity = math.clamp((0.35 - fraction) / 0.35, 0, 1)
+	local threshold = Theme.feedback.lowHealth
+	local intensity = math.clamp((threshold - fraction) / threshold, 0, 1)
 	lowpass.HighGain = -28 * intensity
 	lowpass.MidGain = -6 * intensity
 	if intensity > 0 and fraction > 0 then

@@ -296,7 +296,7 @@ designer à temps partiel, testeurs communautaires. Estimation **à réviser apr
 ## Annexe A — Ordre de construction fichier par fichier
 
 Généré par `python3 tools/require_graph.py --markdown` à partir du graphe de `require` réel
-(104 modules, 511 dépendances). La couche d'un module vaut 1 + la couche maximale de ses
+(104 modules, 513 dépendances). La couche d'un module vaut 1 + la couche maximale de ses
 dépendances : en construisant les couches dans l'ordre, chaque module n'utilise que du code
 déjà écrit et testable. Au sein d'une couche, l'ordre est libre (travail parallélisable).
 
