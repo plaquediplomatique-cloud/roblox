@@ -37,7 +37,8 @@ export type PlayOptions = {
 local AudioController = {}
 
 local groups: { [string]: SoundGroup } = {}
-local lowpass: EqualizerSoundEffect
+-- Filtres "bas PV" : un par groupe concerné (armes, impacts), pilotés ensemble.
+local lowpassFilters: { EqualizerSoundEffect } = {}
 local heartbeat: Sound? = nil
 local ambient: Sound? = nil
 local rng = Random.new()
@@ -268,8 +269,10 @@ end
 function AudioController.setLowHealth(fraction: number)
 	local threshold = Theme.feedback.lowHealth
 	local intensity = math.clamp((threshold - fraction) / threshold, 0, 1)
-	lowpass.HighGain = -28 * intensity
-	lowpass.MidGain = -6 * intensity
+	for _, filter in lowpassFilters do
+		filter.HighGain = -28 * intensity
+		filter.MidGain = -6 * intensity
+	end
 	if intensity > 0 and fraction > 0 then
 		if not heartbeat then
 			-- Créé hors de play() : un son joué par play() est détruit au bout de 8 s.
@@ -310,15 +313,16 @@ function AudioController.start()
 	for _, name in { "Weapons", "Footsteps", "Impacts", "Feedback", "Ambient", "Voice" } do
 		group(name, sfx, 1)
 	end
-	lowpass = Instance.new("EqualizerSoundEffect")
-	lowpass.Name = "LowHealthFilter"
-	lowpass.LowGain = 0
-	lowpass.MidGain = 0
-	lowpass.HighGain = 0
-	lowpass.Priority = 1
-	lowpass.Parent = groups.Weapons
-	local secondary = lowpass:Clone()
-	secondary.Parent = groups.Impacts
+	for _, name in { "Weapons", "Impacts" } do
+		local filter = Instance.new("EqualizerSoundEffect")
+		filter.Name = "LowHealthFilter"
+		filter.LowGain = 0
+		filter.MidGain = 0
+		filter.HighGain = 0
+		filter.Priority = 1
+		filter.Parent = groups[name]
+		table.insert(lowpassFilters, filter)
+	end
 	applyVolumes(SettingsController.get())
 	SettingsController.Changed:Connect(applyVolumes)
 	Players.LocalPlayer.CharacterRemoving:Connect(function()

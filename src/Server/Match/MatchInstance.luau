@@ -36,6 +36,7 @@ local CharacterService = require(script.Parent.Parent.Services.CharacterService)
 local CombatService = require(script.Parent.Parent.Services.CombatService)
 local DataService = require(script.Parent.Parent.Services.DataService)
 local MapService = require(script.Parent.Parent.Services.MapService)
+local PlayerService = require(script.Parent.Parent.Services.PlayerService)
 
 local log = Logger.new("Match")
 
@@ -895,10 +896,9 @@ function MatchInstance.selectLoadout(self: MatchInstance, player: Player, slot: 
 	if not Weapons.isValidForSlot(weaponId, slot) then
 		return
 	end
-	local data = DataService.getData(player)
-	if data then
-		(data.Loadout :: any)[slot] = weaponId
-	end
+	-- Écriture par le replica du profil : persistée ET répliquée (le lobby affiche le
+	-- loadout choisi en match au retour au hub).
+	PlayerService.set(player, { "Loadout", slot }, weaponId)
 	-- Réarmement immédiat pendant la préparation uniquement.
 	if self.state.phase == "Prep" and CharacterService.isAlive(player) then
 		local pistol = not self.state.overtime and GameModes.isPistolRound(self.mode, self.state.round)

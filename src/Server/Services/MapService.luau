@@ -84,16 +84,17 @@ function MapService.createArena(mapId: string, modeId: string, participants: { P
 	end
 	usedSlots[slot] = true
 	local origin = CFrame.new(slot * SLOT_SPACING, 0, 0)
-	local instance = MapBuilder.build(blueprint, origin, arenasFolder, modeId)
+	local streamingMode = if slot == 0
+		then Enum.ModelStreamingMode.Persistent
+		else Enum.ModelStreamingMode.PersistentPerPlayer
+	local instance = MapBuilder.build(blueprint, origin, arenasFolder, modeId, streamingMode)
 	slotOf[instance] = slot
 	if slot == 0 then
-		instance.model.ModelStreamingMode = Enum.ModelStreamingMode.Persistent
 		local info = Maps.get(mapId)
 		if info then
 			MapService.applyLighting(info.lighting)
 		end
 	else
-		instance.model.ModelStreamingMode = Enum.ModelStreamingMode.PersistentPerPlayer
 		local list: { Player } = participants or {}
 		for _, player in list do
 			instance.model:AddPersistentPlayer(player)

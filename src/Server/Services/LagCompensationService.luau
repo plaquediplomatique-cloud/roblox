@@ -16,6 +16,8 @@
 	  * Le rembobinage est BORNÉ (MAX_REWIND) : un client ne peut pas "remonter le temps"
 	    arbitrairement pour toucher quelqu'un déjà à couvert ("favor the shooter",
 	    mais dans une limite saine).
+	  * Un second historique, plus long et moins dense (20 Hz sur 4 s), alimente la
+	    killcam : l'anneau de rembobinage ne couvre qu'une seconde, le replay en montre 3.
 	Les cibles sont des joueurs ou des bots (Training Range) : interface uniforme.
 ]]
 
@@ -69,6 +71,8 @@ export type Snapshot = {
 local HISTORY_SIZE = 64
 local MAX_REWIND = 0.35
 local INTERP_DELAY = 0.1
+local KILLCAM_INTERVAL = 0.05 -- 20 Hz : assez pour un replay fluide (interpolé côté client)
+local KILLCAM_SIZE = 80 -- 4 s : couvre les 3,2 s demandées par la killcam
 
 local LagCompensationService = {}
 LagCompensationService.MAX_REWIND = MAX_REWIND
@@ -76,15 +80,18 @@ LagCompensationService.INTERP_DELAY = INTERP_DELAY
 
 local targets: { [number]: Target } = {}
 local histories: { [number]: { Snapshot } } = {}
+local killcamHistories: { [number]: { Snapshot } } = {}
 
 function LagCompensationService.register(target: Target)
 	targets[target.id] = target
 	histories[target.id] = {}
+	killcamHistories[target.id] = {}
 end
 
 function LagCompensationService.unregister(id: number)
 	targets[id] = nil
 	histories[id] = nil
+	killcamHistories[id] = nil
 end
 
 function LagCompensationService.get(id: number): Target?
@@ -100,15 +107,24 @@ local function record(target: Target, now: number)
 	if not history then
 		return
 	end
-	if #history >= HISTORY_SIZE then
-		table.remove(history, 1)
-	end
-	table.insert(history, {
+	local snapshot: Snapshot = {
 		t = now,
 		cframe = target.root.CFrame,
 		stance = target.stance(),
 		lean = target.lean(),
-	})
+	}
+	if #history >= HISTORY_SIZE then
+		table.remove(history, 1)
+	end
+	table.insert(history, snapshot)
+	local long = killcamHistories[target.id]
+	local last = long and long[#long]
+	if long and (not last or now - last.t >= KILLCAM_INTERVAL - 1e-3) then
+		if #long >= KILLCAM_SIZE then
+			table.remove(long, 1)
+		end
+		table.insert(long, snapshot)
+	end
 end
 
 --[[ Pose d'une cible à l'instant `t` (interpolée), ou la plus proche disponible. ]]
@@ -186,10 +202,10 @@ function LagCompensationService.raycast(
 	return best
 end
 
---[[ Échantillons d'une cible sur [from, to] (killcam). ]]
+--[[ Échantillons (20 Hz) d'une cible sur [from, to], jusqu'à 4 s en arrière (killcam). ]]
 function LagCompensationService.history(id: number, from: number, to: number): { Snapshot }
 	local list = {}
-	local source: { Snapshot } = histories[id] or {}
+	local source: { Snapshot } = killcamHistories[id] or {}
 	for _, snapshot in source do
 		if snapshot.t >= from and snapshot.t <= to then
 			table.insert(list, snapshot)

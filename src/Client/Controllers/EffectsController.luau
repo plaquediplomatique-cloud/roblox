@@ -45,6 +45,26 @@ local tracers: { Tracer } = {}
 local shells: { Shell } = {}
 local flashes: { Flash } = {}
 
+-- Les pools recyclent de force leur objet le plus ancien quand ils sont pleins : un
+-- `task.delay` lancé pour une utilisation précédente ne doit alors plus toucher l'objet.
+-- Chaque utilisation reçoit un jeton ; un rappel dont le jeton est périmé ne fait rien.
+local generations: { [Instance]: number } = setmetatable({}, { __mode = "k" }) :: any
+
+local function claim(object: Instance): number
+	local token = (generations[object] or 0) + 1
+	generations[object] = token
+	return token
+end
+
+local function current(object: Instance, token: number): boolean
+	return generations[object] == token
+end
+
+-- Plafonds des listes animées, sous la taille de leur pool (aucun recyclage forcé d'un
+-- objet encore animé par une autre entrée).
+local MAX_TRACERS = 56
+local MAX_FLASHES = 20
+
 local flashPool: Pool.Pool<BasePart>
 local tracerPool: Pool.Pool<BasePart>
 local impactPool: Pool.Pool<BasePart>
@@ -114,6 +134,11 @@ end
 ---------------------------------------------------------------------------------------------
 
 function EffectsController.muzzleFlash(cframe: CFrame, color: Color3, scale: number, smoke: boolean)
+	if #flashes >= MAX_FLASHES then
+		local oldest = table.remove(flashes, 1) :: Flash
+		oldest.light.Enabled = false
+		flashPool:release(oldest.part)
+	end
 	local part = flashPool:get()
 	local size = scale * rng:NextNumber(0.55, 0.95)
 	part.Size = Vector3.new(size, size, size * 1.6)
@@ -150,6 +175,10 @@ function EffectsController.tracer(
 	if distance < 2 then
 		return
 	end
+	if #tracers >= MAX_TRACERS then
+		local oldest = table.remove(tracers, 1) :: Tracer
+		tracerPool:release(oldest.part)
+	end
 	local part = tracerPool:get()
 	part.Color = color
 	part.Size = Vector3.new(width, width, math.min(length, distance))
@@ -167,13 +196,16 @@ end
 
 function EffectsController.bulletHole(position: Vector3, normal: Vector3)
 	local hole = holePool:get()
+	local token = claim(hole)
 	hole.CFrame = CFrame.lookAt(position + normal * 0.02, position + normal * 2) * CFrame.Angles(0, math.pi / 2, 0)
 	hole.Transparency = 0.15
 	task.delay(10, function()
-		if hole.Parent then
+		if hole.Parent and current(hole, token) then
 			TweenService:Create(hole, TweenInfo.new(1.5), { Transparency = 1 }):Play()
 			task.delay(1.6, function()
-				holePool:release(hole)
+				if current(hole, token) then
+					holePool:release(hole)
+				end
 			end)
 		end
 	end)
@@ -181,6 +213,7 @@ end
 
 function EffectsController.impact(position: Vector3, normal: Vector3, material: Enum.Material, kind: ImpactKind)
 	local anchor = impactPool:get()
+	local token = claim(anchor)
 	anchor.CFrame = CFrame.lookAt(position, position + normal)
 	local sparks = anchor:FindFirstChild("Sparks") :: ParticleEmitter
 	local dust = anchor:FindFirstChild("Dust") :: ParticleEmitter
@@ -207,7 +240,9 @@ function EffectsController.impact(position: Vector3, normal: Vector3, material: 
 		EffectsController.bulletHole(position, normal)
 	end
 	task.delay(1.2, function()
-		impactPool:release(anchor)
+		if current(anchor, token) then
+			impactPool:release(anchor)
+		end
 	end)
 end
 
@@ -265,6 +300,7 @@ end
 
 function EffectsController.explosion(position: Vector3)
 	local anchor = impactPool:get()
+	local token = claim(anchor)
 	anchor.CFrame = CFrame.new(position)
 	local energy = anchor:FindFirstChild("Energy") :: ParticleEmitter
 	energy.Color = ColorSequence.new(Color3.fromRGB(255, 190, 70))
@@ -282,7 +318,9 @@ function EffectsController.explosion(position: Vector3)
 	}):Play()
 	task.delay(0.7, function()
 		sphere:Destroy()
-		impactPool:release(anchor)
+		if current(anchor, token) then
+			impactPool:release(anchor)
+		end
 	end)
 end
 

@@ -210,7 +210,13 @@ local function validate(instance: MapInstance)
 	end
 end
 
-function MapBuilder.build(blueprint: Blueprint, origin: CFrame, parent: Instance, modeId: string?): MapInstance
+function MapBuilder.build(
+	blueprint: Blueprint,
+	origin: CFrame,
+	parent: Instance,
+	modeId: string?,
+	streamingMode: Enum.ModelStreamingMode?
+): MapInstance
 	local started = os.clock()
 	local kit = MapKit.new()
 	blueprint.build(kit)
@@ -325,6 +331,11 @@ function MapBuilder.build(blueprint: Blueprint, origin: CFrame, parent: Instance
 	model:SetAttribute("IntroCount", #blueprint.intro)
 	model:SetAttribute("Overview", instance.overview)
 
+	-- Le mode de streaming doit être fixé AVANT le parentage : la réplication initiale
+	-- du modèle se fait déjà dans le bon mode.
+	if streamingMode then
+		model.ModelStreamingMode = streamingMode
+	end
 	model.Parent = parent
 	if RunService:IsStudio() then
 		validate(instance)

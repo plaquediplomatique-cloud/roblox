@@ -425,25 +425,22 @@ local function sendKillcam(victim: Player, killer: Player, weaponId: string, hea
 	local now = Workspace:GetServerTimeNow()
 	local function track(player: Player): { Types.KillcamSample }
 		local samples: { Types.KillcamSample } = {}
+		-- Historique killcam déjà échantillonné à 20 Hz (≈ 64 poses sur 3,2 s).
 		local poses = LagCompensationService.history(player.UserId, now - 3.2, now)
 		local looksList = CharacterService.lookHistory(player, now - 3.4, now)
 		local lookIndex = 1
-		local step = 0
 		for _, snapshot in poses do
-			step += 1
-			if step % 3 == 0 then
-				while lookIndex < #looksList and looksList[lookIndex + 1].t <= snapshot.t do
-					lookIndex += 1
-				end
-				local look = looksList[lookIndex]
-				table.insert(samples, {
-					t = snapshot.t,
-					cf = snapshot.cframe,
-					stance = snapshot.stance,
-					yaw = if look then look.yaw else 0,
-					pitch = if look then look.pitch else 0,
-				})
+			while lookIndex < #looksList and looksList[lookIndex + 1].t <= snapshot.t do
+				lookIndex += 1
 			end
+			local look = looksList[lookIndex]
+			table.insert(samples, {
+				t = snapshot.t,
+				cf = snapshot.cframe,
+				stance = snapshot.stance,
+				yaw = if look then look.yaw else 0,
+				pitch = if look then look.pitch else 0,
+			})
 		end
 		return samples
 	end
@@ -813,6 +810,11 @@ local isMelee = Guard.shape({ heavy = Guard.boolean, a = Guard.unitVector(0.02),
 local function onMelee(player: Player, packet: Types.MeleePacket)
 	local state = states[player]
 	if not state or not CharacterService.isAlive(player) or not combatAllowed(player) then
+		return
+	end
+	-- Même règle que le tir : pas d'attaque pendant une pose / un désamorçage.
+	local character = player.Character
+	if character and character:GetAttribute("Busy") == true then
 		return
 	end
 	local slot = state.slots[state.equipped]
