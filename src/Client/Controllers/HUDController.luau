@@ -41,6 +41,7 @@ local ClientState = require(script.Parent.Parent.Core.ClientState)
 local ReplicaController = require(script.Parent.Parent.Core.ReplicaController)
 local SettingsController = require(script.Parent.SettingsController)
 local InputController = require(script.Parent.InputController)
+local CharacterAnimator = require(script.Parent.CharacterAnimator)
 local CameraController = require(script.Parent.CameraController)
 local WeaponController = require(script.Parent.WeaponController)
 local ViewmodelController = require(script.Parent.ViewmodelController)
@@ -445,6 +446,7 @@ local function onHitConfirmed(report: Types.HitReport, _def: Types.WeaponDef?)
 		end
 	end
 	addDamageNumber(report)
+	CharacterAnimator.flinch(report.position, report.zone == "Head")
 end
 
 ---------------------------------------------------------------------------------------------

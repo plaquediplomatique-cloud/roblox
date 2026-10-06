@@ -55,6 +55,9 @@ local rad = math.rad
 
 local CharacterAnimator = {}
 
+local FLINCH_RADIUS = 6 -- studs entre le point d'impact et la racine de la cible
+local FLINCH_RECOVERY = 5 -- retour en ~0,2 s
+
 type Limb = {
 	upper: Motor6D,
 	lower: Motor6D,
@@ -108,6 +111,9 @@ type Entry = {
 	connections: { RBXScriptConnection },
 	stepIndex: number,
 	lastVerticalSpeed: number,
+	flinch: number, -- 1 à l'impact, retombe à 0 (réaction à une balle reçue)
+	flinchHead: boolean, -- impact à la tête : la tête part plus fort
+	flinchSide: number, -- -1 / 1 : côté du recul (varie d'un impact à l'autre)
 }
 
 type Look = { yaw: number, pitch: number, targetYaw: number, targetPitch: number }
@@ -306,6 +312,26 @@ local function stepLooks(dt: number)
 		end
 		look.yaw += MathUtil.wrapAngle(look.targetYaw - look.yaw) * alpha
 		look.pitch += (look.targetPitch - look.pitch) * alpha
+	end
+end
+
+--[[
+	Réaction de la cible à un impact confirmé (rapport de touche du serveur) : la cible la
+	plus proche du point d'impact encaisse. Purement visuel, local au tireur.
+]]
+function CharacterAnimator.flinch(position: Vector3, head: boolean)
+	local best: Entry? = nil
+	local bestDistance = FLINCH_RADIUS
+	for _, entry in entries do
+		local distance = (entry.root.Position - position).Magnitude
+		if distance < bestDistance then
+			best, bestDistance = entry, distance
+		end
+	end
+	if best then
+		best.flinch = if head then 1 else 0.7
+		best.flinchHead = head
+		best.flinchSide = if math.random() < 0.5 then -1 else 1
 	end
 end
 
@@ -576,6 +602,9 @@ local function track(instance: Instance)
 		connections = {},
 		stepIndex = 0,
 		lastVerticalSpeed = 0,
+		flinch = 0,
+		flinchHead = false,
+		flinchSide = 1,
 	}
 	entries[model] = entry
 	local function onAttribute(name: string)
@@ -821,7 +850,24 @@ local function animate(entry: Entry, dt: number, now: number, isLocal: boolean)
 	end
 	-- Sans arme (hub), debout, sans emote : les animations Roblox standard (Animate :
 	-- marche, course, saut, chute) pilotent le corps ; on ne réécrit aucune articulation.
+	-- Réaction aux impacts : le buste (et la tête sur un headshot) encaisse puis revient.
+	local flinch = entry.flinch
+	entry.flinch = math.max(0, flinch - dt * FLINCH_RECOVERY)
+	local flinchWaist = CFrame.Angles(-flinch * rad(9), 0, flinch * rad(4) * entry.flinchSide)
+	local flinchNeck = if entry.flinchHead
+		then CFrame.Angles(-flinch * rad(22), flinch * rad(8) * entry.flinchSide, 0)
+		else CFrame.Angles(-flinch * rad(6), 0, 0)
 	if not entry.weapon and not entry.emote and stance == "Stand" then
+		if flinch > 0 then
+			-- Écrit après l'Animator (PreSimulation) : s'ajoute à la pose de marche Roblox ;
+			-- une dernière écriture à l'identité quand la réaction est finie.
+			rig.waist.Transform = rig.waist.Transform * flinchWaist
+			rig.neck.Transform = rig.neck.Transform * flinchNeck
+			if entry.flinch <= 0 then
+				rig.waist.Transform = CFrame.identity
+				rig.neck.Transform = CFrame.identity
+			end
+		end
 		return
 	end
 	local emoteRoot, emoting = emotePose(entry, rig, now)
@@ -847,8 +893,8 @@ local function animate(entry: Entry, dt: number, now: number, isLocal: boolean)
 	rig.root.Transform = tRoot
 	local tWaist = Stances.leanTransform(lean)
 		* CFrame.Angles(pitch * 0.4 - slideLean * 0.7 + forwardLean * 0.45, yawOffset * 0.6 - hipSway * 1.8, 0)
-	rig.waist.Transform = tWaist
-	rig.neck.Transform = CFrame.Angles(pitch * 0.45 - forwardLean * 0.6, yawOffset * 0.4, 0)
+	rig.waist.Transform = tWaist * flinchWaist
+	rig.neck.Transform = CFrame.Angles(pitch * 0.45 - forwardLean * 0.6, yawOffset * 0.4, 0) * flinchNeck
 	local lowerTorso = hrp * rig.root.C0 * tRoot * rig.root.C1:Inverse()
 	local upperTorso = lowerTorso * rig.waist.C0 * tWaist * rig.waist.C1:Inverse()
 
