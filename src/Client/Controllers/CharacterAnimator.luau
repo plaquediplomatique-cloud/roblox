@@ -27,6 +27,7 @@
 local CollectionService = game:GetService("CollectionService")
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
 local Workspace = game:GetService("Workspace")
 
 local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
@@ -512,6 +513,27 @@ local function untrack(model: Model)
 	end
 end
 
+--[[ Réapparition d'un bot du stand : éclat cyan bref qui se dissipe (on voit d'où il sort). ]]
+local function spawnFlash(model: Model)
+	local flash = Instance.new("Highlight")
+	flash.Name = "AS_SpawnFlash"
+	flash.FillColor = Theme.colors.primary
+	flash.OutlineColor = Theme.colors.primary
+	flash.FillTransparency = 0.2
+	flash.OutlineTransparency = 0
+	flash.DepthMode = Enum.HighlightDepthMode.Occluded
+	flash.Parent = model
+	local tween = TweenService:Create(
+		flash,
+		TweenInfo.new(0.45, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+		{ FillTransparency = 1, OutlineTransparency = 1 }
+	)
+	tween.Completed:Once(function()
+		flash:Destroy()
+	end)
+	tween:Play()
+end
+
 local function track(instance: Instance)
 	if not instance:IsA("Model") or entries[instance] then
 		return
@@ -555,6 +577,9 @@ local function track(instance: Instance)
 		end
 		if name == "Team" or name == "Alive" then
 			refreshPresentation(entry)
+		end
+		if name == "Alive" and entry.isBot and model:GetAttribute("Alive") == true then
+			spawnFlash(model)
 		end
 		if name == "Emote" then
 			local value = stringAttr(model, "Emote")

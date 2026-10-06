@@ -42,6 +42,18 @@ RECIPES: dict[str, tuple[float, float, float, float, float, float]] = {
 }
 VARIANTS = 3
 
+# Coup grave (Hz, niveau) : donne du poids sans traîne. Absent = arme légère.
+SUB: dict[str, tuple[float, float]] = {
+    "rifle": (85, 0.45),
+    "lmg": (70, 0.6),
+    "dmr": (75, 0.55),
+    "sniper": (55, 0.8),
+    "shotgun": (60, 0.75),
+    "revolver": (70, 0.6),
+    "pistol": (95, 0.3),
+    "distant": (50, 0.5),
+}
+
 
 def lowpass(signal: np.ndarray, cutoff: float) -> np.ndarray:
     """Passe-bas à un pôle appliqué deux fois (pente douce, aucun artefact)."""
@@ -57,7 +69,11 @@ def lowpass(signal: np.ndarray, cutoff: float) -> np.ndarray:
     return out
 
 
-def synth(recipe: tuple[float, float, float, float, float, float], rng: np.random.Generator) -> np.ndarray:
+def synth(
+    recipe: tuple[float, float, float, float, float, float],
+    rng: np.random.Generator,
+    sub: tuple[float, float] | None = None,
+) -> np.ndarray:
     start, end, duration, noise, cutoff, harmonic = recipe
     jitter = rng.uniform(0.95, 1.05)
     start, end, duration = start * jitter, end * jitter, duration * rng.uniform(0.94, 1.06)
@@ -72,6 +88,12 @@ def synth(recipe: tuple[float, float, float, float, float, float], rng: np.rando
     click = lowpass(rng.standard_normal(n), cutoff) * np.exp(-t / 0.006) * 3.0
     hiss = lowpass(rng.standard_normal(n), cutoff * 0.6) * np.exp(-t / (duration * 0.18))
     signal = body * body_env + noise * (click + hiss)
+    if sub:
+        sub_freq, sub_level = sub
+        sub_phase = 2 * np.pi * np.cumsum(sub_freq * (1 + 0.6 * np.exp(-t / 0.02))) / RATE
+        signal = signal + sub_level * np.sin(sub_phase) * np.exp(-t / (0.035 + duration * 0.15))
+    # Saturation douce : plus de punch à volume égal, crêtes arrondies (jamais agressif).
+    signal = np.tanh(signal * 1.6)
     attack = np.clip(t / 0.0015, 0, 1)  # pas de clic numérique au départ
     fade = np.clip((t[-1] - t) / 0.012, 0, 1)  # fin propre, aucune traîne
     signal = lowpass(signal * attack * fade, cutoff)
@@ -104,7 +126,7 @@ def main() -> None:
     for name, recipe in RECIPES.items():
         for index in range(1, VARIANTS + 1):
             path = os.path.join(out_dir, f"{name}_{index}.mp3")
-            write_mp3(path, synth(recipe, rng))
+            write_mp3(path, synth(recipe, rng, SUB.get(name)))
             print("écrit :", path)
 
 

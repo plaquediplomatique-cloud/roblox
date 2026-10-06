@@ -865,30 +865,40 @@ end
 
 --[[ Ligne du killfeed (texte riche déjà coloré) ; `mine` : liseré pour mes kills / ma mort. ]]
 function HudWidgets.killfeedEntry(parent: Instance, richText: string, mine: Color3?): Frame
+	-- Bande de verre fondue vers la gauche (le killfeed est aligné à droite) : pas de boîte.
 	local entry = UI.frame({
 		Name = "Kill",
-		BackgroundColor3 = colors.shadow,
-		BackgroundTransparency = if mine then 0.25 else 0.45,
+		BackgroundColor3 = if mine then colors.glassLight else colors.glass,
+		BackgroundTransparency = 0,
 		AutomaticSize = Enum.AutomaticSize.X,
 		Size = UDim2.fromOffset(0, 28),
 		Parent = parent,
 	})
-	UI.corner(4, entry)
-	UI.padding(entry, if mine then 14 else 10, 10, 0, 0)
+	UI.gradient(
+		entry,
+		ColorSequence.new(WHITE),
+		0,
+		NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 1),
+			NumberSequenceKeypoint.new(0.25, if mine then 0.3 else 0.5),
+			NumberSequenceKeypoint.new(1, if mine then 0.15 else 0.35),
+		})
+	)
+	UI.padding(entry, 26, if mine then 14 else 10, 0, 0)
 	if mine then
-		local accent = UI.frame({
+		UI.frame({
 			Name = "Accent",
 			BackgroundColor3 = mine,
-			Position = UDim2.fromOffset(-14, 4),
-			Size = UDim2.new(0, 3, 1, -8),
+			AnchorPoint = Vector2.new(1, 0),
+			Position = UDim2.new(1, 14, 0, 0),
+			Size = UDim2.new(0, 3, 1, 0),
 			Parent = entry,
 		})
-		UI.corner(1, accent)
 	end
 	label({
 		Name = "Text",
 		Text = richText,
-		FontFace = fonts.body,
+		FontFace = fonts.bodyBold,
 		TextSize = 15,
 		AutomaticSize = Enum.AutomaticSize.X,
 		Size = UDim2.fromScale(0, 1),
@@ -898,42 +908,38 @@ function HudWidgets.killfeedEntry(parent: Instance, richText: string, mine: Colo
 end
 
 function HudWidgets.toast(parent: Instance, title: string, text: string, color: Color3): Frame
-	local toast = UI.frame({
-		Name = "Toast",
-		BackgroundColor3 = colors.shadow,
-		BackgroundTransparency = 0.18,
-		Size = UDim2.fromOffset(340, 56),
-		Parent = parent,
-	})
-	UI.corner(6, toast)
-	local accent = UI.frame({
-		BackgroundColor3 = color,
-		Position = UDim2.fromOffset(0, 10),
-		Size = UDim2.new(0, 3, 1, -20),
-		Parent = toast,
-	})
-	UI.corner(1, accent)
+	local glass = UI.glass(360, 58, 12, { Name = "Toast" })
+	local toast = glass.root
+	local edge = toast:FindFirstChild("Edge")
+	if edge and edge:IsA("Frame") then
+		edge.BackgroundColor3 = color
+	end
+	glowLine(toast, 12, color)
 	label({
 		Name = "Title",
 		Text = title,
+		FontFace = fonts.headingHeavy,
 		TextSize = 11,
 		TextColor3 = color,
 		TextXAlignment = Enum.TextXAlignment.Left,
-		Position = UDim2.fromOffset(16, 8),
-		Size = UDim2.new(1, -28, 0, 14),
+		Position = UDim2.fromOffset(22, 9),
+		Size = UDim2.new(1, -40, 0, 14),
+		ZIndex = 2,
 		Parent = toast,
 	})
 	label({
 		Name = "Body",
 		Text = text,
-		FontFace = fonts.body,
+		FontFace = fonts.bodyBold,
 		TextSize = 15,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		TextTruncate = Enum.TextTruncate.AtEnd,
-		Position = UDim2.fromOffset(16, 24),
-		Size = UDim2.new(1, -28, 0, 24),
+		Position = UDim2.fromOffset(18, 25),
+		Size = UDim2.new(1, -40, 0, 24),
+		ZIndex = 2,
 		Parent = toast,
 	})
+	toast.Parent = parent
 	return toast
 end
 
@@ -1084,49 +1090,69 @@ end
 export type StatPanel = { root: Frame, values: { [string]: TextLabel } }
 
 function HudWidgets.statPanel(parent: Instance, title: string, accent: Color3, rows: { { string } }): StatPanel
-	local root = UI.frame({
+	local width, rowHeight = 270, 26
+	local glass = UI.glass(width, 50 + #rows * rowHeight, 14, {
 		Name = "Stats",
-		BackgroundColor3 = colors.shadow,
-		BackgroundTransparency = 0.3,
 		AnchorPoint = Vector2.new(0, 0.5),
-		Position = UDim2.new(0, 40, 0.45, 0),
-		Size = UDim2.fromOffset(250, 44 + #rows * 24),
+		Position = UDim2.new(0, 28, 0.45, 0),
 		Parent = parent,
 	})
-	UI.corner(8, root)
-	UI.padding(root, 16, 16, 12, 12)
+	local root = glass.root
+	local edge = root:FindFirstChild("Edge")
+	if edge and edge:IsA("Frame") then
+		edge.BackgroundColor3 = accent
+	end
+	glowLine(root, 14, accent)
 	label({
 		Name = "Title",
 		Text = title,
-		TextSize = 12,
+		FontFace = fonts.headingHeavy,
+		TextSize = 13,
 		TextColor3 = accent,
 		TextXAlignment = Enum.TextXAlignment.Left,
-		Size = UDim2.new(1, 0, 0, 16),
+		Position = UDim2.fromOffset(26, 12),
+		Size = UDim2.new(1, -44, 0, 16),
+		ZIndex = 2,
 		Parent = root,
 	})
 	local values: { [string]: TextLabel } = {}
 	for index, row in rows do
-		local y = 26 + (index - 1) * 24
+		local y = 38 + (index - 1) * rowHeight
+		-- Décalage de chaque ligne vers la droite : elles suivent le biseau du panneau.
+		local inset = 22 - (y / (50 + #rows * rowHeight)) * 14
+		if index > 1 then
+			UI.frame({
+				Name = "Rule",
+				BackgroundColor3 = WHITE,
+				BackgroundTransparency = 0.93,
+				Position = UDim2.fromOffset(inset, y - 1),
+				Size = UDim2.new(1, -inset - 22, 0, 1),
+				ZIndex = 2,
+				Parent = root,
+			})
+		end
 		label({
 			Name = row[1],
 			Text = row[2],
-			FontFace = fonts.body,
-			TextSize = 14,
+			FontFace = fonts.heading,
+			TextSize = 12,
 			TextColor3 = colors.textDim,
 			TextXAlignment = Enum.TextXAlignment.Left,
-			Position = UDim2.fromOffset(0, y),
-			Size = UDim2.new(0.6, 0, 0, 22),
+			Position = UDim2.fromOffset(inset + 4, y),
+			Size = UDim2.new(0.6, 0, 0, rowHeight),
+			ZIndex = 2,
 			Parent = root,
 		})
 		values[row[1]] = label({
 			Name = row[1] .. "Value",
 			Text = "0",
 			FontFace = fonts.number,
-			TextSize = 16,
+			TextSize = 18,
 			TextXAlignment = Enum.TextXAlignment.Right,
 			AnchorPoint = Vector2.new(1, 0),
-			Position = UDim2.new(1, 0, 0, y),
-			Size = UDim2.new(0.4, 0, 0, 22),
+			Position = UDim2.new(1, -24, 0, y),
+			Size = UDim2.new(0.4, 0, 0, rowHeight),
+			ZIndex = 2,
 			Parent = root,
 		})
 	end
