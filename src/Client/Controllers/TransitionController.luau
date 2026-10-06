@@ -8,11 +8,13 @@
 	(jeton) : une transition plus récente annule proprement la précédente.
 ]]
 
+local TeleportService = game:GetService("TeleportService")
 local TweenService = game:GetService("TweenService")
 
 local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
 local Theme = require(Shared.Config.Theme)
 local UI = require(script.Parent.Parent.UI.UI)
+local LoadingScreen = require(game:GetService("ReplicatedFirst"):WaitForChild("LoadingScreen"))
 
 local colors = Theme.colors
 local fonts = Theme.fonts
@@ -106,6 +108,17 @@ function TransitionController.reveal()
 		if current == token then
 			gui.Enabled = false
 		end
+	end)
+end
+
+--[[
+	Prépare l'écran affiché PENDANT une téléportation (lobby <-> serveur de match) :
+	le même écran de chargement est repris à l'arrivée par ReplicatedFirst/Boot.
+]]
+function TransitionController.prepareTeleport(text: string)
+	local screen = LoadingScreen.create(text)
+	pcall(function()
+		TeleportService:SetTeleportGui(screen)
 	end)
 end
 

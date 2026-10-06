@@ -100,6 +100,8 @@ type Entry = {
 	nameplate: BillboardGui?,
 	emote: { id: string, started: number }?,
 	connections: { RBXScriptConnection },
+	stepIndex: number,
+	lastVerticalSpeed: number,
 }
 
 type Look = { yaw: number, pitch: number, targetYaw: number, targetPitch: number }
@@ -534,6 +536,8 @@ local function track(instance: Instance)
 		nameplate = nil,
 		emote = nil,
 		connections = {},
+		stepIndex = 0,
+		lastVerticalSpeed = 0,
 	}
 	entries[model] = entry
 	local function onAttribute(name: string)
@@ -652,6 +656,49 @@ local function emotePose(entry: Entry, rig: Rig, now: number): (CFrame?, boolean
 	return rootOverride, true
 end
 
+local footParams = RaycastParams.new()
+footParams.FilterType = Enum.RaycastFilterType.Include
+
+local function geometryRoots(): { Instance }
+	local roots: { Instance } = {}
+	for _, name in { "Arenas", "Hub" } do
+		local folder = Workspace:FindFirstChild(name)
+		if folder then
+			table.insert(roots, folder)
+		end
+	end
+	return roots
+end
+
+--[[
+	Pas des AUTRES joueurs : information tactique essentielle. Course = audible,
+	accroupi = feutré, marche (Shift) = silencieuse ; matériau du sol par raycast.
+]]
+local function emitFootstep(entry: Entry, stance: Types.Stance, speed: number)
+	local camera = Workspace.CurrentCamera
+	local position = entry.root.Position
+	if not camera or (camera.CFrame.Position - position).Magnitude > Movement.footsteps.maxHearDistance then
+		return
+	end
+	local walking = entry.model:GetAttribute("Walking") == true
+	local volume = if walking
+		then Movement.footsteps.walkVolume
+		elseif stance == "Crouch" then Movement.footsteps.crouchVolume
+		else Movement.footsteps.runVolume
+	volume *= math.clamp(speed / (Movement.runSpeed * 0.7), 0, 1)
+	if volume <= 0.01 then
+		return
+	end
+	footParams.FilterDescendantsInstances = geometryRoots()
+	local hit = Workspace:Raycast(position, Vector3.new(0, -6, 0), footParams)
+	AudioController.footstep(
+		if hit then hit.Position else position - Vector3.new(0, 3, 0),
+		if hit then hit.Material else Enum.Material.Concrete,
+		volume,
+		false
+	)
+end
+
 local function animate(entry: Entry, dt: number, now: number, isLocal: boolean)
 	local rig = entry.rig
 	if not rig then
@@ -685,6 +732,20 @@ local function animate(entry: Entry, dt: number, now: number, isLocal: boolean)
 	local airborne = if isLocal then entry.humanoid.FloorMaterial == Enum.Material.Air else math.abs(velocity.Y) > 4.5
 	if not airborne and speed > 0.3 then
 		entry.phase = (entry.phase + dt * TWO_PI * speed / (2 * Movement.footsteps.strideLength)) % TWO_PI
+	end
+	if not isLocal then
+		local stepIndex = math.floor(entry.phase / math.pi)
+		if stepIndex ~= entry.stepIndex then
+			entry.stepIndex = stepIndex
+			if not airborne and speed > 1 and stance ~= "Slide" then
+				emitFootstep(entry, stance, speed)
+			end
+		end
+		-- Atterrissage lourd audible (sauts, chutes).
+		if entry.lastVerticalSpeed < -18 and velocity.Y > -2 then
+			AudioController.playAt("Move.Land", entry.root.Position, { occlusion = true })
+		end
+		entry.lastVerticalSpeed = velocity.Y
 	end
 	local moveAmount = math.clamp(speed / 6, 0, 1)
 

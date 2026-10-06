@@ -928,6 +928,9 @@ local function onPhase(phase: string)
 	elseif phase == "MatchEnd" then
 		prepHint.Visible = false
 		showMatchEnd()
+		if Workspace:GetAttribute("ServerRole") == "Match" then
+			TransitionController.prepareTeleport("RETOUR AU QG")
+		end
 	end
 	if data and phase ~= "MatchEnd" then
 		endScreen.Visible = false
