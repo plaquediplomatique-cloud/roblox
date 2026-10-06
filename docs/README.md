@@ -18,6 +18,7 @@ chaque affirmation renvoie au code de `src/`, et la section 10 en contient des e
 | 9 | [Effets, juice, caméra, son](09-juice.md) | Chargements, intro, punch/secousse/FOV, hit-stop, killcam, post-processing, mixage |
 | 10 | [Code prioritaire](10-code.md) | Les fondations critiques, code réel commenté : réseau, tir prédit, validation, compensation de latence, rang MMR/RR, persistance, réplication, règles, matchmaking, mouvement, anti-exploit |
 | 11 | [Roadmap d'implémentation](11-roadmap.md) | Phases dans l'ordre exact, critères de sortie, état, prochaine étape (play-tests), risques, ordre de construction fichier par fichier |
+| — | [Skills Claude Code](skills-claude-code.md) | L'équipe de skills installée dans `.claude/skills` : rôles, outils, utilisation, limites |
 
 ## Plans des cartes
 

@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./scripts/analyze.sh:*)",
+      "Bash(./scripts/test.sh:*)",
+      "Bash(./scripts/build.sh:*)",
+      "Bash(stylua:*)",
+      "Bash(rojo build:*)",
+      "Bash(rojo sourcemap:*)",
+      "Bash(luau-lsp analyze:*)",
+      "Bash(lune run tests/:*)",
+      "Bash(lune run tools/:*)",
+      "Bash(lune run .claude/skills/:*)",
+      "Bash(python3 tools/check_skills.py:*)",
+      "Bash(python3 tools/require_graph.py:*)",
+      "Bash(python3 tools/doc_excerpts.py:*)",
+      "Bash(python3 tools/render_maps.py:*)",
+      "Bash(python3 .claude/skills/roblox-ui-design-system/scripts/contrast.py:*)"
+    ]
+  }
+}
