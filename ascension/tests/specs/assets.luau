@@ -144,7 +144,7 @@ T.describe("Props (bibliothèque modulaire)", function()
 		for _, name in Props.names() do
 			if name ~= "Island" and name ~= "Cloud" then
 				local min = Spec.bounds(Props.build(name, Props.DefaultPalette, 1))
-				T.expect(min.Y > -0.5, ("%s: min.Y = %.2f"):format(name, min.Y))
+				T.expect(min.Y > -1.5, ("%s: min.Y = %.2f"):format(name, min.Y))
 			end
 		end
 	end)

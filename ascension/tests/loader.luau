@@ -70,6 +70,18 @@ local game = {
 	GetService = function(_, name)
 		if name == "ReplicatedStorage" then
 			return replicatedStorage
+		elseif name == "RunService" then
+			return {
+				IsServer = function()
+					return true
+				end,
+				IsClient = function()
+					return false
+				end,
+				IsStudio = function()
+					return false
+				end,
+			}
 		end
 		error("service not available in tests: " .. tostring(name))
 	end,
