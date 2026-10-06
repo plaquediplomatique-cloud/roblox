@@ -1,0 +1,92 @@
+{
+  "name": "SmashAscension",
+  "globIgnorePaths": ["**/*.spec.luau", "**/.DS_Store"],
+  "tree": {
+    "$className": "DataModel",
+
+    "ReplicatedStorage": {
+      "$className": "ReplicatedStorage",
+      "Shared": {
+        "$path": "ascension/src/Shared",
+        "Util": {
+          "$path": "src/Shared/Util"
+        }
+      }
+    },
+
+    "ServerScriptService": {
+      "$className": "ServerScriptService",
+      "Server": {
+        "$path": "ascension/src/Server"
+      }
+    },
+
+    "StarterPlayer": {
+      "$className": "StarterPlayer",
+      "$properties": {
+        "CharacterWalkSpeed": 18,
+        "CharacterJumpHeight": 7.2,
+        "CharacterUseJumpPower": false,
+        "AutoJumpEnabled": false,
+        "CameraMaxZoomDistance": 40,
+        "CameraMinZoomDistance": 4,
+        "HealthDisplayDistance": 0,
+        "NameDisplayDistance": 60
+      },
+      "StarterPlayerScripts": {
+        "$className": "StarterPlayerScripts",
+        "Client": {
+          "$path": "ascension/src/Client"
+        }
+      }
+    },
+
+    "StarterGui": {
+      "$className": "StarterGui",
+      "$properties": {
+        "ResetPlayerGuiOnSpawn": false,
+        "ScreenOrientation": "LandscapeSensor"
+      }
+    },
+
+    "Players": {
+      "$className": "Players",
+      "$properties": {
+        "CharacterAutoLoads": false
+      }
+    },
+
+    "Workspace": {
+      "$className": "Workspace",
+      "$properties": {
+        "StreamingEnabled": true,
+        "StreamingMinRadius": 128,
+        "StreamingTargetRadius": 640,
+        "StreamingIntegrityMode": "PauseOutsideLoadedArea",
+        "SignalBehavior": "Deferred",
+        "Gravity": 196.2,
+        "FallenPartsDestroyHeight": -400
+      }
+    },
+
+    "Lighting": {
+      "$className": "Lighting",
+      "$properties": {
+        "Technology": "ShadowMap",
+        "GlobalShadows": true,
+        "Brightness": 2.4,
+        "ClockTime": 14,
+        "EnvironmentDiffuseScale": 0.6,
+        "EnvironmentSpecularScale": 0.4
+      }
+    },
+
+    "SoundService": {
+      "$className": "SoundService",
+      "$properties": {
+        "RespectFilteringEnabled": true,
+        "AmbientReverb": "NoReverb"
+      }
+    }
+  }
+}

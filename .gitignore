@@ -21,3 +21,4 @@ sourcemap.json
 # Python
 __pycache__/
 *.pyc
+ascension.sourcemap.json
