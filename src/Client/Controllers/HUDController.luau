@@ -39,6 +39,7 @@ local SettingsController = require(script.Parent.SettingsController)
 local InputController = require(script.Parent.InputController)
 local CameraController = require(script.Parent.CameraController)
 local WeaponController = require(script.Parent.WeaponController)
+local ViewmodelController = require(script.Parent.ViewmodelController)
 local AudioController = require(script.Parent.AudioController)
 local LightingController = require(script.Parent.LightingController)
 
@@ -49,7 +50,8 @@ local player = Players.LocalPlayer
 local HUDController = {}
 
 local hud: ScreenGui
-local root: Frame
+local root: Frame -- combat (armé, 1re personne)
+local overlay: Frame -- annonces et killfeed : visibles même mort / spectateur
 local worldGui: ScreenGui
 local toastGui: ScreenGui
 local boardGui: ScreenGui
@@ -171,6 +173,49 @@ local function updateCrosshair(dt: number, state: WeaponController.HudState)
 		crosshair.circleStroke.Color = color
 		crosshair.circleStroke.Thickness = math.max(thickness * 0.75, 1)
 		crosshair.circleStroke.Transparency = 1 - opacity
+	end
+end
+
+--[[
+	Aberration chromatique SIMULÉE (Roblox n'a pas d'effet natif) : deux franges de
+	bord, cyan à gauche / rouge à droite, décalées de quelques pixels, flashées 0.15 s.
+	Lue par l'oeil comme une séparation RVB en périphérie, au centre l'image reste nette.
+]]
+local fringes: { Frame } = {}
+
+local function buildFringes(parent: Instance)
+	for _, spec in
+		{
+			{ color = Color3.fromRGB(40, 220, 255), anchor = 0, rotation = 0 },
+			{ color = Color3.fromRGB(255, 50, 90), anchor = 1, rotation = 180 },
+		}
+	do
+		local fringe = UI.frame({
+			BackgroundColor3 = spec.color,
+			BackgroundTransparency = 1,
+			AnchorPoint = Vector2.new(spec.anchor, 0),
+			Position = UDim2.fromScale(spec.anchor, 0),
+			Size = UDim2.fromScale(0.12, 1),
+			ZIndex = 2,
+			Parent = parent,
+		})
+		UI.gradient(fringe, ColorSequence.new(spec.color), spec.rotation, NumberSequence.new(0.2, 1))
+		table.insert(fringes, fringe)
+	end
+end
+
+local function chromaticPulse(intensity: number)
+	if SettingsController.get().Video.ReducedFlashes then
+		return
+	end
+	for index, fringe in fringes do
+		local side = if index == 1 then 1 else -1
+		fringe.BackgroundTransparency = 1 - 0.45 * math.clamp(intensity, 0, 1)
+		fringe.Position = UDim2.new(if index == 1 then 0 else 1, side * 6, 0, 0)
+		UI.tween(fringe, TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+			BackgroundTransparency = 1,
+			Position = UDim2.fromScale(if index == 1 then 0 else 1, 0),
+		})
 	end
 end
 
@@ -385,6 +430,8 @@ local function onHitConfirmed(report: Types.HitReport, _def: Types.WeaponDef?)
 		end
 		LightingController.killPop()
 		CameraController.fovPop(-1.4)
+		ViewmodelController.hitStop(0.045)
+		chromaticPulse(0.6)
 		AudioController.duck(0.35, 0.6)
 	else
 		local color = if report.zone == "Head"
@@ -503,6 +550,7 @@ local function onDamageTaken(packet: Types.DamageTaken)
 	addIndicator(packet.from, packet.damage)
 	damageFlashUntil = os.clock() + 0.18
 	LightingController.damageFlash(math.clamp(packet.damage / 50, 0.25, 1))
+	chromaticPulse(math.clamp(packet.damage / 60, 0.3, 1))
 	CameraController.punch(Vector3.new(-1.2, (math.random() - 0.5) * 2, (math.random() - 0.5) * 3))
 	CameraController.shake(math.clamp(packet.damage / 120, 0.08, 0.35))
 	AudioController.play("Hurt", { volume = math.clamp(packet.damage / 60, 0.4, 1) })
@@ -1138,10 +1186,29 @@ local function buildScope(parent: Instance)
 		ZIndex = 5,
 		Parent = scopeOverlay,
 	})
-	UI.aspect(lens, 1)
+	-- Lentille carrée calée sur la HAUTEUR de l'écran (sinon elle déborde en 16:9).
+	UI.aspect(lens, 1).DominantAxis = Enum.DominantAxis.Height
 	UI.corner(9999, lens)
-	-- L'anneau noir géant masque tout ce qui est hors de la lentille.
-	UI.stroke(lens, Color3.new(0, 0, 0), 2400, 0)
+	-- L'anneau noir épais masque les coins entre le cercle et son carré englobant ;
+	-- quatre caches couvrent le reste de l'écran quelle que soit la résolution.
+	UI.stroke(lens, Color3.new(0, 0, 0), 600, 0)
+	for _, spec in
+		{
+			{ anchor = Vector2.new(1, 0.5), position = UDim2.fromScale(0, 0.5), size = UDim2.new(0, 4000, 0, 8000) },
+			{ anchor = Vector2.new(0, 0.5), position = UDim2.fromScale(1, 0.5), size = UDim2.new(0, 4000, 0, 8000) },
+			{ anchor = Vector2.new(0.5, 1), position = UDim2.fromScale(0.5, 0), size = UDim2.new(0, 8000, 0, 4000) },
+			{ anchor = Vector2.new(0.5, 0), position = UDim2.fromScale(0.5, 1), size = UDim2.new(0, 8000, 0, 4000) },
+		}
+	do
+		UI.frame({
+			BackgroundColor3 = Color3.new(0, 0, 0),
+			AnchorPoint = spec.anchor,
+			Position = spec.position,
+			Size = spec.size,
+			ZIndex = 5,
+			Parent = lens,
+		})
+	end
 	local inner = UI.frame({
 		BackgroundTransparency = 1,
 		Size = UDim2.fromScale(1, 1),
@@ -1469,7 +1536,7 @@ local function buildCenter(parent: Instance)
 		Position = UDim2.fromScale(0.5, 0.27),
 		Size = UDim2.fromOffset(900, 50),
 		TextTransparency = 1,
-		Parent = parent,
+		Parent = overlay,
 	})
 	UI.textStroke(bannerTitle, 0.5)
 	bannerLine = UI.frame({
@@ -1477,7 +1544,7 @@ local function buildCenter(parent: Instance)
 		Position = UDim2.new(0.5, 0, 0.27, 30),
 		Size = UDim2.fromOffset(0, 2),
 		BackgroundTransparency = 1,
-		Parent = parent,
+		Parent = overlay,
 	})
 	bannerSubtitle = UI.text({
 		Text = "",
@@ -1488,7 +1555,7 @@ local function buildCenter(parent: Instance)
 		Position = UDim2.new(0.5, 0, 0.27, 50),
 		Size = UDim2.fromOffset(900, 24),
 		TextTransparency = 1,
-		Parent = parent,
+		Parent = overlay,
 	})
 	killConfirm = UI.text({
 		Text = "",
@@ -1567,7 +1634,7 @@ local function buildSide(parent: Instance)
 		AnchorPoint = Vector2.new(1, 0),
 		Position = UDim2.new(1, -24, 0, 24),
 		Size = UDim2.fromOffset(460, 200),
-		Parent = parent,
+		Parent = overlay,
 	})
 	UI.list(killfeed, Enum.FillDirection.Vertical, 4, Enum.HorizontalAlignment.Right)
 
@@ -1624,6 +1691,7 @@ local function update(dt: number)
 	local cameraMode = CameraController.getMode()
 	local combat = WeaponController.isArmed() and cameraMode == "FirstPerson"
 	root.Visible = visibleRequested and combat
+	overlay.Visible = visibleRequested
 	matchBar.Visible = visibleRequested and kind == "Match" and data ~= nil and cameraMode ~= "Cinematic"
 	updateNetStats(dt)
 	updateDamageNumbers()
@@ -1674,8 +1742,16 @@ function HUDController.start()
 	UI.list(toastList, Enum.FillDirection.Vertical, 8, Enum.HorizontalAlignment.Right, Enum.VerticalAlignment.Bottom)
 
 	root = UI.frame({ Name = "Combat", BackgroundTransparency = 1, Size = UDim2.fromScale(1, 1), Parent = hud })
+	overlay = UI.frame({
+		Name = "Overlay",
+		BackgroundTransparency = 1,
+		Size = UDim2.fromScale(1, 1),
+		ZIndex = 30,
+		Parent = hud,
+	})
 	buildScope(root)
 	buildVignette(root)
+	buildFringes(root)
 	buildCenter(root)
 	buildHealth(root)
 	buildAmmo(root)

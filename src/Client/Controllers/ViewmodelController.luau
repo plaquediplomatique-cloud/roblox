@@ -79,6 +79,7 @@ local blendTimer = 0
 local lastPoseRoot = CFrame.identity
 
 local adsAlpha = 0
+local hitStopUntil = 0
 local requestedVisible = true
 local lowered = false
 local empty = false
@@ -392,6 +393,14 @@ function ViewmodelController.setEmpty(value: boolean)
 	empty = value
 end
 
+--[[
+	Hit-stop : l'arme se fige une fraction de seconde (élimination confirmée). Le temps
+	de jeu, lui, ne s'arrête jamais (multijoueur) : seul le rendu de l'arme marque l'impact.
+]]
+function ViewmodelController.hitStop(duration: number)
+	hitStopUntil = os.clock() + duration
+end
+
 function ViewmodelController.isScoped(): boolean
 	return scoped
 end
@@ -460,7 +469,9 @@ local function hide()
 	end
 end
 
-local function update(dt: number)
+local function update(frameDt: number)
+	-- Pendant un hit-stop, les ressorts et le clip avancent au ralenti (×0.05).
+	local dt = if os.clock() < hitStopUntil then frameDt * 0.05 else frameDt
 	local camera = Workspace.CurrentCamera
 	local state = current
 	local character, humanoid = MovementController.character()

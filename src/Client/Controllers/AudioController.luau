@@ -270,9 +270,13 @@ function AudioController.setLowHealth(fraction: number)
 	lowpass.MidGain = -6 * intensity
 	if intensity > 0 and fraction > 0 then
 		if not heartbeat then
-			heartbeat = AudioController.play("Heartbeat")
-			if heartbeat then
-				heartbeat.Looped = true
+			-- Créé hors de play() : un son joué par play() est détruit au bout de 8 s.
+			local created = create("Heartbeat")
+			if created then
+				created.Looped = true
+				created.Parent = SoundService
+				created:Play()
+				heartbeat = created
 			end
 		end
 		local beat = heartbeat

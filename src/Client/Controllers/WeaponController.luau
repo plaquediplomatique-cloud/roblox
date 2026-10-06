@@ -110,6 +110,7 @@ local readyAt = 0
 local nextShotAt = 0
 local lastShotClock = -math.huge
 local lastShotServer = -math.huge
+local lastShotWeapon = ""
 local bloom = 0
 local heldTime = 0
 local burstRemaining = 0
@@ -199,12 +200,12 @@ end
 ---------------------------------------------------------------------------------------------
 
 local function canAim(def: WeaponDef, now: number): boolean
+	-- Seul le verrou (sniper) fait perdre la lunette pendant le réarmement ; la pompe non.
 	return def.category ~= "Melee"
 		and reload == nil
 		and now >= readyAt
-		and now >= cycleUntil
+		and (now >= cycleUntil or def.fire.mode ~= "Bolt")
 		and not isBusy()
-		and not ViewmodelController.isPlaying("Inspect")
 end
 
 local function updateAds(dt: number, now: number)
@@ -212,6 +213,9 @@ local function updateAds(dt: number, now: number)
 	local wanted = false
 	if def and armed then
 		local held = if SettingsController.get().Controls.ToggleAds then adsToggled else InputController.isDown("Aim")
+		if held and ViewmodelController.isPlaying("Inspect") then
+			ViewmodelController.stop()
+		end
 		wanted = held and canAim(def, now)
 	end
 	if wanted ~= adsWanted then
@@ -457,12 +461,19 @@ local function muzzleOrigin(fallback: Vector3, direction: Vector3): Vector3
 	return if muzzle then muzzle.WorldPosition else fallback
 end
 
+local startReloadDeferred: () -> ()
+
 local function fireOnce(def: WeaponDef, scheduledAt: number, frameClock: number, frameServer: number)
 	local ammo = slotAmmo()
 	if not ammo then
 		return
 	end
+	-- Horloge serveur du tir PLANIFIÉ, jamais plus rapprochée du tir précédent que la
+	-- cadence (la synchro d'horloge peut "sauter" de quelques ms entre deux frames).
 	local shotServerTime = frameServer - (frameClock - scheduledAt)
+	if lastShotWeapon == def.id then
+		shotServerTime = math.max(shotServerTime, lastShotServer + Weapons.minInterval(def) * 0.97)
+	end
 	local origin, aim = CameraController.getAim()
 	local cone = Spread.cone(def.spread, {
 		ads = adsAlpha,
@@ -489,6 +500,7 @@ local function fireOnce(def: WeaponDef, scheduledAt: number, frameClock: number,
 	ammo.mag -= 1
 	bloom = Spread.bloomAfterShot(def.spread, bloom, shotServerTime - lastShotServer)
 	lastShotServer = shotServerTime
+	lastShotWeapon = def.id
 	lastShotClock = scheduledAt
 
 	-- Balles prédites : mêmes directions que le serveur.
@@ -542,6 +554,13 @@ local function fireOnce(def: WeaponDef, scheduledAt: number, frameClock: number,
 	ViewmodelController.setEmpty(ammo.mag <= 0)
 	WeaponController.Fired:Fire(def)
 	WeaponController.Changed:Fire()
+	if ammo.mag <= 0 and ammo.reserve > 0 and SettingsController.get().Controls.AutoReload then
+		task.delay(0.22, function()
+			if current == def and reload == nil and not InputController.isDown("Fire") then
+				startReloadDeferred()
+			end
+		end)
+	end
 
 	-- Culasse / pompe : cycle animé, la lunette se baisse pendant le réarmement.
 	local mode = def.fire.mode
@@ -640,6 +659,10 @@ local function startReload(force: boolean?)
 		end)
 	end
 	WeaponController.Changed:Fire()
+end
+
+startReloadDeferred = function()
+	startReload()
 end
 
 local function cancelReload()
@@ -793,7 +816,7 @@ local function step(dt: number)
 
 	-- Un tir pendant un rechargement cartouche par cartouche l'interrompt (comme le serveur).
 	local active = reload
-	if active and active.shell and held and ammo.mag > 0 and active.inserted > 0 then
+	if active and active.shell and held and ammo.mag > 0 then
 		cancelReload()
 		readyAt = now + 0.12
 	end
@@ -829,6 +852,18 @@ local function step(dt: number)
 			shots += 1
 		end
 	elseif mode == "Burst" then
+		local queuedBurst = semiQueuedAt
+		if burstRemaining == 0 and queuedBurst and now - queuedBurst <= SEMI_BUFFER and now >= burstReadyAt then
+			semiQueuedAt = nil
+			if ammo.mag <= 0 then
+				onDry(def)
+				return
+			end
+			burstRemaining = def.fire.burstCount
+			nextShotAt = now
+		elseif queuedBurst and now - queuedBurst > SEMI_BUFFER then
+			semiQueuedAt = nil
+		end
 		if burstRemaining > 0 then
 			local shots = 0
 			while burstRemaining > 0 and nextShotAt <= now and shots < MAX_SHOTS_PER_FRAME do
@@ -846,14 +881,6 @@ local function step(dt: number)
 					burstReadyAt = scheduled + 60 / def.fire.burstRpm + def.fire.burstCooldown
 				end
 			end
-		elseif semiQueuedAt and now - (semiQueuedAt :: number) <= SEMI_BUFFER and now >= burstReadyAt then
-			semiQueuedAt = nil
-			if ammo.mag <= 0 then
-				onDry(def)
-				return
-			end
-			burstRemaining = def.fire.burstCount
-			nextShotAt = now
 		end
 	else
 		-- Semi / Bolt / Pump : un tir par pression, clic mémorisé SEMI_BUFFER secondes.

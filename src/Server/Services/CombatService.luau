@@ -66,6 +66,7 @@ type State = {
 	counter: number,
 	seedBase: number,
 	lastShotClient: number,
+	lastShotWeapon: string,
 	recentShots: { number },
 	bloom: number,
 	held: number,
@@ -184,6 +185,7 @@ function CombatService.arm(player: Player, loadout: Loadout, infiniteReserve: bo
 		counter = 1,
 		seedBase = Random.new():NextInteger(1, 2 ^ 30),
 		lastShotClient = 0,
+		lastShotWeapon = "",
 		recentShots = {},
 		bloom = 0,
 		held = 0,
@@ -714,6 +716,7 @@ local function onFire(player: Player, packet: Types.FirePacket)
 	end
 	if now - state.equippedAt < def.handling.equipTime * 0.7 then
 		AntiCheatService.flag(player, "FastEquip", 1)
+		sync(state)
 		return
 	end
 	if state.reload then
@@ -730,11 +733,15 @@ local function onFire(player: Player, packet: Types.FirePacket)
 	end
 	if math.abs(packet.t - now) > 1.0 then
 		AntiCheatService.flag(player, "ShotClock", 1)
+		sync(state)
 		return
 	end
+	-- Cadence : entre deux tirs de la MÊME arme (un changement d'arme est déjà borné par
+	-- le temps d'équipement ; sinon SMG -> sniper serait refusé à tort).
 	local interval = packet.t - state.lastShotClient
-	if interval < Weapons.minInterval(def) * 0.9 then
+	if state.lastShotWeapon == def.id and interval < Weapons.minInterval(def) * 0.9 then
 		AntiCheatService.flag(player, "FireRate", 2)
+		sync(state)
 		return
 	end
 	local recent = state.recentShots
@@ -743,6 +750,7 @@ local function onFire(player: Player, packet: Types.FirePacket)
 	end
 	if #recent >= math.ceil(maxShotsPerSecond(def)) + 2 then
 		AntiCheatService.flag(player, "FireRateWindow", 3)
+		sync(state)
 		return
 	end
 	local eye = CharacterService.eyePosition(player)
@@ -753,6 +761,7 @@ local function onFire(player: Player, packet: Types.FirePacket)
 	local tolerance = 3.5 + root.AssemblyLinearVelocity.Magnitude * 0.35
 	if (packet.o - eye).Magnitude > tolerance then
 		AntiCheatService.flag(player, "ShotOrigin", 3)
+		sync(state)
 		return
 	end
 
@@ -773,6 +782,7 @@ local function onFire(player: Player, packet: Types.FirePacket)
 	end
 	state.bloom = Spread.bloomAfterShot(def.spread, state.bloom, interval)
 	state.lastShotClient = packet.t
+	state.lastShotWeapon = def.id
 	table.insert(recent, now)
 
 	local directions = Spread.directions(
