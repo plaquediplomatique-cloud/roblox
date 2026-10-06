@@ -17,3 +17,7 @@ sourcemap.json
 /.vscode/*
 !/.vscode/settings.json
 .DS_Store
+
+# Python
+__pycache__/
+*.pyc
