@@ -67,6 +67,19 @@ local TAB_LABELS: { [string]: string } = {
 	Shop = "BOUTIQUE",
 	Settings = "RÉGLAGES",
 }
+-- Pictogrammes de la navigation (formes géométriques : lisibles sans couleur, sans asset).
+local TAB_ICONS: { [string]: string } = {
+	Play = "▶",
+	Armory = "◈",
+	Locker = "▣",
+	Missions = "◎",
+	Pass = "★",
+	Leaderboard = "▲",
+	Shop = "◆",
+	Settings = "⚙",
+}
+local NAV_WIDTH = 236
+local NAV_ITEM_HEIGHT = 50
 -- Terminal du hub -> (onglet, option)
 local TERMINALS: { [string]: { tab: string, option: string? } } = {
 	Play = { tab = "Play", option = nil },
@@ -92,6 +105,7 @@ local menu: Frame
 local nav: Frame
 local content: Frame
 local navButtons: { [string]: TextButton } = {}
+local contentTitle: TextLabel? = nil
 local tabs: { [string]: Tab } = {}
 local currentTab: string? = nil
 local queueWidget: Frame
@@ -207,6 +221,29 @@ local function buildTab(name: string): Tab
 	}
 end
 
+--[[
+	Entrée de la navigation : actif = verre teinté, barre cyan à gauche, texte blanc ;
+	survol = fond léger ; repos = texte atténué. L'état actif ne repose pas que sur la couleur
+	(barre + fond + graisse).
+]]
+local function styleNavItem(button: TextButton, active: boolean, hover: boolean)
+	button.BackgroundColor3 = if active then colors.primaryDeep else colors.panelLight
+	button.BackgroundTransparency = if active then 0.45 elseif hover then 0.6 else 1
+	local bar = button:FindFirstChild("Bar")
+	if bar and bar:IsA("Frame") then
+		bar.Visible = active
+	end
+	local icon = button:FindFirstChild("Icon")
+	if icon and icon:IsA("TextLabel") then
+		icon.TextColor3 = if active then colors.primary else colors.textDim
+	end
+	local label = button:FindFirstChild("Label")
+	if label and label:IsA("TextLabel") then
+		label.TextColor3 = if active or hover then colors.text else colors.textDim
+		label.FontFace = if active then fonts.headingHeavy else fonts.heading
+	end
+end
+
 local function selectTab(name: string, option: string?)
 	local tab = tabs[name]
 	if not tab then
@@ -221,10 +258,10 @@ local function selectTab(name: string, option: string?)
 		other.frame.Visible = tabName == name
 	end
 	for tabName, button in navButtons do
-		local active = tabName == name
-		button.BackgroundColor3 = if active then colors.primary else colors.panel
-		button.BackgroundTransparency = if active then 0 else 0.4
-		button.TextColor3 = if active then colors.void else colors.textDim
+		styleNavItem(button, tabName == name, false)
+	end
+	if contentTitle then
+		contentTitle.Text = TAB_LABELS[name] or name
 	end
 	currentTab = name
 	tab.focus(option)
@@ -597,40 +634,100 @@ local function buildMenu()
 			NumberSequenceKeypoint.new(1, 0),
 		})
 	)
-	local panel = UI.panel({
-		AnchorPoint = Vector2.new(1, 0.5),
-		Position = UDim2.new(1, -28, 0.5, 20),
-		Size = UDim2.new(0.66, 0, 1, -110),
-		BackgroundTransparency = 0.08,
+	-- Navigation verticale à gauche (un clic par écran, pictogramme + libellé).
+	nav = UI.frame({
+		Name = "Nav",
+		BackgroundTransparency = 1,
+		Position = UDim2.fromOffset(24, 86),
+		Size = UDim2.new(0, NAV_WIDTH, 1, -114),
 		Parent = menu,
 	})
-	nav = UI.frame({ BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 44), Parent = panel })
-	UI.padding(nav, 16, 16, 10, 0)
-	UI.list(nav, Enum.FillDirection.Horizontal, 6)
+	UI.list(nav, Enum.FillDirection.Vertical, 4)
 	for order, name in TAB_ORDER do
 		local button = UI.button({
-			Text = TAB_LABELS[name],
-			TextSize = 14,
-			Size = UDim2.fromOffset(122, 34),
+			Name = name,
+			Text = "",
+			AutoButtonColor = false,
+			Size = UDim2.new(1, 0, 0, NAV_ITEM_HEIGHT),
 			LayoutOrder = order,
 			Parent = nav,
 		})
-		UI.corner(3, button)
+		UI.corner(4, button)
+		UI.frame({
+			Name = "Bar",
+			BackgroundColor3 = colors.primary,
+			Position = UDim2.fromOffset(0, 8),
+			Size = UDim2.new(0, 3, 1, -16),
+			Visible = false,
+			Parent = button,
+		})
+		UI.text({
+			Name = "Icon",
+			Text = TAB_ICONS[name] or "•",
+			FontFace = fonts.headingHeavy,
+			TextSize = 18,
+			Position = UDim2.fromOffset(14, 0),
+			Size = UDim2.fromOffset(28, NAV_ITEM_HEIGHT),
+			Parent = button,
+		})
+		UI.text({
+			Name = "Label",
+			Text = TAB_LABELS[name],
+			FontFace = fonts.heading,
+			TextSize = 16,
+			TextXAlignment = Enum.TextXAlignment.Left,
+			Position = UDim2.fromOffset(52, 0),
+			Size = UDim2.new(1, -60, 1, 0),
+			Parent = button,
+		})
+		styleNavItem(button, false, false)
 		navButtons[name] = button
+		button.MouseEnter:Connect(function()
+			styleNavItem(button, currentTab == name, true)
+		end)
+		button.MouseLeave:Connect(function()
+			styleNavItem(button, currentTab == name, false)
+		end)
 		button.Activated:Connect(function()
 			UI.playSound("UI.Click")
 			selectTab(name)
 		end)
 	end
+	-- Contenu : grand panneau de verre, titre de l'onglet en tête.
+	local panel = UI.panel({
+		Name = "Content",
+		Position = UDim2.fromOffset(24 + NAV_WIDTH + 16, 86),
+		Size = UDim2.new(1, -(24 + NAV_WIDTH + 16 + 28), 1, -114),
+		BackgroundTransparency = 0.08,
+		Parent = menu,
+	})
+	contentTitle = UI.text({
+		Name = "Title",
+		Text = "",
+		FontFace = fonts.display,
+		TextSize = 28,
+		TextXAlignment = Enum.TextXAlignment.Left,
+		Position = UDim2.fromOffset(24, 12),
+		Size = UDim2.new(1, -200, 0, 36),
+		Parent = panel,
+	})
+	UI.frame({
+		Name = "Rule",
+		BackgroundColor3 = colors.primary,
+		BackgroundTransparency = 0.4,
+		Position = UDim2.fromOffset(24, 52),
+		Size = UDim2.fromOffset(48, 2),
+		Parent = panel,
+	})
 	content = UI.frame({
 		BackgroundTransparency = 1,
-		Position = UDim2.fromOffset(20, 64),
-		Size = UDim2.new(1, -40, 1, -84),
+		Position = UDim2.fromOffset(20, 68),
+		Size = UDim2.new(1, -40, 1, -88),
 		Parent = panel,
 	})
 	local close = UI.actionButton("✕ FERMER", "Ghost", LobbyController.close, {
 		AnchorPoint = Vector2.new(1, 0),
-		Position = UDim2.new(1, -28, 0, 24),
+		Position = UDim2.new(1, -40, 0, 96),
 		Size = UDim2.fromOffset(130, 34),
 		Parent = menu,
 	})
