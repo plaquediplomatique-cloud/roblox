@@ -21,6 +21,9 @@ AvatarRules.MATCH_REMOVED_SLOTS = {
 	"FrontAccessory",
 }
 
+-- Types d'accessoires retirés hors hub (Accessory.AccessoryType.Name).
+AvatarRules.BULKY_TYPES = { Back = true, Waist = true, Shoulder = true, Front = true }
+
 -- Taille maximale de la poignée d'un accessoire conservé en combat (studs).
 AvatarRules.MAX_ACCESSORY_EXTENT = 2.6
 AvatarRules.MAX_ACCESSORY_VOLUME = 6

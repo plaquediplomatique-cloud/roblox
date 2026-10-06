@@ -158,60 +158,10 @@ end
 -- Spawn
 ---------------------------------------------------------------------------------------------
 
-local avatarCache: { [number]: HumanoidDescription } = {}
-
---[[
-	Apparence Roblox du joueur, récupérée une fois par session. Échec (service
-	indisponible, comptes de test Studio à identifiant négatif) : nil.
-]]
-local function avatarDescription(player: Player): HumanoidDescription?
-	local cached = avatarCache[player.UserId]
-	if cached then
-		return cached:Clone()
-	end
-	if player.UserId <= 0 then
-		return nil
-	end
-	local ok, result = pcall(function(): HumanoidDescription
-		return Players:GetHumanoidDescriptionFromUserIdAsync(player.UserId)
-	end)
-	if not ok then
-		log:warn("avatar indisponible", player.Name, result)
-		return nil
-	end
-	avatarCache[player.UserId] = result
-	return result:Clone()
-end
-
-local function buildDescription(
-	player: Player,
-	arenaKind: Types.ArenaKind
-): (HumanoidDescription, Types.ItemDef?, boolean)
+local function equippedOperator(player: Player): Types.ItemDef?
 	local data = DataService.getData(player)
-	local operator = Cosmetics.get(if data then data.Cosmetics.Operator else "op_standard")
-		or Cosmetics.get("op_standard")
-	local avatar = avatarDescription(player)
-	local description: HumanoidDescription
-	if avatar then
-		description = avatar
-		if arenaKind ~= "Hub" then
-			for _, field in AvatarRules.MATCH_REMOVED_SLOTS do
-				(description :: any)[field] = ""
-			end
-		end
-	else
-		description = Instance.new("HumanoidDescription")
-		if operator and operator.palette then
-			OperatorGear.bodyColors(description, operator.palette)
-		end
-	end
-	description.HeightScale = 1
-	description.WidthScale = 1
-	description.DepthScale = 1
-	description.HeadScale = 1
-	description.BodyTypeScale = 0
-	description.ProportionScale = 0
-	return description, operator, avatar ~= nil
+	return Cosmetics.get(if data then data.Cosmetics.Operator else AvatarRules.DEFAULT_OPERATOR)
+		or Cosmetics.get(AvatarRules.DEFAULT_OPERATOR)
 end
 
 --[[ Accessoires : jamais de collision ni de requête ; en combat, les surdimensionnés partent. ]]
@@ -223,7 +173,8 @@ local function sanitizeAccessories(character: Model, combat: boolean, removeHead
 		local handle = child:FindFirstChild("Handle")
 		local size = if handle and handle:IsA("BasePart") then handle.Size else Vector3.zero
 		local headwear = child.AccessoryType == Enum.AccessoryType.Hat or child.AccessoryType == Enum.AccessoryType.Hair
-		if (combat and AvatarRules.oversized(size)) or (removeHeadwear and headwear) then
+		local bulky = AvatarRules.BULKY_TYPES[child.AccessoryType.Name] == true
+		if (combat and (bulky or AvatarRules.oversized(size))) or (removeHeadwear and headwear) then
 			child:Destroy()
 			continue
 		end
@@ -282,9 +233,11 @@ function CharacterService.spawn(player: Player, cframe: CFrame, options: SpawnOp
 		return nil
 	end
 	spawning[player] = true
-	local description, operator, ownAvatar = buildDescription(player, options.arenaKind)
+	local operator = equippedOperator(player)
+	-- Personnage Roblox natif : l'avatar du joueur tel qu'il l'a habillé, animations
+	-- de marche / course / saut standard de Roblox (aucune silhouette de remplacement).
 	local ok, err = pcall(function()
-		player:LoadCharacterWithHumanoidDescriptionAsync(description)
+		player:LoadCharacterAsync()
 	end)
 	spawning[player] = nil
 	if not ok then
@@ -323,7 +276,7 @@ function CharacterService.spawn(player: Player, cframe: CFrame, options: SpawnOp
 
 	-- Tenue d'opérateur : par-dessus l'avatar seulement si le joueur en a équipé une (le
 	-- casque remplace alors chapeaux et cheveux) ; sans avatar, elle habille la silhouette.
-	local wearsGear = operator ~= nil and (not ownAvatar or operator.id ~= AvatarRules.DEFAULT_OPERATOR)
+	local wearsGear = operator ~= nil and operator.id ~= AvatarRules.DEFAULT_OPERATOR
 	sanitizeAccessories(character, options.arenaKind ~= "Hub", wearsGear)
 	if wearsGear then
 		OperatorGear.attach(character, operator)
@@ -504,7 +457,6 @@ function CharacterService.Start()
 		releaseSlot(player)
 		looks[player] = nil
 		lookHistories[player] = nil
-		avatarCache[player.UserId] = nil
 		damageLogs[player] = nil
 		spawning[player] = nil
 		LagCompensationService.unregister(player.UserId)

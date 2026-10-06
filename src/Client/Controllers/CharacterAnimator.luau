@@ -2,7 +2,7 @@
 --[[
 	CharacterAnimator — tous les personnages vus en 3e personne, animés PROCÉDURALEMENT.
 
-	Le script Animate par défaut est neutralisé (StarterCharacterScripts/Animate) : aucun
+	Hub, sans arme : animations Roblox standard (script Animate par défaut). Sinon : aucun
 	asset d'animation. Chaque frame (PreSimulation, écriture de Motor6D.Transform, la
 	méthode documentée pour l'animation procédurale) :
 
@@ -786,6 +786,11 @@ local function animate(entry: Entry, dt: number, now: number, isLocal: boolean)
 	-- Emote (hub) : remplace la pose des bras ; annulée par le mouvement.
 	if entry.emote and speed > 3 then
 		entry.emote = nil
+	end
+	-- Sans arme (hub), debout, sans emote : les animations Roblox standard (Animate :
+	-- marche, course, saut, chute) pilotent le corps ; on ne réécrit aucune articulation.
+	if not entry.weapon and not entry.emote and stance == "Stand" then
+		return
 	end
 	local emoteRoot, emoting = emotePose(entry, rig, now)
 

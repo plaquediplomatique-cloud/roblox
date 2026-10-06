@@ -1,4 +1,0 @@
---!strict
--- Remplace le script "Animate" par défaut : toutes les animations 3e personne sont
--- PROCÉDURALES (Client/Controllers/CharacterAnimator) — posture, visée, glissade, lean,
--- emotes — et parfaitement cohérentes avec les hitboxes de gameplay.

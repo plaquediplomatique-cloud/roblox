@@ -30,7 +30,7 @@
         "CharacterJumpHeight": 4.4,
         "CharacterWalkSpeed": 16,
         "CharacterMaxSlopeAngle": 50,
-        "LoadCharacterAppearance": false,
+        "LoadCharacterAppearance": true,
         "GameSettingsAvatar": "R15",
         "AutoJumpEnabled": false,
         "EnableMouseLockOption": false,
