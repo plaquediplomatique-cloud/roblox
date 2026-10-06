@@ -42,7 +42,6 @@ local SoundPack = require(script.Parent.SoundPack)
 
 type Shape = { tone: Tone?, cut: number?, layers: { string }? }
 
-local ROCKET = "rbxasset://sounds/Rocket shot.wav"
 local PAINTBALL = "rbxasset://sounds/paintball.wav"
 local CLICK = "rbxasset://sounds/clickfast.wav"
 local BUTTON = "rbxasset://sounds/button.wav"
@@ -95,7 +94,8 @@ local SHORT = Vector2.new(4, 60)
 local Sounds = {}
 
 Sounds.defs = {
-	-- Armes. Un tir = corps (le coup, coupé avant la traîne) + attaque (claquement) +
+	-- Armes. Plus aucun son d'explosion (« Rocket shot » sonnait comme du tonnerre) : le corps
+	-- est un « pop » sec (paintball grave), sans grondement ni traîne. Un tir = corps (le coup, coupé avant la traîne) + attaque (claquement) +
 	-- impact grave + mécanique, puis une queue 3D discrète réverbérée en intérieur. Les
 	-- autres joueurs au-delà de 120 studs entendent la version « distant » (étouffée).
 	-- Volumes volontairement bas : le compresseur du groupe Armes égalise les rafales.
@@ -108,7 +108,7 @@ Sounds.defs = {
 		tone = { low = 8, mid = -4, high = -26 },
 	}),
 
-	["Weapon.Rifle.Fire"] = shape(def({ ROCKET }, 0.26, 1.45, 1.55, "Weapons", NEAR), {
+	["Weapon.Rifle.Fire"] = shape(def({ PAINTBALL }, 0.26, 0.7, 0.75, "Weapons", NEAR), {
 		tone = { low = 3, mid = -2, high = -12 },
 		cut = 0.2,
 		layers = { "Weapon.Layer.Crack", "Weapon.Layer.Thump" },
@@ -118,7 +118,7 @@ Sounds.defs = {
 		cut = 0.25,
 		layers = { "Weapon.Layer.CrackLight" },
 	}),
-	["Weapon.Rifle.Burst"] = shape(def({ ROCKET }, 0.24, 1.58, 1.66, "Weapons", NEAR), {
+	["Weapon.Rifle.Burst"] = shape(def({ PAINTBALL }, 0.24, 0.74, 0.78, "Weapons", NEAR), {
 		tone = { low = 3, mid = -2, high = -12 },
 		cut = 0.18,
 		layers = { "Weapon.Layer.Crack", "Weapon.Layer.Thump" },
@@ -128,27 +128,27 @@ Sounds.defs = {
 		cut = 0.2,
 		layers = { "Weapon.Layer.CrackLight" },
 	}),
-	["Weapon.LMG.Fire"] = shape(def({ ROCKET }, 0.28, 1.3, 1.38, "Weapons", NEAR), {
+	["Weapon.LMG.Fire"] = shape(def({ PAINTBALL }, 0.28, 0.62, 0.66, "Weapons", NEAR), {
 		tone = { low = 4, mid = -2, high = -14 },
 		cut = 0.22,
 		layers = { "Weapon.Layer.Crack", "Weapon.Layer.ThumpHeavy" },
 	}),
-	["Weapon.Sniper.Fire"] = shape(def({ ROCKET }, 0.32, 1.0, 1.06, "Weapons", Vector2.new(12, 400)), {
+	["Weapon.Sniper.Fire"] = shape(def({ PAINTBALL }, 0.32, 0.5, 0.54, "Weapons", Vector2.new(12, 400)), {
 		tone = { low = 5, mid = -1, high = -10 },
 		cut = 0.45,
 		layers = { "Weapon.Layer.Crack", "Weapon.Layer.ThumpHeavy" },
 	}),
-	["Weapon.DMR.Fire"] = shape(def({ ROCKET }, 0.3, 1.2, 1.28, "Weapons", Vector2.new(10, 320)), {
+	["Weapon.DMR.Fire"] = shape(def({ PAINTBALL }, 0.3, 0.6, 0.64, "Weapons", Vector2.new(10, 320)), {
 		tone = { low = 4, mid = -2, high = -12 },
 		cut = 0.3,
 		layers = { "Weapon.Layer.Crack", "Weapon.Layer.Thump" },
 	}),
-	["Weapon.Shotgun.Fire"] = shape(def({ ROCKET }, 0.32, 1.0, 1.08, "Weapons", NEAR), {
+	["Weapon.Shotgun.Fire"] = shape(def({ PAINTBALL }, 0.32, 0.5, 0.55, "Weapons", NEAR), {
 		tone = { low = 6, mid = -2, high = -14 },
 		cut = 0.3,
 		layers = { "Weapon.Layer.Crack", "Weapon.Layer.ThumpHeavy" },
 	}),
-	["Weapon.Shotgun.Auto"] = shape(def({ ROCKET }, 0.28, 1.15, 1.22, "Weapons", NEAR), {
+	["Weapon.Shotgun.Auto"] = shape(def({ PAINTBALL }, 0.28, 0.55, 0.6, "Weapons", NEAR), {
 		tone = { low = 5, mid = -2, high = -14 },
 		cut = 0.25,
 		layers = { "Weapon.Layer.ThumpHeavy" },
@@ -158,7 +158,7 @@ Sounds.defs = {
 		cut = 0.22,
 		layers = { "Weapon.Layer.CrackLight", "Weapon.Layer.Thump" },
 	}),
-	["Weapon.Revolver.Fire"] = shape(def({ ROCKET }, 0.3, 1.2, 1.28, "Weapons", NEAR), {
+	["Weapon.Revolver.Fire"] = shape(def({ PAINTBALL }, 0.3, 0.58, 0.62, "Weapons", NEAR), {
 		tone = { low = 5, mid = -2, high = -12 },
 		cut = 0.3,
 		layers = { "Weapon.Layer.Crack", "Weapon.Layer.ThumpHeavy" },
@@ -169,20 +169,20 @@ Sounds.defs = {
 		layers = { "Weapon.Layer.CrackLight" },
 	}),
 	-- Queues : souffle grave et étouffé (plus de tonnerre), courtes.
-	["Weapon.Tail.Rifle"] = shape(def({ ROCKET }, 0.07, 0.56, 0.62, "Weapons", NEAR), {
+	["Weapon.Tail.Rifle"] = shape(def({ PAINTBALL }, 0.07, 0.5, 0.55, "Weapons", NEAR), {
 		tone = { low = 2, mid = -8, high = -30 },
 		cut = 0.7,
 	}),
-	["Weapon.Tail.Light"] = shape(def({ ROCKET }, 0.05, 0.66, 0.72, "Weapons", MID), {
+	["Weapon.Tail.Light"] = shape(def({ PAINTBALL }, 0.05, 0.55, 0.6, "Weapons", MID), {
 		tone = { low = 1, mid = -8, high = -30 },
 		cut = 0.5,
 	}),
-	["Weapon.Tail.Heavy"] = shape(def({ ROCKET }, 0.1, 0.5, 0.55, "Weapons", NEAR), {
+	["Weapon.Tail.Heavy"] = shape(def({ PAINTBALL }, 0.1, 0.45, 0.5, "Weapons", NEAR), {
 		tone = { low = 3, mid = -8, high = -30 },
 		cut = 0.9,
 	}),
 	-- Lointain : coup sourd filtré (on lit la distance à l'oreille).
-	["Weapon.Distant.Rifle"] = shape(def({ ROCKET }, 0.2, 1.05, 1.15, "Weapons", Vector2.new(40, 600)), {
+	["Weapon.Distant.Rifle"] = shape(def({ PAINTBALL }, 0.2, 0.5, 0.55, "Weapons", Vector2.new(40, 600)), {
 		tone = { low = 3, mid = -6, high = -28 },
 		cut = 0.4,
 	}),
@@ -190,11 +190,11 @@ Sounds.defs = {
 		tone = { low = 2, mid = -6, high = -28 },
 		cut = 0.3,
 	}),
-	["Weapon.Distant.Heavy"] = shape(def({ ROCKET }, 0.26, 0.9, 0.98, "Weapons", Vector2.new(50, 700)), {
+	["Weapon.Distant.Heavy"] = shape(def({ PAINTBALL }, 0.26, 0.45, 0.5, "Weapons", Vector2.new(50, 700)), {
 		tone = { low = 4, mid = -6, high = -28 },
 		cut = 0.5,
 	}),
-	["Weapon.Distant.Sniper"] = shape(def({ ROCKET }, 0.3, 0.8, 0.86, "Weapons", Vector2.new(60, 900)), {
+	["Weapon.Distant.Sniper"] = shape(def({ PAINTBALL }, 0.3, 0.42, 0.46, "Weapons", Vector2.new(60, 900)), {
 		tone = { low = 4, mid = -6, high = -26 },
 		cut = 0.6,
 	}),

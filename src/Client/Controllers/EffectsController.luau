@@ -355,11 +355,14 @@ local function fadeOut(model: Model, duration: number)
 	for _, part in bodyParts(model) do
 		task.spawn(function()
 			local start = os.clock()
-			while os.clock() - start < duration and part.Parent do
+			-- S'arrête si le modèle revit entre-temps (bot du stand réutilisé).
+			while os.clock() - start < duration and part.Parent and model:GetAttribute("Alive") ~= true do
 				part.LocalTransparencyModifier = (os.clock() - start) / duration
 				RunService.RenderStepped:Wait()
 			end
-			part.LocalTransparencyModifier = 1
+			if model:GetAttribute("Alive") ~= true then
+				part.LocalTransparencyModifier = 1
+			end
 		end)
 	end
 end

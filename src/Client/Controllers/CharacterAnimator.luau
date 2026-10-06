@@ -515,6 +515,13 @@ end
 
 --[[ Réapparition d'un bot du stand : éclat cyan bref qui se dissipe (on voit d'où il sort). ]]
 local function spawnFlash(model: Model)
+	-- L'effet d'élimination (EffectsController.killEffect) efface le corps via
+	-- LocalTransparencyModifier ; un bot est réutilisé, pas recréé : on le rend visible.
+	for _, descendant in model:GetDescendants() do
+		if descendant:IsA("BasePart") then
+			descendant.LocalTransparencyModifier = 0
+		end
+	end
 	local flash = Instance.new("Highlight")
 	flash.Name = "AS_SpawnFlash"
 	flash.FillColor = Theme.colors.primary

@@ -362,8 +362,10 @@ function TrainingRangeService.Start()
 		return
 	end
 	botFolder = Instance.new("Folder")
-	botFolder.Name = "Bots"
-	botFolder.Parent = Workspace:WaitForChild("Hub")
+	botFolder.Name = "TrainingBots"
+	-- Hors du dossier Hub : le décor (raycasts monde, trous de balle) ne doit jamais inclure les
+	-- bots, sinon des impacts restent suspendus là où un bot se tenait.
+	botFolder.Parent = Workspace
 	for _, part in CollectionService:GetTagged("TrainingZone") do
 		if part:IsA("BasePart") then
 			trainingZone = part
