@@ -33,6 +33,41 @@ local PostMatch = {}
 
 local showing = false
 
+--[[
+	Panneau de verre biseauté (même grammaire que le HUD) avec un cadre intérieur : les
+	listes et marges vivent dans `content`, pas sur le verre (qui porte liseré et filet).
+]]
+local function glassPanel(
+	parent: Instance,
+	props: { [string]: any },
+	width: number,
+	height: number,
+	accent: Color3
+): (Frame, Frame)
+	local glass = UI.glass(width, height, 16, props)
+	local root = glass.root
+	root.ZIndex = 41
+	for _, child in root:GetChildren() do
+		if child:IsA("GuiObject") then
+			child.ZIndex = 42
+		end
+	end
+	local edge = root:FindFirstChild("Edge")
+	if edge and edge:IsA("Frame") then
+		edge.BackgroundColor3 = accent
+	end
+	local content = UI.frame({
+		Name = "Content",
+		BackgroundTransparency = 1,
+		Size = UDim2.fromScale(1, 1),
+		ZIndex = 41,
+		Parent = root,
+	})
+	UI.padding(content, 30, 24, 18, 16)
+	root.Parent = parent
+	return root, content
+end
+
 local function countUp(label: TextLabel, from: number, to: number, duration: number, format: (number) -> string)
 	local started = os.clock()
 	local connection: RBXScriptConnection
@@ -84,6 +119,25 @@ function PostMatch.show(parent: Instance, summary: Types.PostMatchSummary, onClo
 		Size = UDim2.fromOffset(1000, 84),
 	})
 	UI.glitchText(title, 0.5)
+	-- Filet lumineux à la couleur du résultat, fondu aux deux bouts.
+	local rule = UI.frame({
+		BackgroundColor3 = resultColor,
+		AnchorPoint = Vector2.new(0.5, 0),
+		Position = UDim2.new(0.5, 0, 0.07, 82),
+		Size = UDim2.fromOffset(560, 2),
+		ZIndex = 41,
+		Parent = overlay,
+	})
+	UI.gradient(
+		rule,
+		ColorSequence.new(Color3.new(1, 1, 1)),
+		0,
+		NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 1),
+			NumberSequenceKeypoint.new(0.5, 0),
+			NumberSequenceKeypoint.new(1, 1),
+		})
+	)
 	text({
 		Text = ("%d — %d   ·   %s   ·   %s%s"):format(
 			summary.scoreFor,
@@ -96,19 +150,15 @@ function PostMatch.show(parent: Instance, summary: Types.PostMatchSummary, onClo
 		TextSize = 20,
 		TextColor3 = colors.textDim,
 		AnchorPoint = Vector2.new(0.5, 0),
-		Position = UDim2.new(0.5, 0, 0.07, 88),
+		Position = UDim2.new(0.5, 0, 0.07, 92),
 		Size = UDim2.fromOffset(1000, 26),
 	})
 
 	-- Statistiques (gauche)
-	local stats = UI.panel({
+	local _, stats = glassPanel(overlay, {
 		AnchorPoint = Vector2.new(1, 0),
 		Position = UDim2.new(0.5, -12, 0.27, 0),
-		Size = UDim2.fromOffset(420, 300),
-		ZIndex = 41,
-		Parent = overlay,
-	})
-	UI.padding(stats, 20, 20, 16, 16)
+	}, 440, 300, resultColor)
 	UI.list(stats, Enum.FillDirection.Vertical, 6)
 	local lines = {
 		{ "ÉLIMINATIONS / MORTS / ASSISTS", ("%d / %d / %d"):format(summary.kills, summary.deaths, summary.assists) },
@@ -150,13 +200,9 @@ function PostMatch.show(parent: Instance, summary: Types.PostMatchSummary, onClo
 	end
 
 	-- Progression (droite)
-	local progress = UI.panel({
+	local _, progress = glassPanel(overlay, {
 		Position = UDim2.new(0.5, 12, 0.27, 0),
-		Size = UDim2.fromOffset(460, 300),
-		ZIndex = 41,
-		Parent = overlay,
-	})
-	UI.padding(progress, 20, 20, 16, 16)
+	}, 480, 316, colors.primary)
 	local breakdown =
 		UI.frame({ BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 150), ZIndex = 41, Parent = progress })
 	UI.list(breakdown, Enum.FillDirection.Vertical, 2)
