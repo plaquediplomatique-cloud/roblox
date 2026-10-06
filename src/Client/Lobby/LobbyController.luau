@@ -16,6 +16,7 @@
 
 local Players = game:GetService("Players")
 local ProximityPromptService = game:GetService("ProximityPromptService")
+local CollectionService = game:GetService("CollectionService")
 local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
 
@@ -28,6 +29,7 @@ local Cosmetics = require(Shared.Config.Cosmetics)
 local Progression = require(Shared.Config.Progression)
 local Ranks = require(Shared.Config.Ranks)
 local Theme = require(Shared.Config.Theme)
+local Onboarding = require(Shared.Rules.Onboarding)
 local Net = require(Shared.Net.Net)
 local UI = require(script.Parent.Parent.UI.UI)
 local SettingsPanel = require(script.Parent.Parent.UI.SettingsPanel)
@@ -581,6 +583,92 @@ local function buildTopBar()
 		TextTruncate = Enum.TextTruncate.AtEnd,
 		Parent = topBar,
 	})
+	-- Guide « prochaine étape » (premières sessions) : une consigne, la distance au lieu visé.
+	local guide = UI.glass(440, 34, 12, {
+		Name = "Guide",
+		Position = UDim2.fromOffset(0, 58),
+		Visible = false,
+		Parent = identity,
+	}).root
+	local guideTitle = UI.text({
+		Text = "",
+		FontFace = fonts.headingHeavy,
+		TextSize = 11,
+		TextColor3 = colors.primary,
+		TextXAlignment = Enum.TextXAlignment.Left,
+		Position = UDim2.fromOffset(18, 0),
+		Size = UDim2.fromOffset(90, 34),
+		Parent = guide,
+	})
+	local guideText = UI.text({
+		Text = "",
+		FontFace = fonts.bodyBold,
+		TextSize = 14,
+		TextXAlignment = Enum.TextXAlignment.Left,
+		TextTruncate = Enum.TextTruncate.AtEnd,
+		Position = UDim2.fromOffset(104, 0),
+		Size = UDim2.fromOffset(268, 34),
+		Parent = guide,
+	})
+	local guideDistance = UI.text({
+		Text = "",
+		FontFace = fonts.monoBold,
+		TextSize = 13,
+		TextColor3 = colors.primary,
+		TextXAlignment = Enum.TextXAlignment.Right,
+		AnchorPoint = Vector2.new(1, 0),
+		Position = UDim2.new(1, -18, 0, 0),
+		Size = UDim2.fromOffset(60, 34),
+		Parent = guide,
+	})
+	local trainedThisSession = false
+	local function nearestTarget(tag: string): number?
+		local character = player.Character
+		local root = character and character:FindFirstChild("HumanoidRootPart")
+		if not (root and root:IsA("BasePart")) then
+			return nil
+		end
+		local best: number? = nil
+		for _, part in CollectionService:GetTagged(tag) do
+			if part:IsA("BasePart") then
+				local distance = (part.Position - root.Position).Magnitude
+				if not best or distance < best then
+					best = distance
+				end
+			end
+		end
+		return best
+	end
+	task.spawn(function()
+		while true do
+			task.wait(0.25)
+			if ClientState.arena() == "Training" then
+				trainedThisSession = true
+			end
+			local data = ClientState.profileData()
+			local step: Onboarding.Step? = nil
+			if data then
+				local toClaim = 0
+				for _, mission in data.Missions.Daily do
+					if not mission.claimed and mission.progress >= mission.target then
+						toClaim += 1
+					end
+				end
+				step = Onboarding.nextStep({
+					matches = data.Stats.Matches,
+					trainedThisSession = trainedThisSession,
+					missionsToClaim = toClaim,
+				}, SettingsController.get().Keybinds.Menu or "M")
+			end
+			guide.Visible = step ~= nil
+			if step then
+				guideTitle.Text = step.title
+				guideText.Text = step.text
+				local distance = if step.target then nearestTarget(step.target) else nil
+				guideDistance.Text = if distance then ("%d m"):format(math.floor(distance / 3.57 + 0.5)) else ""
+			end
+		end
+	end)
 	-- Suivre la zone libre entre les boutons Roblox (gauche) et le bouton d'options (droite).
 	UI.onTopbarChanged(gui, function()
 		local left, right = UI.topbarClearance(gui)
