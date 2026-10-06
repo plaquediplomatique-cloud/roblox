@@ -3,7 +3,8 @@
 	RankMath — calculs purs de MMR et de RR (testés unitairement, voir tests/).
 
 	MMR (caché) : Elo d'équipe. Attendu = 1 / (1 + 10^((MMRadv − MMRéquipe)/400)).
-	  K = 64 pendant les placements, puis décroît linéairement jusqu'à 24 sur 30 matchs.
+	  K = 64 pendant les placements, puis 48 décroissant linéairement jusqu'à 24 sur les
+	  30 matchs suivants (le rang se stabilise, les montagnes russes s'arrêtent).
 	  La performance individuelle (−1..1, dérivée du score de combat relatif) module le
 	  delta de ±15 % : on récompense l'impact sans transformer le jeu en course aux kills.
 

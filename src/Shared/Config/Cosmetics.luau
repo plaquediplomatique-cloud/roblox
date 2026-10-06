@@ -359,6 +359,14 @@ simple("bn_circuit", "Banner", "Circuit", "Rare", true, "Pistes de circuit lumin
 simple("bn_aurora", "Banner", "Aurore", "Epic", true, "Une aurore boréale numérique.")
 simple("bn_apex", "Banner", "Apex", "Legendary", false, "Réservée aux sommets.")
 
+-- Titres (affichés sous le nom dans le hub et la barre d'identité)
+simple("ti_recruit", "Title", "Recrue", "Common", false, "Tout le monde commence quelque part.")
+simple("ti_entry", "Title", "Entry Fragger", "Rare", true, "Premier dans la pièce, premier au tableau.")
+simple("ti_anchor", "Title", "Ancre", "Rare", true, "Le site ne tombe pas tant qu'il est debout.")
+simple("ti_clutch", "Title", "Maître du Clutch", "Epic", true, "Seul contre tous, et pourtant.")
+simple("ti_phantom", "Title", "Fantôme", "Legendary", true, "Personne ne l'a entendu arriver.")
+simple("ti_founder", "Title", "Fondateur", "Mythic", false, "Présent depuis la Saison 1.")
+
 ---------------------------------------------------------------------------------------------
 -- Inventaire de départ et accès
 ---------------------------------------------------------------------------------------------
@@ -369,6 +377,7 @@ function Cosmetics.starterInventory(): { [string]: boolean }
 		ke_none = true,
 		em_salute = true,
 		bn_default = true,
+		ti_recruit = true,
 	}
 	for _, weaponId in Weapons.order do
 		owned[Cosmetics.skinId("default", weaponId)] = true

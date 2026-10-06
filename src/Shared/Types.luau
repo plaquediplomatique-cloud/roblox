@@ -144,6 +144,9 @@ export type TracerProfile = {
 	speed: number, -- studs/s du segment visuel
 	length: number,
 	every: number, -- 1 = chaque balle a un traceur
+	-- Arme suppressée : au-delà de cette distance, les AUTRES joueurs ne voient ni le
+	-- traceur ni le flash de bouche (le tireur, lui, voit toujours ses traceurs).
+	concealRange: number?,
 }
 
 export type WeaponAudio = {

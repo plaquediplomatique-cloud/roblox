@@ -46,8 +46,15 @@ local PISTOL_HIP = CFrame.new(0.42, -0.5, -1.38)
 
 local WARM_TRACER = Color3.fromRGB(255, 214, 150)
 
-local function tracer(width: number, every: number, color: Color3?): Types.TracerProfile
-	return { color = color or WARM_TRACER, width = width, speed = 950, length = 9, every = every }
+local function tracer(width: number, every: number, color: Color3?, concealRange: number?): Types.TracerProfile
+	return {
+		color = color or WARM_TRACER,
+		width = width,
+		speed = 950,
+		length = 9,
+		every = every,
+		concealRange = concealRange,
+	}
 end
 
 local function audio(
@@ -306,7 +313,7 @@ register({
 		accentRings = 4,
 	}),
 	viewmodel = viewmodel(RIFLE_HIP, 0.95, "Rifle", 1),
-	tracer = tracer(0.05, 2, Color3.fromRGB(190, 240, 255)),
+	tracer = tracer(0.05, 2, Color3.fromRGB(190, 240, 255), 60),
 })
 
 -- 3. BR-3 "Tribune" — fusil à rafales de 3 ---------------------------------------------------

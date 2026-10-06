@@ -22,7 +22,8 @@ local InputController = {
 	Scrolled = Signal.new() :: Signal.Signal<number>,
 }
 
-local ALWAYS_ACTIVE: { [string]: boolean } = { Menu = true, Scoreboard = true }
+-- Actions qui restent actives menu ouvert (elles servent justement à le fermer).
+local ALWAYS_ACTIVE: { [string]: boolean } = { Menu = true, Scoreboard = true, Emote = true }
 
 local GAMEPAD: { [Enum.KeyCode]: string } = {
 	[Enum.KeyCode.ButtonR2] = "Fire",

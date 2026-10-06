@@ -902,8 +902,12 @@ local function onShotVisual(packet: any)
 	local skin = if skinId then Cosmetics.get(skinId) else nil
 	local fx = skin and skin.fx
 	local tracerColor = (fx and fx.tracerColor) or def.tracer.color
+	-- Arme suppressée : de loin, ni traceur ni flash (on entend, on ne voit pas).
+	local camera = Workspace.CurrentCamera
+	local conceal = def.tracer.concealRange
+	local concealed = conceal ~= nil and camera ~= nil and (camera.CFrame.Position - muzzle).Magnitude > conceal
 	local first = visual.e[1]
-	if typeof(first) == "Vector3" then
+	if typeof(first) == "Vector3" and not concealed then
 		local flashColor = (fx and fx.muzzleColor) or Color3.fromRGB(255, 200, 120)
 		EffectsController.muzzleFlash(CFrame.lookAt(muzzle, first), flashColor, 1.1, true)
 	end
@@ -911,7 +915,7 @@ local function onShotVisual(packet: any)
 		if typeof(endpoint) ~= "Vector3" or index > 12 then
 			break
 		end
-		if index == 1 or index % 2 == 0 then
+		if not concealed and (index == 1 or index % 2 == 0) then
 			EffectsController.tracer(
 				muzzle,
 				endpoint,
