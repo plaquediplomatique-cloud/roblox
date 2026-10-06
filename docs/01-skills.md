@@ -210,7 +210,7 @@ zone de visée, bouton « tir + visée », sans aucun code de gameplay spécifiq
 ## 1.11 Character controller custom
 
 `MovementController` : modèle **Source-like** piloté sur un Humanoid (friction
-proportionnelle, accélération, **counter-strafe** ≈ 50-70 ms, air-control plafonné,
+proportionnelle, accélération, **counter-strafe** ≈ 40–50 ms, air-control plafonné,
 bunny-hop léger qui s'érode, glissade avec élan/pente/steering/slide-jump, buffer de saut
 120 ms, coyote time 80 ms). Postures (debout/accroupi/glissade) répliquées au serveur, qui
 en déduit les hitboxes. Détails : [06-movement.md](06-movement.md).
@@ -230,7 +230,8 @@ en déduit les hitboxes. Détails : [06-movement.md](06-movement.md).
 ## 1.13 Hit detection autoritaire + lag compensation
 
 Pipeline en 10 étapes dans `CombatService.onFire` (contexte, arme, séquence, munitions,
-cadence, origine, cône minimal, vitesse angulaire, résolution, effets). Les cibles sont
+cadence, origine, cône minimal, vitesse angulaire, résolution, effets) — 13 contrôles
+détaillés en [10-code.md §10.3](10-code.md#103-validation-serveur-du-tir). Les cibles sont
 **rembobinées** par `LagCompensationService` : anneau de 64 instantanés par cible,
 interpolation, rembobinage max 0.35 s, délai d'interpolation 0.1 s, hitboxes gonflées de
 0.12 stud. Les hitboxes sont des **OBB de gameplay** (`Shared/Combat/Hitbox.luau`),
