@@ -38,6 +38,8 @@ export type SoundDef = {
 	layers: { string }?, -- clés jouées en même temps (son composé)
 }
 
+local SoundPack = require(script.Parent.SoundPack)
+
 type Shape = { tone: Tone?, cut: number?, layers: { string }? }
 
 local ROCKET = "rbxasset://sounds/Rocket shot.wav"
@@ -307,8 +309,17 @@ Sounds.defs = {
 	["Ambient.Hum"] = def({ FALL }, 0.05, 0.22, 0.22, "Ambient", nil, true),
 } :: { [string]: SoundDef }
 
+-- Pack de tirs maison : une entrée dont les ids sont renseignés remplace le son de repli.
+local packed: { [string]: SoundDef } = {}
+for key, entry in SoundPack do
+	local base = Sounds.defs[key]
+	if base and #entry.ids > 0 then
+		packed[key] = def(entry.ids, entry.volume, 0.97, 1.03, base.group, base.rolloff)
+	end
+end
+
 function Sounds.get(key: string): SoundDef?
-	return Sounds.defs[key]
+	return packed[key] or Sounds.defs[key]
 end
 
 return Sounds

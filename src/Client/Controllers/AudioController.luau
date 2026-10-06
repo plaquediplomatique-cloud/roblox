@@ -6,8 +6,8 @@
 	  Master ─┬─ Music
 	          ├─ SFX ─┬─ Weapons ─ Footsteps ─ Impacts ─ Feedback ─ Ambient
 	          └─ UI
-	* Tirs : couche "corps" (+ couches composées : attaque, grave) + "mécanique" + "tail" ;
-	  la tail est réverbérée en intérieur (plafond détecté par raycast). Les tirs lointains
+	* Tirs : couche "corps" (+ couches composées : attaque, grave) + "mécanique", secs :
+	  ni traîne ni réverbération (écho jugé désagréable en test). Les tirs lointains
 	  (>120 studs) jouent la version "distant" : on lit la distance d'un combat à l'oreille.
 	* Mise en forme par son (Sounds : égaliseur `tone`, coupe en fondu `cut`, `layers`) et
 	  compresseur sur le groupe Armes : les rafales restent pleines sans agresser l'oreille.
@@ -259,18 +259,12 @@ function AudioController.playOn(key: string, parent: Instance, options: PlayOpti
 	return sound
 end
 
-local function indoorAt(position: Vector3): boolean
-	occlusionParams.FilterDescendantsInstances = geometryRoots()
-	return Workspace:Raycast(position, Vector3.new(0, 40, 0), occlusionParams) ~= nil
-end
-
 --[[ Tir : couches proches pour le tireur local, version lointaine/occluse pour les autres. ]]
 function AudioController.weaponShot(def: Types.WeaponDef, position: Vector3, isLocal: boolean)
 	local audio = def.audio
 	if isLocal then
 		AudioController.play(audio.fire)
 		AudioController.play(audio.mech, { volume = 0.8 })
-		AudioController.playAt(audio.tail, position, { reverb = indoorAt(position) })
 		return
 	end
 	local camera = Workspace.CurrentCamera
@@ -279,7 +273,6 @@ function AudioController.weaponShot(def: Types.WeaponDef, position: Vector3, isL
 		AudioController.playAt(audio.distant, position, { occlusion = true })
 	else
 		AudioController.playAt(audio.fire, position, { occlusion = true })
-		AudioController.playAt(audio.tail, position, { occlusion = true, reverb = indoorAt(position) })
 	end
 end
 
@@ -425,7 +418,9 @@ local function updateAmbience(dt: number)
 		reverbClock = 0.3
 		occlusionParams.FilterDescendantsInstances = geometryRoots()
 		local indoor = Workspace:Raycast(listener, Vector3.new(0, 60, 0), occlusionParams) ~= nil
-		local target = reverbType(if indoor then current.indoorReverb else current.outdoorReverb)
+		-- Réverbération d'ambiance limitée aux petites pièces : jamais de longue traîne.
+		local wanted = reverbType(if indoor then current.indoorReverb else current.outdoorReverb)
+		local target = if wanted == Enum.ReverbType.NoReverb then wanted else Enum.ReverbType.Room
 		if SoundService.AmbientReverb ~= target then
 			SoundService.AmbientReverb = target
 		end
@@ -448,7 +443,7 @@ function AudioController.start()
 	local sfx = group("SFX", master, 1)
 	group("UI", master, 0.8)
 	for _, name in { "Weapons", "Footsteps", "Impacts", "Feedback", "Ambient", "Voice" } do
-		group(name, sfx, if name == "Weapons" then 0.85 else 1)
+		group(name, sfx, if name == "Weapons" then 0.55 else 1)
 	end
 	-- Compresseur des armes : rafales homogènes, pics écrêtés en douceur.
 	local compressor = Instance.new("CompressorSoundEffect")
