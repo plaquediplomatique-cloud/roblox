@@ -346,7 +346,7 @@ local function build(kit: Kit)
 	end
 
 	-- ATRIUM : sculpture, bassin, apparitions, borne ----------------------------------------
-	-- Bassin carré (margelle assise), obélisque de pierre noire au centre.
+	-- Bassin carré (margelle assise), sculpture torsadée au centre.
 	kit:box("PoolFloor", -8, 0, -8, 8, 0.1, 8, "HqDarkStone", "Props")
 	for _, spec in
 		{
@@ -360,15 +360,43 @@ local function build(kit: Kit)
 	end
 	kit:decorBox("PoolWater", -8, 0.9, -8, 8, 1, 8, "Water")
 	kit:box("SculptureBase", -2.6, 0, -2.6, 2.6, 2.2, 2.6, "HqConcrete", "Props")
-	kit:box("AetherCore", -1.4, 2.2, -1.4, 1.4, 24, 1.4, "Monolith", "Props")
-	kit:decorBox("CoreLine", -1.45, 22.5, -1.45, 1.45, 22.7, 1.45, "NeonWhite", {
-		color = Color3.fromRGB(150, 225, 255),
-	})
+	-- Sculpture « Aether » : tour torsadée acier blanc / laiton (rappel des filets du sol),
+	-- silhouette lisible depuis chaque entrée sans boucher la perspective vers la verrière,
+	-- couronnée d'un cristal lumineux discret.
+	local levels = 7
+	for index = 0, levels - 1 do
+		local t = index / (levels - 1)
+		local width = 3.6 - 1.7 * t
+		local height = 1.3
+		local y = 2.2 + index * height + height / 2
+		-- Pièce solide (pivotée : pas une boîte axe-alignée de kit:box).
+		local tier = kit:decor(
+			"AetherTier",
+			CFrame.new(0, y, 0) * CFrame.Angles(0, math.rad(index * 13), 0),
+			Vector3.new(width, height - 0.12, width),
+			if index % 2 == 0 then "HqSteelWhite" else "Brass",
+			{ group = "Props", shadow = true }
+		)
+		tier.collide = true
+		tier.query = true
+	end
+	local top = 2.2 + levels * 1.3
+	kit:decor(
+		"AetherCrystal",
+		CFrame.new(0, top + 2.3, 0) * CFrame.Angles(math.rad(45), math.rad(20), math.rad(35.26)),
+		Vector3.new(1.3, 1.3, 1.3),
+		"NeonWhite",
+		{ color = Color3.fromRGB(150, 225, 255) }
+	)
+
 	for index = 0, 7 do
 		local angle = index / 8 * math.pi * 2
 		kit:spawn("Hub", math.cos(angle) * 14, math.sin(angle) * 14, 0, 0)
 	end
-	kiosk(kit, "Play", "JOUER", 0, -20, "-Z")
+	-- Deux bornes JOUER encadrent le bassin, tournées vers les apparitions : à un pas du
+	-- joueur, sans couper l'axe entrée → sculpture → enseigne.
+	kiosk(kit, "Play", "JOUER", -15.5, -15.5, "+X")
+	kiosk(kit, "Play", "JOUER", 15.5, -15.5, "-X")
 	lettering(kit, "AETHER STRIKE", 0, 23, 39, 34, 4, "-Z", SIGN_BRASS)
 	lettering(kit, "SALLE DE BRIEFING · CLASSÉ", 0, 11.6, 39.15, 26, 1.6, "-Z", SIGN_INK)
 	lettering(kit, "GALERIE DES CHAMPIONS", 0, 11.6, -39.15, 24, 1.6, "+Z", SIGN_INK)
