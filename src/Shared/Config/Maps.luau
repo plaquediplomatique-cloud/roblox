@@ -5,6 +5,10 @@
 	La géométrie est décrite par les blueprints serveur (Server/Maps/Blueprints/*) ;
 	ce module partagé ne contient que ce dont le client a besoin : nom, sites, profil
 	d'éclairage/post-process, astuces pour l'écran de chargement.
+
+	Règle d'éclairage des arènes (skill roblox-lighting-art) : l'ambiance vient de la
+	TEMPÉRATURE de la lumière (nuit bleutée, coucher orangé, néons), jamais de l'obscurité.
+	Ambient ≥ ~80 et OutdoorAmbient ≥ ~120 sur 255 : un adversaire dans l'ombre reste lisible.
 ]]
 
 local Types = require(script.Parent.Parent.Types)
@@ -89,22 +93,22 @@ Maps.defs = {
 		},
 		lighting = {
 			clockTime = 0.5,
-			brightness = 1.2,
-			ambient = rgb(24, 22, 26),
-			outdoorAmbient = rgb(52, 50, 58),
-			exposure = 0.2,
+			brightness = 2.0,
+			ambient = rgb(104, 98, 100),
+			outdoorAmbient = rgb(150, 142, 152),
+			exposure = 0.35,
 			colorShiftTop = rgb(255, 170, 90),
 			diffuseScale = 0.9,
 			specularScale = 1,
 			atmosphere = {
-				density = 0.34,
+				density = 0.26,
 				offset = 0.05,
 				color = rgb(90, 80, 75),
 				decay = rgb(60, 40, 30),
 				glare = 0.1,
-				haze = 1.8,
+				haze = 1.2,
 			},
-			colorCorrection = { brightness = 0.03, contrast = 0.16, saturation = -0.05, tint = rgb(255, 240, 225) },
+			colorCorrection = { brightness = 0.05, contrast = 0.1, saturation = -0.05, tint = rgb(255, 240, 225) },
 			bloom = { intensity = 0.7, size = 24, threshold = 0.9 },
 			sunRays = { intensity = 0.02, spread = 0.4 },
 			shadowSoftness = 0.35,
@@ -137,9 +141,9 @@ Maps.defs = {
 		},
 		lighting = {
 			clockTime = 14,
-			brightness = 2.2,
-			ambient = rgb(40, 44, 52),
-			outdoorAmbient = rgb(90, 100, 115),
+			brightness = 2.8,
+			ambient = rgb(92, 98, 110),
+			outdoorAmbient = rgb(150, 158, 172),
 			exposure = 0,
 			colorShiftTop = rgb(200, 230, 255),
 			diffuseScale = 1,
@@ -152,7 +156,7 @@ Maps.defs = {
 				glare = 0.3,
 				haze = 1.0,
 			},
-			colorCorrection = { brightness = 0, contrast = 0.1, saturation = -0.1, tint = rgb(240, 248, 255) },
+			colorCorrection = { brightness = 0.02, contrast = 0.08, saturation = -0.1, tint = rgb(240, 248, 255) },
 			bloom = { intensity = 0.55, size = 22, threshold = 0.95 },
 			sunRays = { intensity = 0.06, spread = 0.5 },
 			shadowSoftness = 0.15,
@@ -186,10 +190,10 @@ Maps.defs = {
 		},
 		lighting = {
 			clockTime = 17.6,
-			brightness = 2.4,
-			ambient = rgb(38, 40, 52),
-			outdoorAmbient = rgb(110, 105, 125),
-			exposure = 0.05,
+			brightness = 2.8,
+			ambient = rgb(90, 88, 104),
+			outdoorAmbient = rgb(152, 142, 160),
+			exposure = 0.15,
 			colorShiftTop = rgb(255, 180, 140),
 			diffuseScale = 1,
 			specularScale = 1,
@@ -201,7 +205,7 @@ Maps.defs = {
 				glare = 0.6,
 				haze = 1.2,
 			},
-			colorCorrection = { brightness = 0.01, contrast = 0.14, saturation = 0.05, tint = rgb(255, 244, 236) },
+			colorCorrection = { brightness = 0.03, contrast = 0.1, saturation = 0.05, tint = rgb(255, 244, 236) },
 			bloom = { intensity = 0.6, size = 26, threshold = 0.93 },
 			sunRays = { intensity = 0.12, spread = 0.7 },
 			shadowSoftness = 0.3,
@@ -234,10 +238,10 @@ Maps.defs = {
 		},
 		lighting = {
 			clockTime = 2,
-			brightness = 1.1,
-			ambient = rgb(30, 22, 40),
-			outdoorAmbient = rgb(60, 50, 80),
-			exposure = 0.15,
+			brightness = 1.9,
+			ambient = rgb(100, 88, 118),
+			outdoorAmbient = rgb(146, 132, 166),
+			exposure = 0.35,
 			colorShiftTop = rgb(220, 120, 255),
 			diffuseScale = 0.9,
 			specularScale = 1,
@@ -249,7 +253,7 @@ Maps.defs = {
 				glare = 0,
 				haze = 0.6,
 			},
-			colorCorrection = { brightness = 0.02, contrast = 0.18, saturation = 0.12, tint = rgb(248, 238, 255) },
+			colorCorrection = { brightness = 0.04, contrast = 0.1, saturation = 0.12, tint = rgb(248, 238, 255) },
 			bloom = { intensity = 0.9, size = 30, threshold = 0.9 },
 			sunRays = { intensity = 0, spread = 0 },
 			shadowSoftness = 0.2,
