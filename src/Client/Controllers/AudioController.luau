@@ -6,9 +6,11 @@
 	  Master ─┬─ Music
 	          ├─ SFX ─┬─ Weapons ─ Footsteps ─ Impacts ─ Feedback ─ Ambient
 	          └─ UI
-	* Tirs : couche "corps" + "mécanique" + "tail" ; la tail est réverbérée en
-	  intérieur (plafond détecté par raycast). Les tirs lointains (>120 studs) jouent
-	  la version "distant" : on lit la distance d'un combat à l'oreille.
+	* Tirs : couche "corps" (+ couches composées : attaque, grave) + "mécanique" + "tail" ;
+	  la tail est réverbérée en intérieur (plafond détecté par raycast). Les tirs lointains
+	  (>120 studs) jouent la version "distant" : on lit la distance d'un combat à l'oreille.
+	* Mise en forme par son (Sounds : égaliseur `tone`, coupe en fondu `cut`, `layers`) et
+	  compresseur sur le groupe Armes : les rafales restent pleines sans agresser l'oreille.
 	* Occlusion : un son 3D dont la ligne caméra -> source traverse un mur est filtré
 	  (passe-bas + atténuation) : on distingue "derrière ce mur" de "dans cette pièce".
 	* Ducking : sur un kill/une détonation, musique et ambiance s'effacent brièvement.
@@ -47,6 +49,7 @@ local occlusionParams = RaycastParams.new()
 occlusionParams.FilterType = Enum.RaycastFilterType.Include
 
 local DISTANT_THRESHOLD = 120
+local CUT_FADE = TweenInfo.new(0.06, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 
 -- Ambiance de la carte courante : sons ponctuels autour de l'auditeur + réverbération
 -- du lieu (intérieur / extérieur, détecté par un rayon vers le ciel).
@@ -100,7 +103,41 @@ local function create(key: string, options: PlayOptions?): Sound?
 		sound.RollOffMinDistance = def.rolloff.X
 		sound.RollOffMaxDistance = def.rolloff.Y
 	end
+	local tone = def.tone
+	if tone then
+		local equalizer = Instance.new("EqualizerSoundEffect")
+		equalizer.Name = "Tone"
+		equalizer.LowGain = tone.low or 0
+		equalizer.MidGain = tone.mid or 0
+		equalizer.HighGain = tone.high or 0
+		equalizer.Priority = 2
+		equalizer.Parent = sound
+	end
 	return sound
+end
+
+--[[ Coupe en fondu (`cut`) : garde l'attaque d'un échantillon et retire sa traîne. ]]
+local function scheduleCut(sound: Sound, key: string)
+	local def = Sounds.get(key)
+	local cut = def and def.cut
+	if not cut then
+		return
+	end
+	task.delay(cut, function()
+		if sound.Parent and sound.IsPlaying then
+			TweenService:Create(sound, CUT_FADE, { Volume = 0 }):Play()
+			task.delay(CUT_FADE.Time, function()
+				if sound.Parent then
+					sound:Destroy()
+				end
+			end)
+		end
+	end)
+end
+
+local function layersOf(key: string): { string }
+	local def = Sounds.get(key)
+	return if def and def.layers then def.layers else {}
 end
 
 --[[ Son 2D (interface, retours de combat). ]]
@@ -109,8 +146,12 @@ function AudioController.play(key: string, options: PlayOptions?): Sound?
 	if not sound then
 		return nil
 	end
+	for _, layer in layersOf(key) do
+		AudioController.play(layer, options)
+	end
 	sound.Parent = SoundService
 	sound:Play()
+	scheduleCut(sound, key)
 	if not sound.Looped then
 		sound.Ended:Once(function()
 			sound:Destroy()
@@ -141,10 +182,32 @@ function AudioController.playAt(key: string, position: Vector3, options: PlayOpt
 	if not sound then
 		return nil
 	end
+	local occluded = options ~= nil and options.occlusion == true and isOccluded(position)
+	local layers = layersOf(key)
+	if #layers > 0 then
+		-- Les couches héritent du résultat d'occlusion (un seul rayon par tir).
+		local layerOptions: PlayOptions = {
+			volume = options and options.volume,
+			pitch = options and options.pitch,
+			reverb = options and options.reverb,
+			occlusion = false,
+		}
+		for _, layer in layers do
+			local layered = AudioController.playAt(layer, position, layerOptions)
+			if layered and occluded then
+				local filter = Instance.new("EqualizerSoundEffect")
+				filter.LowGain = 2
+				filter.MidGain = -8
+				filter.HighGain = -24
+				filter.Parent = layered
+				layered.Volume *= 0.7
+			end
+		end
+	end
 	local attachment = Instance.new("Attachment")
 	attachment.WorldPosition = position
 	attachment.Parent = Workspace.Terrain
-	if options and options.occlusion and isOccluded(position) then
+	if occluded then
 		local filter = Instance.new("EqualizerSoundEffect")
 		filter.LowGain = 2
 		filter.MidGain = -8
@@ -162,8 +225,16 @@ function AudioController.playAt(key: string, position: Vector3, options: PlayOpt
 	end
 	sound.Parent = attachment
 	sound:Play()
+	scheduleCut(sound, key)
 	sound.Ended:Once(function()
 		attachment:Destroy()
+	end)
+	sound.Destroying:Once(function()
+		task.defer(function()
+			if attachment.Parent then
+				attachment:Destroy()
+			end
+		end)
 	end)
 	task.delay(10, function()
 		if attachment.Parent then
@@ -377,8 +448,27 @@ function AudioController.start()
 	local sfx = group("SFX", master, 1)
 	group("UI", master, 0.8)
 	for _, name in { "Weapons", "Footsteps", "Impacts", "Feedback", "Ambient", "Voice" } do
-		group(name, sfx, 1)
+		group(name, sfx, if name == "Weapons" then 0.85 else 1)
 	end
+	-- Compresseur des armes : rafales homogènes, pics écrêtés en douceur.
+	local compressor = Instance.new("CompressorSoundEffect")
+	compressor.Name = "WeaponBus"
+	compressor.Threshold = -18
+	compressor.Ratio = 3.5
+	compressor.Attack = 0.004
+	compressor.Release = 0.15
+	compressor.GainMakeup = 0
+	compressor.Priority = 0
+	compressor.Parent = groups.Weapons
+	-- Limiteur général : aucun cumul (explosion + rafale + impacts) ne sature.
+	local limiter = Instance.new("CompressorSoundEffect")
+	limiter.Name = "MasterLimiter"
+	limiter.Threshold = -6
+	limiter.Ratio = 10
+	limiter.Attack = 0.002
+	limiter.Release = 0.2
+	limiter.Priority = 0
+	limiter.Parent = master
 	for _, name in { "Weapons", "Impacts" } do
 		local filter = Instance.new("EqualizerSoundEffect")
 		filter.Name = "LowHealthFilter"

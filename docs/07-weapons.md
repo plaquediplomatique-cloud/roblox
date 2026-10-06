@@ -202,13 +202,19 @@ nouvelle arme est tenue correctement sans animation dédiée. Un clip interrompu
 
 | Couche | Exemple VK-12 | Règle |
 |---|---|---|
-| Corps du tir | `Weapon.Rifle.Fire` | 2D pour le tireur, 3D occlus pour les autres |
+| Corps du tir | `Weapon.Rifle.Fire` | 2D pour le tireur, 3D occlus pour les autres ; coupé en fondu avant sa traîne (`cut`), égalisé (`tone`) |
+| Attaque + grave | `Weapon.Layer.Crack` / `Weapon.Layer.Thump` | couches jouées avec le corps (`layers`) : claquement net, impact sourd |
 | Mécanique | `Weapon.Mech.Rifle` | 2D tireur |
-| Queue (tail) | `Weapon.Tail.Rifle` | 3D, **réverbérée en intérieur** (plafond détecté) |
+| Queue (tail) | `Weapon.Tail.Rifle` | 3D, souffle grave filtré (plus de tonnerre), **réverbérée en intérieur** |
 | Lointain | `Weapon.Distant.Rifle` | remplace corps + tail au-delà de 120 studs |
 | Rechargement | `Reload.MagOut/MagIn/Rack` | déclenchés par les événements du clip |
 | Équipement / à vide | `Equip.Rifle` / `Weapon.Dry` | + **cliquetis d'alerte** sur les 20 % derniers du chargeur |
 | Impacts | béton, métal, bois, verre, chair, bouclier | 2 sons max par tir (pompe : pas de mur de son) |
+
+Mix : volumes bas par couche (≤ 0,75 cumulé, vérifié par les tests), compresseur sur le
+groupe Armes (seuil −18 dB, ratio 3,5) et limiteur général : une rafale reste pleine sans
+saturer. Les sons sont des placeholders intégrés au client ; brancher un vrai pack =
+remplacer les `ids` dans `Shared/Config/Sounds.luau` (voir l'en-tête du fichier).
 
 L'AR-9 utilise une signature **suppressée** (`Weapon.Rifle.Suppressed`), et ses traceurs
 et flashs sont **invisibles pour les autres joueurs au-delà de 60 studs**

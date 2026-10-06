@@ -534,9 +534,10 @@ local function objectiveStep()
 			action = "PlantStart"
 			if objective.planter == myId then
 				progress = 1 - (objective.plantEndsAt - now) / math.max(mode.plantTime, 0.1)
-				prompt = "ARMEMENT DE L'UPLINK…"
+				prompt = "Armement de l'uplink…"
 			else
-				prompt = ("Maintenir [%s]  —  ARMER L'UPLINK  ·  SITE %s"):format(keyFor("Interact"), site)
+				-- La touche est affichée dans la pastille de l'invite (HUDController).
+				prompt = ("Maintenir pour armer l'uplink  ·  site %s"):format(site)
 			end
 		end
 	elseif live and side == "Defense" and objective.planted then
@@ -545,11 +546,10 @@ local function objectiveStep()
 			action = "DefuseStart"
 			if objective.defuser == myId then
 				progress = 1 - (objective.defuseEndsAt - now) / math.max(mode.defuseTime, 0.1)
-				prompt = "NEUTRALISATION…"
+				prompt = "Neutralisation…"
 			else
-				prompt = ("Maintenir [%s]  —  NEUTRALISER%s"):format(
-					keyFor("Interact"),
-					if objective.halfDefused then "  ·  50 % CONSERVÉS" else ""
+				prompt = ("Maintenir pour neutraliser%s"):format(
+					if objective.halfDefused then "  ·  50 % conservés" else ""
 				)
 			end
 		end

@@ -120,7 +120,7 @@ function LoadingScreen.create(status: string?): ScreenGui
 	local tagline = label(
 		background,
 		"TACTIQUE  ·  COMPÉTITIF  ·  1v1  2v2  3v3",
-		Enum.Font.Sarpanch,
+		Enum.Font.BuilderSansBold,
 		18,
 		DIM,
 		UDim2.new(0.5, 0, 0.42, 50)
@@ -146,7 +146,7 @@ function LoadingScreen.create(status: string?): ScreenGui
 		label(background, status or "INITIALISATION", Enum.Font.RobotoMono, 16, CYAN, UDim2.new(0.5, 0, 0.42, 120))
 	statusLabel.Name = "Status"
 	local tip =
-		label(background, TIPS[math.random(1, #TIPS)], Enum.Font.TitilliumWeb, 18, DIM, UDim2.new(0.5, 0, 1, -60))
+		label(background, TIPS[math.random(1, #TIPS)], Enum.Font.BuilderSansMedium, 18, DIM, UDim2.new(0.5, 0, 1, -60))
 	tip.Name = "Tip"
 	tip.TextWrapped = true
 	tip.Size = UDim2.new(0.8, 0, 0, 50)

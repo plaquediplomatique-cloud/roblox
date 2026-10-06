@@ -270,8 +270,8 @@ function UI.panel(props: Props?): Frame
 		BackgroundColor3 = Theme.colors.panel,
 		BackgroundTransparency = UI.backgroundTransparency(Theme.transparency.panel),
 	})
-	UI.corner(4, panel)
-	UI.stroke(panel, Theme.colors.stroke, 1, 0.2)
+	UI.corner(8, panel)
+	UI.stroke(panel, Theme.colors.stroke, 1, 0.55)
 	UI.gradient(
 		panel,
 		ColorSequence.new(Color3.fromRGB(255, 255, 255), Color3.fromRGB(190, 200, 215)),

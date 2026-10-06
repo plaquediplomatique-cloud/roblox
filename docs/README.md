@@ -32,7 +32,7 @@ puis `tools/render_maps.py`).
 
 ## Ce qui est vérifié, et ce qui ne l'est pas encore
 
-- **Vérifié automatiquement** : analyse Luau **stricte** de tout `src/` (0 erreur), 116 tests
+- **Vérifié automatiquement** : analyse Luau **stricte** de tout `src/` (0 erreur), 123 tests
   unitaires hors moteur, build Rojo de la place complète, graphe de dépendances sans cycle,
   extraits de la section 10 conformes au code.
 - **Pas encore vérifié** : le jeu n'a pas été exécuté dans Roblox Studio. Le ressenti, les

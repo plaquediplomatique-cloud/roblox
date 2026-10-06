@@ -307,3 +307,38 @@ T.describe("Balistique", function()
 	end
 	print(table.concat(lines, "\n"))
 end)
+
+T.describe("Audio des armes", function()
+	local Sounds = req(Shared.Config.Sounds)
+	T.it("toutes les clés et couches existent, sans cycle", function()
+		for _, def in Weapons.defs do
+			for field, key in def.audio :: any do
+				T.expect(Sounds.get(key) ~= nil, def.id .. "." .. field .. " -> " .. key)
+			end
+		end
+		for key, sound in Sounds.defs do
+			for _, layer in sound.layers or {} do
+				local child = Sounds.get(layer)
+				T.expect(child ~= nil, key .. " couche inconnue " .. layer)
+				T.expect(child == nil or child.layers == nil, key .. " : couches imbriquées")
+			end
+		end
+	end)
+	T.it("mix des tirs : volumes bas, pas de tonnerre derrière chaque coup", function()
+		for _, def in Weapons.defs do
+			if def.category ~= "Melee" then
+				for _, key in { def.audio.fire, def.audio.tail, def.audio.mech } do
+					local sound = Sounds.get(key) :: any
+					local total = sound.volume
+					for _, layer in sound.layers or {} do
+						total += (Sounds.get(layer) :: any).volume
+					end
+					T.expect(total <= 0.75, ("%s : volume cumulé %.2f"):format(key, total))
+					for _, id in sound.ids do
+						T.expect(not string.find(id, "Thunder"), key .. " utilise encore le tonnerre")
+					end
+				end
+			end
+		end
+	end)
+end)

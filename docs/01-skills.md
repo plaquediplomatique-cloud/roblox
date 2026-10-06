@@ -188,7 +188,7 @@ tricher sur l'endroit où l'on tire.
 
 `AudioController` construit `Master ─┬─ Music / SFX ─┬─ Weapons, Footsteps, Impacts,
 Feedback, Ambient / UI`. Volumes des réglages appliqués aux groupes.
-- **Couches** : tir local = corps 2D + mécanique + *tail* 3D ; tir distant (> 120 studs) =
+- **Couches** : tir local = corps 2D (+ attaque et grave) + mécanique + *tail* 3D ; tir distant (> 120 studs) =
   variante `distant` ; *tail* réverbérée en intérieur (plafond détecté par raycast).
 - **Occlusion** : un son 3D dont la ligne caméra→source traverse la géométrie est filtré
   (passe-bas + atténuation) : on entend « derrière ce mur ».

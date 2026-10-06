@@ -38,7 +38,7 @@ services, avec une logique de jeu pure testée hors moteur.
 ```bash
 rokit install                 # rojo 7.7.1, luau-lsp 1.70.1, StyLua 2.5.2, Lune 0.10.5
 ./scripts/analyze.sh          # analyse Luau stricte de src/ (télécharge les définitions Roblox)
-./scripts/test.sh             # 116 tests unitaires (Lune)
+./scripts/test.sh             # 123 tests unitaires (Lune)
 ./scripts/build.sh            # → build/AetherStrike.rbxl
 ```
 
@@ -65,6 +65,7 @@ serveurs réservés par le matchmaker sont des **serveurs de match**
 | `python3 tools/check_skills.py --run-tests` | skills Claude Code : structure, liens, snippets typés, tests |
 | `lune run tools/audit_maps.luau` | coût de chaque carte (SceneAudit) + `build/maps/<id>.rbxm` |
 | `lune run tools/export_maps.luau` puis `python3 tools/render_view.py all` | rendus 3D de prévisualisation des cartes (hors Studio) |
+| `lune run tools/ui_preview.luau hud scene.json` puis `python3 tools/render_ui.py scene.json hud.jpg --bg <image>` | aperçu du HUD (vrais modules d'UI, mise en page Roblox) hors Studio |
 
 ## Organisation
 
@@ -77,7 +78,7 @@ src/
 │                lobby, interface
 └── ReplicatedFirst/   écran de chargement (démarrage et téléportations)
 tests/           tests Lune (specs + chargeur de modules hors moteur)
-tools/           tables d'armes, plans et rendus des cartes, audit de scène, graphe de dépendances,
+tools/           tables d'armes, plans et rendus des cartes, aperçu du HUD, audit de scène, graphe de dépendances,
                  extraits de documentation, vérification des skills
 docs/            dossier de conception (11 sections + audit de refonte)
 .claude/         équipe de skills Claude Code (voir docs/skills-claude-code.md)

@@ -77,7 +77,7 @@ function Settings.defaults(): Types.SettingsData
 			Weather = true,
 		},
 		Audio = {
-			Master = 0.85,
+			Master = 0.7,
 			Music = 0.45,
 			Sfx = 1,
 			Ui = 0.8,

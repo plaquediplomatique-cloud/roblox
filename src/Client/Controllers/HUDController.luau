@@ -3,6 +3,9 @@
 	HUDController — HUD de combat (match + Training Range), lisible en une fraction de
 	seconde et entièrement piloté par l'état (aucune logique de jeu ici).
 
+	Visuel : Client/UI/HudWidgets (construction seule, prévisualisable hors Studio avec
+	tools/ui_preview.luau + tools/render_ui.py) ; ce contrôleur ne fait que les alimenter.
+
 	Disposition (référence 1080p, mise à l'échelle par UI.screen) :
 	  haut-centre    : scores, timer de manche / mèche de l'uplink, survivants, boussole
 	  haut-droite    : killfeed
@@ -33,6 +36,7 @@ local Ballistics = require(Shared.Combat.Ballistics)
 local Spring = require(Shared.Util.Spring)
 local Net = require(Shared.Net.Net)
 local UI = require(script.Parent.Parent.UI.UI)
+local HudWidgets = require(script.Parent.Parent.UI.HudWidgets)
 local ClientState = require(script.Parent.Parent.Core.ClientState)
 local ReplicaController = require(script.Parent.Parent.Core.ReplicaController)
 local SettingsController = require(script.Parent.SettingsController)
@@ -360,6 +364,7 @@ end
 local killConfirm: TextLabel
 local killPips: Frame
 local roundKills = 0
+local QUAD_IN = TweenInfo.new(0.16, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 
 local STREAK_NAMES: { [number]: string } = {
 	[2] = "DOUBLÉ",
@@ -375,14 +380,7 @@ local function renderKillPips()
 		end
 	end
 	for index = 1, math.min(roundKills, 5) do
-		local pip = UI.frame({
-			BackgroundColor3 = if roundKills >= 5 then colors.gold else colors.primary,
-			Size = UDim2.fromOffset(14, 14),
-			Rotation = 45,
-			LayoutOrder = index,
-			Parent = killPips,
-		})
-		UI.stroke(pip, Color3.new(0, 0, 0), 1, 0.4)
+		HudWidgets.killPip(killPips, index, if roundKills >= 5 then colors.gold else colors.primary)
 	end
 end
 
@@ -404,14 +402,14 @@ local function confirmKill(event: Types.KillEvent)
 		table.insert(tags, "PREMIER SANG")
 	end
 	local suffix = if #tags > 0 then "  ·  " .. table.concat(tags, " · ") else ""
-	killConfirm.Text = ('<font color="#%s">%s</font>  ÉLIMINÉ  ·  %s%s'):format(
+	killConfirm.Text = ('<font color="#%s">%s</font>   ÉLIMINÉ  ·  %s%s'):format(
 		(if streak then colors.gold else colors.primary):ToHex(),
 		streak or "◆",
 		string.upper(event.victimName),
 		suffix
 	)
-	killConfirm.TextTransparency = 0
-	UI.glitchText(killConfirm, 0.18)
+	killConfirm.TextTransparency = 1
+	UI.tween(killConfirm, QUAD_IN, { TextTransparency = 0 })
 	local token = os.clock()
 	killConfirm:SetAttribute("Token", token)
 	task.delay(2.2, function()
@@ -453,8 +451,8 @@ end
 -- Santé, bouclier, vignettes, indicateurs directionnels
 ---------------------------------------------------------------------------------------------
 
-local healthBar: UI.Bar
-local armorBar: UI.Bar
+local healthBar: HudWidgets.SegmentBar
+local armorBar: HudWidgets.SegmentBar
 local healthText: TextLabel
 local armorText: TextLabel
 local vignetteEdges: { Frame } = {}
@@ -580,7 +578,7 @@ local function updateHealth()
 	armorText.Text = tostring(math.ceil(armor))
 	local fraction = health / Ballistics.MAX_HEALTH
 	healthText.TextColor3 = if fraction <= LOW_HEALTH then colors.healthLow else colors.health
-	healthBar.fill.BackgroundColor3 = if fraction <= LOW_HEALTH then colors.healthLow else colors.health
+	healthBar.setColor(if fraction <= LOW_HEALTH then colors.healthLow else colors.health)
 	AudioController.setLowHealth(if health > 0 then fraction else 1)
 	LightingController.setLowHealth(if health > 0 then fraction else 1)
 
@@ -600,15 +598,10 @@ end
 -- Munitions et arme
 ---------------------------------------------------------------------------------------------
 
-local ammoMag: TextLabel
-local ammoReserve: TextLabel
+local ammoWidget: HudWidgets.Ammo
 local ammoScale: UIScale
-local weaponName: TextLabel
-local fireModeLabel: TextLabel
-local reloadFill: Frame
-local reloadHint: TextLabel
-local slotLabels: { [string]: TextLabel } = {}
 local lastMag = -1
+local lastCapacity = -1
 local lastWeapon: Types.WeaponDef? = nil
 
 local FIRE_MODE_NAMES: { [string]: string } = {
@@ -625,41 +618,48 @@ local function updateAmmo(state: WeaponController.HudState)
 	if not def then
 		return
 	end
+	local widget = ammoWidget
 	if def ~= lastWeapon then
 		lastWeapon = def
-		weaponName.Text = string.upper(def.displayName)
-		fireModeLabel.Text = FIRE_MODE_NAMES[def.fire.mode] or def.fire.mode
-		UI.glitchText(weaponName, 0.15)
+		widget.weaponName.Text = string.upper(def.displayName)
+		widget.fireMode.Text = FIRE_MODE_NAMES[def.fire.mode] or def.fire.mode
 		local slots = WeaponController.slots()
-		for slotName, label in slotLabels do
+		for index, slotName in { "Primary", "Secondary", "Melee" } do
+			local chip = widget.slots[slotName]
 			local ammo = slots[slotName]
 			local slotDef = if ammo then Weapons.get(ammo.w) else nil
-			label.Text = if slotDef then slotDef.shortName else "—"
-			local active = state.slot == slotName
-			label.TextColor3 = if active then colors.primary else colors.textFaint
-			label.FontFace = if active then fonts.monoBold else fonts.mono
+			chip.Text = ("%d  %s"):format(index, if slotDef then slotDef.shortName else "—")
+			HudWidgets.styleSlot(chip, state.slot == slotName)
 		end
+		lastMag = -1
 	end
 	local melee = def.category == "Melee"
-	ammoMag.Visible = not melee
-	ammoReserve.Visible = not melee
-	if state.mag ~= lastMag then
+	widget.mag.Visible = not melee
+	widget.reserve.Visible = not melee
+	widget.pips.Visible = not melee
+	if state.mag ~= lastMag or state.capacity ~= lastCapacity then
 		if state.mag < lastMag then
-			ammoScale.Scale = 1.12
+			ammoScale.Scale = 1.08
 			UI.tween(ammoScale, QUAD_OUT, { Scale = 1 })
 		end
 		lastMag = state.mag
-		ammoMag.Text = tostring(state.mag)
+		lastCapacity = state.capacity
+		widget.mag.Text = tostring(state.mag)
+		if not melee then
+			HudWidgets.renderPips(widget.pips, state.mag, state.capacity)
+		end
 	end
-	ammoReserve.Text = "/ " .. (if state.reserve >= 999 then "∞" else tostring(state.reserve))
+	widget.reserve.Text = "/ " .. (if state.reserve >= 999 then "∞" else tostring(state.reserve))
 	local ratio = if state.capacity > 0 then state.mag / state.capacity else 1
-	ammoMag.TextColor3 = if state.mag <= 0 then colors.danger elseif ratio <= 0.3 then colors.warning else colors.text
-	reloadFill.Size = UDim2.fromScale(if state.reloading then state.reloadProgress else 0, 1)
+	widget.mag.TextColor3 = if state.mag <= 0 then colors.danger elseif ratio <= 0.3 then colors.warning else colors.text
+	widget.reloadTrack.Visible = state.reloading
+	widget.reloadFill.Size = UDim2.fromScale(if state.reloading then state.reloadProgress else 0, 1)
 	local needsReload = not melee and not state.reloading and state.mag <= 0 and state.reserve > 0
-	reloadHint.Visible = needsReload
+	local hint = widget.reloadHint
+	hint.Visible = needsReload
 	if needsReload then
-		reloadHint.TextTransparency = 0.25 + 0.25 * math.sin(os.clock() * 8)
-		reloadHint.Text = ("RECHARGER  [%s]"):format(SettingsController.get().Keybinds.Reload or "R")
+		hint.TextTransparency = 0.25 + 0.25 * math.sin(os.clock() * 8)
+		hint.Text = ("RECHARGER  [%s]"):format(SettingsController.get().Keybinds.Reload or "R")
 	end
 end
 
@@ -668,14 +668,7 @@ end
 ---------------------------------------------------------------------------------------------
 
 local matchBar: Frame
-local scoreLeft: TextLabel
-local scoreRight: TextLabel
-local sideLeft: TextLabel
-local sideRight: TextLabel
-local timerLabel: TextLabel
-local roundLabel: TextLabel
-local pipsLeft: Frame
-local pipsRight: Frame
+local bar: HudWidgets.MatchBar
 local compass: Frame
 local compassStrip: Frame
 local compassLabels: { { label: TextLabel, heading: number } } = {}
@@ -704,58 +697,41 @@ local function renderPips(container: Frame, data: Types.MatchStateData, team: st
 			end
 		end
 	end
-	local children = {}
-	for _, child in container:GetChildren() do
-		if child:IsA("Frame") then
-			table.insert(children, child)
-		end
-	end
-	for index = 1, math.max(total, #children) do
-		local pip = children[index]
-		if index > total then
-			if pip then
-				pip:Destroy()
-			end
-			continue
-		end
-		if not pip then
-			pip = UI.frame({ Size = UDim2.fromOffset(18, 5), LayoutOrder = index, Parent = container })
-		end
-		local frame = pip :: Frame
-		frame.BackgroundColor3 = if index <= alive then color else colors.stroke
-		frame.BackgroundTransparency = if index <= alive then 0 else 0.3
-	end
+	HudWidgets.renderAlive(container, alive, total, color)
 end
 
 local function updateMatchBar(data: Types.MatchStateData)
 	local myTeam = ClientState.myTeam() or "A"
 	local enemyTeam = if myTeam == "A" then "B" else "A"
 	local scores = data.scores :: any
-	scoreLeft.Text = tostring(scores[myTeam] or 0)
-	scoreRight.Text = tostring(scores[enemyTeam] or 0)
+	bar.scoreLeft.Text = tostring(scores[myTeam] or 0)
+	bar.scoreRight.Text = tostring(scores[enemyTeam] or 0)
 	local sides = data.sides :: any
 	local mySide: string = sides[myTeam] or "Attack"
 	local enemySide: string = sides[enemyTeam] or "Defense"
-	sideLeft.Text = (Theme.sideNames :: any)[mySide] or mySide
-	sideRight.Text = (Theme.sideNames :: any)[enemySide] or enemySide
-	sideLeft.TextColor3 = colors.ally
-	sideRight.TextColor3 = colors.enemy
-	renderPips(pipsLeft, data, myTeam, colors.ally)
-	renderPips(pipsRight, data, enemyTeam, colors.enemy)
+	bar.sideLeft.Text = (Theme.sideNames :: any)[mySide] or mySide
+	bar.sideRight.Text = (Theme.sideNames :: any)[enemySide] or enemySide
+	bar.sideLeft.TextColor3 = colors.ally
+	bar.sideRight.TextColor3 = colors.enemy
+	bar.stripLeft.BackgroundColor3 = colors.ally
+	bar.stripRight.BackgroundColor3 = colors.enemy
+	renderPips(bar.pipsLeft, data, myTeam, colors.ally)
+	renderPips(bar.pipsRight, data, enemyTeam, colors.enemy)
 	local remaining = math.max(0, data.phaseEndsAt - serverNow())
 	local planted = data.phase == "Planted"
+	local timer = bar.timer
 	if planted then
-		timerLabel.Text = string.format("%.1f", remaining)
-		timerLabel.TextColor3 = colors.danger
-		timerLabel.TextTransparency = if remaining < 10 then 0.3 * (0.5 + 0.5 * math.sin(os.clock() * 12)) else 0
+		timer.Text = string.format("%.1f", remaining)
+		timer.TextColor3 = colors.danger
+		timer.TextTransparency = if remaining < 10 then 0.3 * (0.5 + 0.5 * math.sin(os.clock() * 12)) else 0
 	else
-		timerLabel.Text = UI.formatTime(remaining)
-		timerLabel.TextColor3 = if data.phase == "Live" and remaining <= 10 then colors.warning else colors.text
-		timerLabel.TextTransparency = 0
+		timer.Text = UI.formatTime(remaining)
+		timer.TextColor3 = if data.phase == "Live" and remaining <= 10 then colors.warning else colors.text
+		timer.TextTransparency = 0
 	end
 	local phaseName = PHASE_NAMES[data.phase] or ""
 	local roundText = ("MANCHE %d%s"):format(data.round, if data.overtime then "  ·  PROLONGATION" else "")
-	roundLabel.Text = if phaseName ~= "" then roundText .. "  ·  " .. phaseName else roundText
+	bar.round.Text = if phaseName ~= "" then roundText .. "  ·  " .. phaseName else roundText
 end
 
 local function buildCompass(parent: Instance)
@@ -786,8 +762,8 @@ local function buildCompass(parent: Instance)
 		local cardinal = names[heading]
 		local label = UI.text({
 			Text = cardinal or tostring(heading),
-			FontFace = if cardinal then fonts.heading else fonts.mono,
-			TextSize = if cardinal then 16 else 11,
+			FontFace = if cardinal then fonts.heading else fonts.body,
+			TextSize = if cardinal then 15 else 11,
 			TextColor3 = if cardinal then colors.text else colors.textDim,
 			AnchorPoint = Vector2.new(0.5, 0.5),
 			Size = UDim2.fromOffset(36, 20),
@@ -855,41 +831,26 @@ local function addKillfeedEntry(event: Types.KillEvent)
 	local weaponText = if def then def.shortName elseif event.weapon == "fall" then "CHUTE" else event.weapon
 	local markers = {}
 	if event.headshot then
-		table.insert(markers, "⌖")
+		table.insert(markers, "TÊTE")
 	end
 	if event.wallbang then
-		table.insert(markers, "⟂")
+		table.insert(markers, "À TRAVERS")
 	end
 	if event.noscope then
-		table.insert(markers, "◎")
+		table.insert(markers, "SANS VISÉE")
 	end
-	local text = ('<font color="#%s">%s</font>  <font color="#%s">[%s%s]</font>  <font color="#%s">%s</font>'):format(
+	local text = ('<font color="#%s"><b>%s</b></font>   <font color="#%s">%s%s</font>   <font color="#%s"><b>%s</b></font>'):format(
 		teamColor(event.killerTeam):ToHex(),
 		event.killerName,
 		colors.textDim:ToHex(),
 		weaponText,
-		if #markers > 0 then " " .. table.concat(markers, " ") else "",
+		if #markers > 0 then "  ·  " .. table.concat(markers, " · ") else "",
 		teamColor(event.victimTeam):ToHex(),
 		event.victimName
 	)
-	local entry = UI.panel({
-		Size = UDim2.fromOffset(0, 28),
-		AutomaticSize = Enum.AutomaticSize.X,
-		LayoutOrder = -math.floor(os.clock() * 1000),
-		Parent = killfeed,
-	})
-	UI.padding(entry, 10, 10, 0, 0)
-	if mine then
-		UI.stroke(entry, if event.killer == player.UserId then colors.primary else colors.danger, 1.5, 0)
-	end
-	UI.text({
-		Text = text,
-		FontFace = fonts.bodyBold,
-		TextSize = 16,
-		AutomaticSize = Enum.AutomaticSize.X,
-		Size = UDim2.fromScale(0, 1),
-		Parent = entry,
-	})
+	local accent = if not mine then nil elseif event.killer == player.UserId then colors.primary else colors.danger
+	local entry = HudWidgets.killfeedEntry(killfeed, text, accent)
+	entry.LayoutOrder = -math.floor(os.clock() * 1000)
 	local children = {}
 	for _, child in killfeed:GetChildren() do
 		if child:IsA("Frame") then
@@ -1050,6 +1011,7 @@ local bannerLine: Frame
 local bannerToken = 0
 local toastList: Frame
 local interactionPanel: Frame
+local interactionKey: TextLabel
 local interactionText: TextLabel
 local interactionFill: Frame
 
@@ -1067,7 +1029,6 @@ function HUDController.banner(title: string, subtitle: string?, color: Color3?, 
 	bannerLine.BackgroundTransparency = 0
 	bannerLine.Size = UDim2.fromOffset(0, 2)
 	UI.tween(bannerLine, Theme.tween.slow, { Size = UDim2.fromOffset(520, 2) })
-	UI.glitchText(bannerTitle, 0.25)
 	task.delay(duration or 2.6, function()
 		if token ~= bannerToken then
 			return
@@ -1092,35 +1053,25 @@ local TOAST_COLORS: { [string]: Color3 } = {
 	RejoinAvailable = colors.warning,
 }
 
+local TOAST_TITLES: { [string]: string } = {
+	Reward = "RÉCOMPENSE",
+	LevelUp = "NIVEAU SUPÉRIEUR",
+	RankUp = "PROMOTION",
+	RankDown = "RANG",
+	MissionComplete = "MISSION ACCOMPLIE",
+	PassTier = "PASSE DE COMBAT",
+	Purchase = "ACHAT",
+	Error = "ERREUR",
+	Info = "INFO",
+	PartyInvite = "ESCOUADE",
+	RejoinAvailable = "MATCH EN COURS",
+}
+
 --[[ Notification discrète (coin droit), visible partout (hub compris). ]]
 function HUDController.toast(text: string, kind: string?)
 	local color = TOAST_COLORS[kind or "Info"] or colors.primary
-	local toast = UI.panel({
-		Size = UDim2.fromOffset(340, 52),
-		LayoutOrder = -math.floor(os.clock() * 1000),
-		Parent = toastList,
-	})
-	UI.accent(toast, color, 4)
-	UI.padding(toast, 16, 10, 4, 4)
-	UI.text({
-		Text = string.upper(kind or "INFO"),
-		FontFace = fonts.heading,
-		TextSize = 12,
-		TextColor3 = color,
-		TextXAlignment = Enum.TextXAlignment.Left,
-		Size = UDim2.new(1, 0, 0, 16),
-		Parent = toast,
-	})
-	UI.text({
-		Text = text,
-		FontFace = fonts.bodyBold,
-		TextSize = 16,
-		TextXAlignment = Enum.TextXAlignment.Left,
-		TextTruncate = Enum.TextTruncate.AtEnd,
-		Position = UDim2.fromOffset(0, 16),
-		Size = UDim2.new(1, 0, 0, 26),
-		Parent = toast,
-	})
+	local toast = HudWidgets.toast(toastList, TOAST_TITLES[kind or "Info"] or "INFO", text, color)
+	toast.LayoutOrder = -math.floor(os.clock() * 1000)
 	local scale = Instance.new("UIScale")
 	scale.Scale = 0.85
 	scale.Parent = toast
@@ -1140,7 +1091,11 @@ end
 function HUDController.setInteraction(text: string?, progress: number?)
 	interactionPanel.Visible = text ~= nil
 	if text then
-		interactionText.Text = text
+		-- « Maintenir [F] pour … » : la touche passe dans la pastille, le reste en clair.
+		local key = SettingsController.get().Keybinds.Interact or "F"
+		interactionKey.Text = key
+		local cleaned = string.gsub(string.gsub(text, "%s*%[" .. key .. "%]%s*", " "), "%s+", " ")
+		interactionText.Text = cleaned
 		interactionFill.Size = UDim2.fromScale(math.clamp(progress or 0, 0, 1), 1)
 	end
 end
@@ -1166,7 +1121,15 @@ end
 local scopeOverlay: Frame
 local wasScoped = false
 local trainingPanel: Frame
-local trainingText: TextLabel
+local trainingValues: { [string]: TextLabel } = {}
+local TRAINING_ROWS = {
+	{ "Shots", "Tirs" },
+	{ "Accuracy", "Précision" },
+	{ "Head", "Tête" },
+	{ "Damage", "Dégâts" },
+	{ "Kills", "Éliminations" },
+	{ "Armor", "Boucliers" },
+}
 local netStats: TextLabel
 local fpsAverage = 60
 
@@ -1259,20 +1222,20 @@ local function updateTraining()
 	end
 	local stats = trainingStats()
 	if not stats then
-		trainingText.Text = "Chargement…"
+		for _, value in trainingValues do
+			value.Text = "…"
+		end
 		return
 	end
 	local shots = tonumber(stats.shots) or 0
 	local hits = tonumber(stats.hits) or 0
 	local headshots = tonumber(stats.headshots) or 0
-	trainingText.Text = table.concat({
-		("TIRS          %d"):format(shots),
-		("PRÉCISION     %d %%"):format(if shots > 0 then math.floor(hits / shots * 100 + 0.5) else 0),
-		("TÊTE          %d %%"):format(if hits > 0 then math.floor(headshots / hits * 100 + 0.5) else 0),
-		("DÉGÂTS        %d"):format(tonumber(stats.damage) or 0),
-		("ÉLIMINATIONS  %d"):format(tonumber(stats.kills) or 0),
-		("BOUCLIERS     %s"):format(if stats.armor then "OUI" else "NON"),
-	}, "\n")
+	trainingValues.Shots.Text = tostring(shots)
+	trainingValues.Accuracy.Text = ("%d %%"):format(if shots > 0 then math.floor(hits / shots * 100 + 0.5) else 0)
+	trainingValues.Head.Text = ("%d %%"):format(if hits > 0 then math.floor(headshots / hits * 100 + 0.5) else 0)
+	trainingValues.Damage.Text = tostring(tonumber(stats.damage) or 0)
+	trainingValues.Kills.Text = tostring(tonumber(stats.kills) or 0)
+	trainingValues.Armor.Text = if stats.armor then "OUI" else "NON"
 end
 
 local function updateNetStats(dt: number)
@@ -1299,305 +1262,40 @@ end
 ---------------------------------------------------------------------------------------------
 
 local function buildHealth(parent: Instance)
-	local panel = UI.panel({
-		Name = "Vitals",
-		AnchorPoint = Vector2.new(0, 1),
-		Position = UDim2.new(0, 32, 1, -32),
-		Size = UDim2.fromOffset(330, 92),
-		Parent = parent,
-	})
-	UI.accent(panel, colors.primary, 3)
-	healthText = UI.text({
-		Text = "100",
-		FontFace = fonts.monoBold,
-		TextSize = 44,
-		TextXAlignment = Enum.TextXAlignment.Left,
-		Position = UDim2.fromOffset(18, 8),
-		Size = UDim2.fromOffset(110, 46),
-		Parent = panel,
-	})
-	UI.text({
-		Text = "PV",
-		FontFace = fonts.heading,
-		TextSize = 13,
-		TextColor3 = colors.textDim,
-		TextXAlignment = Enum.TextXAlignment.Left,
-		Position = UDim2.fromOffset(122, 14),
-		Size = UDim2.fromOffset(40, 16),
-		Parent = panel,
-	})
-	armorText = UI.text({
-		Text = "50",
-		FontFace = fonts.monoBold,
-		TextSize = 22,
-		TextColor3 = colors.armor,
-		TextXAlignment = Enum.TextXAlignment.Right,
-		Position = UDim2.fromOffset(220, 14),
-		Size = UDim2.fromOffset(60, 26),
-		Parent = panel,
-	})
-	UI.text({
-		Text = "BOUCLIER",
-		FontFace = fonts.heading,
-		TextSize = 12,
-		TextColor3 = colors.armor,
-		TextXAlignment = Enum.TextXAlignment.Right,
-		Position = UDim2.fromOffset(160, 38),
-		Size = UDim2.fromOffset(120, 14),
-		Parent = panel,
-	})
-	healthBar = UI.bar(colors.health, {
-		Position = UDim2.fromOffset(18, 58),
-		Size = UDim2.new(1, -36, 0, 10),
-		Parent = panel,
-	})
-	armorBar = UI.bar(colors.armor, {
-		Position = UDim2.fromOffset(18, 72),
-		Size = UDim2.new(1, -36, 0, 5),
-		Parent = panel,
-	})
+	local vitals = HudWidgets.vitals(parent)
+	healthText = vitals.health
+	armorText = vitals.armor
+	healthBar = vitals.healthBar
+	armorBar = vitals.armorBar
 end
 
 local function buildAmmo(parent: Instance)
-	local panel = UI.panel({
-		Name = "Ammo",
-		AnchorPoint = Vector2.new(1, 1),
-		Position = UDim2.new(1, -32, 1, -32),
-		Size = UDim2.fromOffset(330, 118),
-		Parent = parent,
-	})
-	UI.accent(panel, colors.primary, 3)
-	weaponName = UI.text({
-		Text = "",
-		FontFace = fonts.heading,
-		TextSize = 17,
-		TextXAlignment = Enum.TextXAlignment.Left,
-		Position = UDim2.fromOffset(18, 8),
-		Size = UDim2.fromOffset(220, 20),
-		Parent = panel,
-	})
-	fireModeLabel = UI.text({
-		Text = "",
-		FontFace = fonts.mono,
-		TextSize = 12,
-		TextColor3 = colors.primary,
-		TextXAlignment = Enum.TextXAlignment.Right,
-		Position = UDim2.new(1, -96, 0, 10),
-		Size = UDim2.fromOffset(80, 16),
-		Parent = panel,
-	})
-	ammoMag = UI.text({
-		Text = "0",
-		FontFace = fonts.monoBold,
-		TextSize = 52,
-		TextXAlignment = Enum.TextXAlignment.Right,
-		AnchorPoint = Vector2.new(1, 0),
-		Position = UDim2.new(0.55, 0, 0, 26),
-		Size = UDim2.fromOffset(150, 54),
-		Parent = panel,
-	})
+	ammoWidget = HudWidgets.ammo(parent)
 	ammoScale = Instance.new("UIScale")
-	ammoScale.Parent = ammoMag
-	ammoReserve = UI.text({
-		Text = "/ 0",
-		FontFace = fonts.mono,
-		TextSize = 22,
-		TextColor3 = colors.textDim,
-		TextXAlignment = Enum.TextXAlignment.Left,
-		Position = UDim2.new(0.57, 0, 0, 46),
-		Size = UDim2.fromOffset(110, 26),
-		Parent = panel,
-	})
-	local reloadTrack = UI.frame({
-		BackgroundColor3 = colors.panelLight,
-		Position = UDim2.new(0, 18, 0, 84),
-		Size = UDim2.new(1, -36, 0, 3),
-		Parent = panel,
-	})
-	reloadFill = UI.frame({ BackgroundColor3 = colors.primary, Size = UDim2.fromScale(0, 1), Parent = reloadTrack })
-	local slots = UI.frame({
-		BackgroundTransparency = 1,
-		Position = UDim2.new(0, 18, 0, 92),
-		Size = UDim2.new(1, -36, 0, 18),
-		Parent = panel,
-	})
-	UI.list(slots, Enum.FillDirection.Horizontal, 16)
-	for index, slotName in { "Primary", "Secondary", "Melee" } do
-		slotLabels[slotName] = UI.text({
-			Text = "—",
-			FontFace = fonts.mono,
-			TextSize = 13,
-			TextColor3 = colors.textFaint,
-			AutomaticSize = Enum.AutomaticSize.X,
-			Size = UDim2.fromOffset(0, 18),
-			LayoutOrder = index,
-			Parent = slots,
-		})
-	end
-	reloadHint = UI.text({
-		Text = "RECHARGER",
-		FontFace = fonts.heading,
-		TextSize = 18,
-		TextColor3 = colors.warning,
-		AnchorPoint = Vector2.new(0.5, 0),
-		Position = UDim2.new(0.5, 0, 0.5, 60),
-		Size = UDim2.fromOffset(300, 24),
-		Visible = false,
-		Parent = parent,
-	})
-	UI.textStroke(reloadHint, 0.4)
+	ammoScale.Parent = ammoWidget.mag
 end
 
 local function buildMatchBar(parent: Instance)
-	matchBar = UI.frame({
-		Name = "MatchBar",
-		BackgroundTransparency = 1,
-		AnchorPoint = Vector2.new(0.5, 0),
-		Position = UDim2.new(0.5, 0, 0, 16),
-		Size = UDim2.fromOffset(520, 72),
-		Parent = parent,
-	})
-	local center = UI.panel({
-		AnchorPoint = Vector2.new(0.5, 0),
-		Position = UDim2.fromScale(0.5, 0),
-		Size = UDim2.fromOffset(150, 56),
-		Parent = matchBar,
-	})
-	timerLabel = UI.text({
-		Text = "0:00",
-		FontFace = fonts.monoBold,
-		TextSize = 30,
-		Size = UDim2.new(1, 0, 0, 36),
-		Parent = center,
-	})
-	roundLabel = UI.text({
-		Text = "",
-		FontFace = fonts.heading,
-		TextSize = 11,
-		TextColor3 = colors.textDim,
-		Position = UDim2.fromOffset(0, 34),
-		Size = UDim2.new(1, 0, 0, 16),
-		TextTruncate = Enum.TextTruncate.AtEnd,
-		Parent = center,
-	})
-	local function side(anchorX: number, x: number): (TextLabel, TextLabel, Frame)
-		local block = UI.panel({
-			AnchorPoint = Vector2.new(anchorX, 0),
-			Position = UDim2.new(0.5, x, 0, 0),
-			Size = UDim2.fromOffset(170, 56),
-			Parent = matchBar,
-		})
-		local score = UI.text({
-			Text = "0",
-			FontFace = fonts.display,
-			TextSize = 30,
-			AnchorPoint = Vector2.new(anchorX, 0),
-			Position = UDim2.new(anchorX, if anchorX == 1 then -14 else 14, 0, 4),
-			Size = UDim2.fromOffset(60, 34),
-			TextXAlignment = if anchorX == 1 then Enum.TextXAlignment.Right else Enum.TextXAlignment.Left,
-			Parent = block,
-		})
-		local name = UI.text({
-			Text = "",
-			FontFace = fonts.heading,
-			TextSize = 14,
-			AnchorPoint = Vector2.new(1 - anchorX, 0),
-			Position = UDim2.new(1 - anchorX, if anchorX == 1 then 14 else -14, 0, 10),
-			Size = UDim2.fromOffset(80, 20),
-			TextXAlignment = if anchorX == 1 then Enum.TextXAlignment.Left else Enum.TextXAlignment.Right,
-			Parent = block,
-		})
-		local pips = UI.frame({
-			BackgroundTransparency = 1,
-			Position = UDim2.new(0, 14, 1, -14),
-			Size = UDim2.new(1, -28, 0, 6),
-			Parent = block,
-		})
-		UI.list(
-			pips,
-			Enum.FillDirection.Horizontal,
-			4,
-			if anchorX == 1 then Enum.HorizontalAlignment.Right else Enum.HorizontalAlignment.Left
-		)
-		return score, name, pips
-	end
-	scoreLeft, sideLeft, pipsLeft = side(1, -80)
-	scoreRight, sideRight, pipsRight = side(0, 80)
+	bar = HudWidgets.matchBar(parent)
+	matchBar = bar.root
 end
 
 local function buildCenter(parent: Instance)
 	indicatorLayer = UI.frame({ BackgroundTransparency = 1, Size = UDim2.fromScale(1, 1), Parent = parent })
 	crosshair = buildCrosshair(parent)
 	buildHitmarker(parent)
-	bannerTitle = UI.text({
-		Text = "",
-		FontFace = fonts.display,
-		TextSize = 40,
-		AnchorPoint = Vector2.new(0.5, 0.5),
-		Position = UDim2.fromScale(0.5, 0.27),
-		Size = UDim2.fromOffset(900, 50),
-		TextTransparency = 1,
-		Parent = overlay,
-	})
-	UI.textStroke(bannerTitle, 0.5)
-	bannerLine = UI.frame({
-		AnchorPoint = Vector2.new(0.5, 0.5),
-		Position = UDim2.new(0.5, 0, 0.27, 30),
-		Size = UDim2.fromOffset(0, 2),
-		BackgroundTransparency = 1,
-		Parent = overlay,
-	})
-	bannerSubtitle = UI.text({
-		Text = "",
-		FontFace = fonts.heading,
-		TextSize = 18,
-		TextColor3 = colors.textDim,
-		AnchorPoint = Vector2.new(0.5, 0.5),
-		Position = UDim2.new(0.5, 0, 0.27, 50),
-		Size = UDim2.fromOffset(900, 24),
-		TextTransparency = 1,
-		Parent = overlay,
-	})
-	killConfirm = UI.text({
-		Text = "",
-		FontFace = fonts.heading,
-		TextSize = 18,
-		AnchorPoint = Vector2.new(0.5, 0.5),
-		Position = UDim2.new(0.5, 0, 0.5, 120),
-		Size = UDim2.fromOffset(700, 24),
-		TextTransparency = 1,
-		Parent = parent,
-	})
-	UI.textStroke(killConfirm, 0.5)
-	killPips = UI.frame({
-		BackgroundTransparency = 1,
-		AnchorPoint = Vector2.new(0.5, 0.5),
-		Position = UDim2.new(0.5, 0, 0.5, 150),
-		Size = UDim2.fromOffset(200, 18),
-		Parent = parent,
-	})
-	UI.list(killPips, Enum.FillDirection.Horizontal, 10, Enum.HorizontalAlignment.Center)
-	interactionPanel = UI.panel({
-		AnchorPoint = Vector2.new(0.5, 0),
-		Position = UDim2.new(0.5, 0, 0.5, 70),
-		Size = UDim2.fromOffset(360, 44),
-		Visible = false,
-		Parent = parent,
-	})
-	interactionText = UI.text({
-		Text = "",
-		FontFace = fonts.heading,
-		TextSize = 16,
-		Size = UDim2.new(1, 0, 0, 34),
-		Parent = interactionPanel,
-	})
-	local track = UI.frame({
-		BackgroundColor3 = colors.panelLight,
-		Position = UDim2.new(0, 12, 1, -9),
-		Size = UDim2.new(1, -24, 0, 4),
-		Parent = interactionPanel,
-	})
-	interactionFill = UI.frame({ BackgroundColor3 = colors.warning, Size = UDim2.fromScale(0, 1), Parent = track })
+	local banner = HudWidgets.banner(overlay)
+	bannerTitle = banner.title
+	bannerSubtitle = banner.subtitle
+	bannerLine = banner.line
+	local confirm = HudWidgets.killConfirm(parent)
+	killConfirm = confirm.text
+	killPips = confirm.pips
+	local interaction = HudWidgets.interaction(parent)
+	interactionPanel = interaction.root
+	interactionKey = interaction.key
+	interactionText = interaction.text
+	interactionFill = interaction.fill
 end
 
 local function buildScoreboard()
@@ -1633,45 +1331,20 @@ local function buildSide(parent: Instance)
 		Name = "Killfeed",
 		BackgroundTransparency = 1,
 		AnchorPoint = Vector2.new(1, 0),
-		Position = UDim2.new(1, -24, 0, 24),
+		Position = UDim2.new(1, -24, 0, 62),
 		Size = UDim2.fromOffset(460, 200),
 		Parent = overlay,
 	})
 	UI.list(killfeed, Enum.FillDirection.Vertical, 4, Enum.HorizontalAlignment.Right)
 
-	trainingPanel = UI.panel({
-		Name = "Training",
-		AnchorPoint = Vector2.new(0, 0.5),
-		Position = UDim2.new(0, 32, 0.45, 0),
-		Size = UDim2.fromOffset(250, 176),
-		Visible = false,
-		Parent = parent,
-	})
-	UI.accent(trainingPanel, colors.success, 3)
-	UI.text({
-		Text = "TRAINING RANGE",
-		FontFace = fonts.heading,
-		TextSize = 15,
-		TextColor3 = colors.success,
-		TextXAlignment = Enum.TextXAlignment.Left,
-		Position = UDim2.fromOffset(16, 8),
-		Size = UDim2.new(1, -24, 0, 20),
-		Parent = trainingPanel,
-	})
-	trainingText = UI.text({
-		Text = "",
-		FontFace = fonts.mono,
-		TextSize = 14,
-		TextXAlignment = Enum.TextXAlignment.Left,
-		TextYAlignment = Enum.TextYAlignment.Top,
-		Position = UDim2.fromOffset(16, 34),
-		Size = UDim2.new(1, -24, 1, -40),
-		Parent = trainingPanel,
-	})
+	local stats = HudWidgets.statPanel(parent, "STAND DE TIR", colors.success, TRAINING_ROWS)
+	trainingPanel = stats.root
+	trainingPanel.Visible = false
+	trainingValues = stats.values
 
 	netStats = UI.text({
 		Text = "",
-		FontFace = fonts.mono,
+		FontFace = fonts.bodyBold,
 		TextSize = 13,
 		TextColor3 = colors.textDim,
 		TextXAlignment = Enum.TextXAlignment.Left,

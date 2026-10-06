@@ -119,7 +119,8 @@ détonation, annonces, écran de fin.
 `InverseTapered` par famille : tirs proches 8–260 studs, armes légères 6–120, mécanique et
 rechargements 4–60, pas 4–70, tirs lointains 30–900 studs (sniper).
 
-**Couches d'un tir** : corps + mécanique (2D tireur) + tail 3D réverbérée en intérieur ;
+**Couches d'un tir** : corps coupé avant sa traîne + attaque + grave + mécanique (2D
+tireur) + tail 3D discrète réverbérée en intérieur ; compresseur du groupe Armes ;
 **variante lointaine** au-delà de 120 studs (on entend *où* et *à quelle distance* on se
 bat) ; occlusion (passe-bas + atténuation) si la ligne de vue est coupée.
 

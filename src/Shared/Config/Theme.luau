@@ -4,8 +4,9 @@
 
 	Palette froide et premium : noirs bleutés, cyan électrique comme couleur de marque,
 	magenta pour le prestige, ambre pour les alertes, rouge pour l'ennemi.
-	Typographie : Michroma (titres, très "aérospatial"), Sarpanch (UI militaire),
-	TitilliumWeb (lisibilité), RobotoMono (chiffres : pas de "danse" des largeurs).
+	Typographie : Builder Sans partout (sobre, très lisible, graisses Medium → ExtraBold ;
+	gros chiffres du HUD en ExtraBold), RobotoMono pour les tableaux de chiffres alignés,
+	Michroma réservée au logotype.
 ]]
 
 local function rgb(r: number, g: number, b: number): Color3
@@ -41,13 +42,16 @@ local Theme = {
 		armor = rgb(110, 200, 255),
 		health = rgb(235, 240, 245),
 		healthLow = rgb(255, 70, 85),
+		shadow = rgb(3, 5, 8), -- plaques d'ombre du HUD (dégradés, jamais de boîte pleine)
 	},
 	fonts = {
-		display = weighted(Enum.Font.Michroma, Enum.FontWeight.Regular),
-		heading = weighted(Enum.Font.Sarpanch, Enum.FontWeight.Bold),
-		headingHeavy = weighted(Enum.Font.Sarpanch, Enum.FontWeight.Heavy),
-		body = weighted(Enum.Font.TitilliumWeb, Enum.FontWeight.Regular),
-		bodyBold = weighted(Enum.Font.TitilliumWeb, Enum.FontWeight.Bold),
+		brand = weighted(Enum.Font.Michroma, Enum.FontWeight.Regular), -- logotype uniquement
+		display = weighted(Enum.Font.BuilderSans, Enum.FontWeight.ExtraBold),
+		heading = weighted(Enum.Font.BuilderSans, Enum.FontWeight.Bold),
+		headingHeavy = weighted(Enum.Font.BuilderSans, Enum.FontWeight.ExtraBold),
+		body = weighted(Enum.Font.BuilderSans, Enum.FontWeight.Medium),
+		bodyBold = weighted(Enum.Font.BuilderSans, Enum.FontWeight.Bold),
+		number = weighted(Enum.Font.BuilderSans, Enum.FontWeight.ExtraBold), -- gros chiffres du HUD
 		mono = weighted(Enum.Font.RobotoMono, Enum.FontWeight.Medium),
 		monoBold = weighted(Enum.Font.RobotoMono, Enum.FontWeight.Bold),
 	},

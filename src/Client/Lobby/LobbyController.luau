@@ -448,7 +448,7 @@ local function buildTopBar()
 	UI.gradient(topBar, ColorSequence.new(colors.void), 90, NumberSequence.new(0.1, 1))
 	UI.text({
 		Text = "AETHER STRIKE",
-		FontFace = fonts.display,
+		FontFace = fonts.brand,
 		TextSize = 18,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		Position = UDim2.fromOffset(24, 0),
