@@ -29,6 +29,15 @@ Maps.defs = {
 		size = Vector2.new(220, 180),
 		ambientSound = "Ambient.Hum",
 		tips = {},
+		weather = { kind = "Motes", intensity = 0.4, lightning = false },
+		ambience = {
+			outdoorReverb = "Alley",
+			indoorReverb = "Room",
+			spots = {
+				{ key = "Ambient.Traffic", interval = NumberRange.new(5, 12), distance = NumberRange.new(60, 160) },
+				{ key = "Ambient.Announce", interval = NumberRange.new(35, 70), distance = NumberRange.new(20, 50) },
+			},
+		},
 		lighting = {
 			clockTime = 21.5,
 			brightness = 1.6,
@@ -49,6 +58,9 @@ Maps.defs = {
 			colorCorrection = { brightness = 0.02, contrast = 0.12, saturation = 0.05, tint = rgb(235, 245, 255) },
 			bloom = { intensity = 0.8, size = 28, threshold = 0.92 },
 			sunRays = { intensity = 0.04, spread = 0.6 },
+			shadowSoftness = 0.25,
+			sky = { stars = 4000, sunSize = 21, moonSize = 14, celestial = true },
+			clouds = { cover = 0.32, density = 0.22, color = rgb(70, 80, 110) },
 		},
 	},
 	kestrel = {
@@ -65,6 +77,15 @@ Maps.defs = {
 			"Les CONTENEURS (nord) offrent des angles courts : idéal pour les SMG.",
 			"La PASSERELLE (sud) est rapide mais exposée depuis la Tour et la fenêtre.",
 		},
+		weather = { kind = "Rain", intensity = 0.8, lightning = true },
+		ambience = {
+			outdoorReverb = "Alley",
+			indoorReverb = "Room",
+			spots = {
+				{ key = "Ambient.Creak", interval = NumberRange.new(9, 20), distance = NumberRange.new(30, 80) },
+				{ key = "Ambient.Drip", interval = NumberRange.new(3, 8), distance = NumberRange.new(6, 22) },
+			},
+		},
 		lighting = {
 			clockTime = 0.5,
 			brightness = 1.2,
@@ -75,16 +96,19 @@ Maps.defs = {
 			diffuseScale = 0.9,
 			specularScale = 1,
 			atmosphere = {
-				density = 0.38,
+				density = 0.34,
 				offset = 0.05,
 				color = rgb(90, 80, 75),
 				decay = rgb(60, 40, 30),
 				glare = 0.1,
-				haze = 2.2,
+				haze = 1.8,
 			},
 			colorCorrection = { brightness = 0.03, contrast = 0.16, saturation = -0.05, tint = rgb(255, 240, 225) },
 			bloom = { intensity = 0.7, size = 24, threshold = 0.9 },
 			sunRays = { intensity = 0.02, spread = 0.4 },
+			shadowSoftness = 0.35,
+			sky = { stars = 600, sunSize = 21, moonSize = 11, celestial = true },
+			clouds = { cover = 0.86, density = 0.55, color = rgb(46, 44, 50) },
 		},
 	},
 	helix = {
@@ -100,6 +124,15 @@ Maps.defs = {
 			"Le VAULT s'attaque par MAIN (large, sous les portiques) ou par SERVICE (porte ouest, discrète).",
 			"L'ATRIUM relie les deux accès : le défenseur qui le tient voit les rotations.",
 			"Le verre de l'atrium se traverse : écoutez avant de peek.",
+		},
+		weather = { kind = "Motes", intensity = 0.5, lightning = false },
+		ambience = {
+			outdoorReverb = "Hallway",
+			indoorReverb = "Hallway",
+			spots = {
+				{ key = "Ambient.Chime", interval = NumberRange.new(25, 50), distance = NumberRange.new(20, 60) },
+				{ key = "Ambient.Hvac", interval = NumberRange.new(10, 20), distance = NumberRange.new(10, 40) },
+			},
 		},
 		lighting = {
 			clockTime = 14,
@@ -121,6 +154,9 @@ Maps.defs = {
 			colorCorrection = { brightness = 0, contrast = 0.1, saturation = -0.1, tint = rgb(240, 248, 255) },
 			bloom = { intensity = 0.55, size = 22, threshold = 0.95 },
 			sunRays = { intensity = 0.06, spread = 0.5 },
+			shadowSoftness = 0.15,
+			sky = { stars = 0, sunSize = 21, moonSize = 11, celestial = true },
+			clouds = { cover = 0.5, density = 0.3, color = rgb(245, 248, 255) },
 		},
 	},
 	spire = {
@@ -137,6 +173,16 @@ Maps.defs = {
 			"La PLAZA au centre donne accès aux deux sites : la défense doit la contester tôt.",
 			"Rotations : la BACK ROAD pour la défense, le COURTYARD pour l'attaque — rapides mais exposées.",
 		},
+		weather = { kind = "Snow", intensity = 0.6, lightning = false },
+		ambience = {
+			outdoorReverb = "Mountains",
+			indoorReverb = "Room",
+			spots = {
+				{ key = "Ambient.Gust", interval = NumberRange.new(6, 14), distance = NumberRange.new(30, 90) },
+				{ key = "Ambient.IceCrack", interval = NumberRange.new(15, 35), distance = NumberRange.new(40, 120) },
+				{ key = "Ambient.Creak", interval = NumberRange.new(20, 40), distance = NumberRange.new(80, 180) },
+			},
+		},
 		lighting = {
 			clockTime = 17.6,
 			brightness = 2.4,
@@ -147,16 +193,19 @@ Maps.defs = {
 			diffuseScale = 1,
 			specularScale = 1,
 			atmosphere = {
-				density = 0.33,
+				density = 0.28,
 				offset = 0.12,
 				color = rgb(190, 170, 175),
 				decay = rgb(120, 90, 110),
 				glare = 0.6,
-				haze = 1.4,
+				haze = 1.2,
 			},
 			colorCorrection = { brightness = 0.01, contrast = 0.14, saturation = 0.05, tint = rgb(255, 244, 236) },
 			bloom = { intensity = 0.6, size = 26, threshold = 0.93 },
 			sunRays = { intensity = 0.12, spread = 0.7 },
+			shadowSoftness = 0.3,
+			sky = { stars = 300, sunSize = 26, moonSize = 11, celestial = true },
+			clouds = { cover = 0.62, density = 0.4, color = rgb(214, 172, 168) },
 		},
 	},
 	monolith = {
@@ -172,6 +221,15 @@ Maps.defs = {
 			"Le MONOLITHE bloque toute ligne de vue au centre : on le contourne par les ANNEAUX.",
 			"Les BALCONS (y = 7) dominent l'ANNEAU : on y monte par des rampes à claire-voie, bruyantes.",
 			"En Duel, seule l'arène centrale est active : pas de site, élimination pure.",
+		},
+		weather = { kind = "Embers", intensity = 0.5, lightning = false },
+		ambience = {
+			outdoorReverb = "StoneRoom",
+			indoorReverb = "Room",
+			spots = {
+				{ key = "Ambient.Pulse", interval = NumberRange.new(8, 16), distance = NumberRange.new(20, 60) },
+				{ key = "Ambient.Creak", interval = NumberRange.new(12, 25), distance = NumberRange.new(30, 90) },
+			},
 		},
 		lighting = {
 			clockTime = 2,
@@ -193,6 +251,9 @@ Maps.defs = {
 			colorCorrection = { brightness = 0.02, contrast = 0.18, saturation = 0.12, tint = rgb(248, 238, 255) },
 			bloom = { intensity = 0.9, size = 30, threshold = 0.9 },
 			sunRays = { intensity = 0, spread = 0 },
+			shadowSoftness = 0.2,
+			sky = { stars = 5000, sunSize = 12, moonSize = 8, celestial = false },
+			clouds = nil,
 		},
 	},
 } :: { [string]: MapInfo }

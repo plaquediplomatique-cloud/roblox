@@ -517,7 +517,7 @@ local function buildTopBar()
 		Text = "[M] MENU    [B] EMOTES    [F] INTERAGIR",
 		FontFace = fonts.mono,
 		TextSize = 12,
-		TextColor3 = colors.textFaint,
+		TextColor3 = colors.textDim,
 		AnchorPoint = Vector2.new(0.5, 0),
 		Position = UDim2.new(0.5, 0, 0, 62),
 		Size = UDim2.fromOffset(500, 16),

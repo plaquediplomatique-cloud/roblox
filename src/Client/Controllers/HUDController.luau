@@ -1750,14 +1750,37 @@ function HUDController.start()
 		ZIndex = 30,
 		Parent = hud,
 	})
+	-- Les éléments ancrés aux bords (santé, munitions, boussole, killfeed) vivent dans une
+	-- zone sûre : sur téléphone, ni encoche ni coin arrondi ne les mangent. Les overlays
+	-- plein écran (lunette, vignette) restent sur tout l'écran.
+	local safe =
+		UI.frame({ Name = "SafeArea", BackgroundTransparency = 1, Size = UDim2.fromScale(1, 1), Parent = root })
+	local safePadding = Instance.new("UIPadding")
+	safePadding.Parent = safe
+	local function refreshSafeArea()
+		local left, top, right, bottom = UI.safeInsets()
+		local scale = hud:FindFirstChildOfClass("UIScale")
+		local factor = if scale and scale.Scale > 0 then 1 / scale.Scale else 1
+		safePadding.PaddingLeft = UDim.new(0, left * factor)
+		safePadding.PaddingTop = UDim.new(0, top * factor)
+		safePadding.PaddingRight = UDim.new(0, right * factor)
+		safePadding.PaddingBottom = UDim.new(0, bottom * factor)
+	end
 	buildScope(root)
 	buildVignette(root)
 	buildFringes(root)
 	buildCenter(root)
-	buildHealth(root)
-	buildAmmo(root)
-	buildCompass(root)
-	buildSide(root)
+	buildHealth(safe)
+	buildAmmo(safe)
+	buildCompass(safe)
+	buildSide(safe)
+	task.defer(refreshSafeArea)
+	local viewportCamera = Workspace.CurrentCamera
+	if viewportCamera then
+		viewportCamera:GetPropertyChangedSignal("ViewportSize"):Connect(function()
+			task.defer(refreshSafeArea)
+		end)
+	end
 	buildMatchBar(hud)
 	buildScoreboard()
 

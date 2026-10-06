@@ -71,6 +71,7 @@ function Settings.defaults(): Types.SettingsData
 			ViewmodelBob = 1,
 			ShowFps = false,
 			ReducedFlashes = false,
+			Weather = true,
 		},
 		Audio = {
 			Master = 0.85,
@@ -161,6 +162,7 @@ Settings.validate = Guard.shape({
 		ViewmodelBob = Guard.range(0, 1.5),
 		ShowFps = Guard.boolean,
 		ReducedFlashes = Guard.boolean,
+		Weather = Guard.boolean,
 	}),
 	Audio = Guard.shape({
 		Master = Guard.range(0, 1),

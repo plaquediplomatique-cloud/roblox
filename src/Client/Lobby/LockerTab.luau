@@ -329,7 +329,7 @@ function LockerTab.build(parent: Instance, mode: Mode): Tab
 			local empty = UI.button({ Text = "", BackgroundTransparency = 1, LayoutOrder = 1, Parent = grid })
 			UI.text({
 				Text = if mode == "Shop" then "Tout est déjà à vous." else "Rien ici pour l'instant.",
-				TextColor3 = colors.textFaint,
+				TextColor3 = colors.textDim,
 				Size = UDim2.fromScale(1, 1),
 				Parent = empty,
 			})

@@ -179,6 +179,18 @@ Sounds.defs = {
 	["UI.Whoosh"] = def({ WHOOSH }, 0.3, 1.4, 1.6, "UI"),
 	["UI.Glitch"] = def({ CLICK }, 0.3, 0.5, 2.5, "UI"),
 
+	-- Ambiances : sons ponctuels autour de l'auditeur (AudioController, profils de cartes)
+	["Ambient.Thunder"] = def({ THUNDER }, 0.55, 0.45, 0.6, "Ambient", Vector2.new(60, 900)),
+	["Ambient.Creak"] = def({ COLLIDE }, 0.25, 0.35, 0.45, "Ambient", Vector2.new(10, 140)),
+	["Ambient.Drip"] = def({ SNAP }, 0.18, 1.6, 2.2, "Ambient", Vector2.new(4, 40)),
+	["Ambient.Traffic"] = def({ WHOOSH }, 0.22, 0.45, 0.6, "Ambient", Vector2.new(30, 300)),
+	["Ambient.Announce"] = def({ PING }, 0.3, 0.75, 0.8, "Ambient", Vector2.new(10, 120)),
+	["Ambient.Chime"] = def({ PING }, 0.22, 1.25, 1.3, "Ambient", Vector2.new(10, 90)),
+	["Ambient.Hvac"] = def({ FALL }, 0.12, 0.25, 0.3, "Ambient", Vector2.new(8, 60)),
+	["Ambient.Gust"] = def({ FALL }, 0.3, 0.5, 0.7, "Ambient", Vector2.new(20, 200)),
+	["Ambient.IceCrack"] = def({ GLASS }, 0.22, 0.4, 0.55, "Ambient", Vector2.new(15, 200)),
+	["Ambient.Pulse"] = def({ PING }, 0.25, 0.3, 0.34, "Ambient", Vector2.new(10, 120)),
+
 	-- Ambiances (boucles)
 	["Ambient.Industrial"] = def({ FALL }, 0.08, 0.3, 0.3, "Ambient", nil, true),
 	["Ambient.Wind"] = def({ FALL }, 0.12, 0.45, 0.45, "Ambient", nil, true),

@@ -389,7 +389,7 @@ function PlayTab.build(parent: Instance): Tab
 			UI.text({
 				Text = "Aucun autre joueur sur ce serveur.",
 				TextSize = 14,
-				TextColor3 = colors.textFaint,
+				TextColor3 = colors.textDim,
 				TextXAlignment = Enum.TextXAlignment.Left,
 				Size = UDim2.fromScale(1, 1),
 				Parent = row,
@@ -434,7 +434,7 @@ function PlayTab.build(parent: Instance): Tab
 			codeBox.FontFace = fonts.monoBold
 			codeBox.TextSize = 18
 			codeBox.TextColor3 = colors.text
-			codeBox.PlaceholderColor3 = colors.textFaint
+			codeBox.PlaceholderColor3 = colors.textDim
 			codeBox.BackgroundColor3 = colors.panelLight
 			codeBox.Size = UDim2.fromOffset(120, 38)
 			codeBox.ClearTextOnFocus = false

@@ -793,7 +793,7 @@ local function renderLoadout()
 				Text = ("%d RPM"):format(def.fire.rpm),
 				FontFace = fonts.mono,
 				TextSize = 11,
-				TextColor3 = colors.textFaint,
+				TextColor3 = colors.textDim,
 				Position = UDim2.fromOffset(0, 52),
 				Size = UDim2.new(1, 0, 0, 14),
 				Parent = card,

@@ -1913,7 +1913,7 @@ bob, punch, secousse (bruit de Perlin, intensité = trauma²), roulis. Aucune ne
 direction des balles ; le recul *réel*, lui, passe par `addRecoil` et déplace la visée.
 
 ```lua
--- src/Client/Controllers/CameraController.luau (l. 232–262)
+-- src/Client/Controllers/CameraController.luau (l. 239–270)
 local function firstPerson(camera: Camera, dt: number, now: number)
     local body = bodyProvider()
     local root = body.root
@@ -1932,10 +1932,11 @@ local function firstPerson(camera: Camera, dt: number, now: number)
     local video = SettingsController.get().Video
     local punchAngles = punch:step(dt)
     local shake = shakeAngles(now)
-    local roll = math.rad(body.bobRoll * video.HeadBob + body.tilt)
+    local bob = video.HeadBob * motionScale()
+    local roll = math.rad(body.bobRoll * bob + body.tilt)
     local aim = CFrame.new(eye.X, y, eye.Z) * CFrame.Angles(0, yaw, 0) * CFrame.Angles(pitch, 0, 0)
     camera.CFrame = aim
-        * CFrame.new(body.bobOffset * video.HeadBob)
+        * CFrame.new(body.bobOffset * bob)
         * CFrame.Angles(
             math.rad(punchAngles.X) + shake.X,
             math.rad(punchAngles.Y) + shake.Y,
@@ -2079,7 +2080,7 @@ Workspace:SetAttribute("ServerReady", true)
 envoyé par le serveur.
 
 ```lua
--- src/Client/Main.client.luau (l. 60–81)
+-- src/Client/Main.client.luau (l. 61–83)
 -- 1. Démarrage ordonné
 ClientState.start()
 SettingsController.start()
@@ -2089,6 +2090,7 @@ UI.setSoundPlayer(function(key: string)
     AudioController.play(key)
 end)
 LightingController.start()
+WeatherController.start()
 EffectsController.start()
 WeaponModelBuilder.start()
 CameraController.start()

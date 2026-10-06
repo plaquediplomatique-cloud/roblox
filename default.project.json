@@ -85,6 +85,9 @@
       "$className": "Lighting",
       "$properties": {
         "Technology": "Future",
+        "LightingStyle": "Realistic",
+        "PrioritizeLightingQuality": true,
+        "ShadowSoftness": 0.2,
         "GlobalShadows": true,
         "Brightness": 2,
         "ClockTime": 20.6,
@@ -93,6 +96,13 @@
         "ExposureCompensation": 0,
         "Ambient": [0.07, 0.08, 0.1],
         "OutdoorAmbient": [0.16, 0.18, 0.22]
+      }
+    },
+
+    "MaterialService": {
+      "$className": "MaterialService",
+      "$properties": {
+        "Use2022Materials": true
       }
     },
 

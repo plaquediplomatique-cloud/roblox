@@ -422,6 +422,14 @@ local function buildVideo(page: ScrollingFrame, s: Types.SettingsData)
 	)
 	add(
 		page,
+		UI.toggle("Météo et particules d'ambiance", s.Video.Weather, function(v)
+			update(function(d)
+				d.Video.Weather = v
+			end)
+		end)
+	)
+	add(
+		page,
 		UI.toggle("Afficher les FPS", s.Video.ShowFps, function(v)
 			update(function(d)
 				d.Video.ShowFps = v

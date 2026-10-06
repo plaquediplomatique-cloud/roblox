@@ -482,7 +482,7 @@ function ProgressTabs.leaderboard(parent: Instance): Tab
 			local empty = UI.frame({ BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 40), Parent = list })
 			UI.text({
 				Text = "Classement indisponible (DataStores inactifs en Studio non publié, ou saison vide).",
-				TextColor3 = colors.textFaint,
+				TextColor3 = colors.textDim,
 				Size = UDim2.fromScale(1, 1),
 				Parent = empty,
 			})

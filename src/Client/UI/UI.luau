@@ -177,10 +177,44 @@ function UI.aspect(parent: Instance, ratio: number): UIAspectRatioConstraint
 	return constraint
 end
 
+--[[
+	Tween d'interface. Respecte GuiService.ReducedMotionEnabled (préférence système
+	d'accessibilité) : le mouvement devient instantané, l'état final est identique.
+]]
 function UI.tween(instance: Instance, info: TweenInfo, goals: Props): Tween
-	local tween = TweenService:Create(instance, info, goals)
+	local effective = if GuiService.ReducedMotionEnabled then TweenInfo.new(0) else info
+	local tween = TweenService:Create(instance, effective, goals)
 	tween:Play()
 	return tween
+end
+
+--[[ Transparence d'un fond selon la préférence système (PreferredTransparency : 0 = opaque). ]]
+function UI.backgroundTransparency(base: number): number
+	return base * GuiService.PreferredTransparency
+end
+
+--[[
+	Marges de la zone sûre de l'appareil (encoches, coins arrondis), en pixels :
+	gauche, haut, droite, bas. Nulles sur ordinateur. Mesurées par deux ScreenGui sondes.
+]]
+function UI.safeInsets(): (number, number, number, number)
+	local playerGui = Players.LocalPlayer:WaitForChild("PlayerGui")
+	local full = Instance.new("ScreenGui")
+	full.Name = "AS_InsetProbe"
+	full.ScreenInsets = Enum.ScreenInsets.None
+	full.Parent = playerGui
+	local safe = Instance.new("ScreenGui")
+	safe.Name = "AS_InsetProbe"
+	safe.ScreenInsets = Enum.ScreenInsets.DeviceSafeInsets
+	safe.Parent = playerGui
+	local fp, fs = full.AbsolutePosition, full.AbsoluteSize
+	local sp, ss = safe.AbsolutePosition, safe.AbsoluteSize
+	full:Destroy()
+	safe:Destroy()
+	return math.max(sp.X - fp.X, 0),
+		math.max(sp.Y - fp.Y, 0),
+		math.max((fp.X + fs.X) - (sp.X + ss.X), 0),
+		math.max((fp.Y + fs.Y) - (sp.Y + ss.Y), 0)
 end
 
 --[[ ScreenGui standard + UIScale responsive (référence 1080p). ]]
@@ -232,7 +266,7 @@ end
 function UI.panel(props: Props?): Frame
 	local panel = UI.frame({
 		BackgroundColor3 = Theme.colors.panel,
-		BackgroundTransparency = Theme.transparency.panel,
+		BackgroundTransparency = UI.backgroundTransparency(Theme.transparency.panel),
 	})
 	UI.corner(4, panel)
 	UI.stroke(panel, Theme.colors.stroke, 1, 0.2)

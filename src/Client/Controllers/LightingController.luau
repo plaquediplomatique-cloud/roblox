@@ -16,6 +16,7 @@
 
 local Lighting = game:GetService("Lighting")
 local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
 
 local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
 local Types = require(Shared.Types)
@@ -38,6 +39,7 @@ local atmosphere: Atmosphere
 local profile: Types.LightingProfile? = nil
 local flash = 0
 local pop = 0
+local lightning = 0
 local lowHealth = 0
 local menuBlur = 0
 local menuTarget = 0
@@ -82,6 +84,40 @@ function LightingController.applyMap(mapId: string)
 	bloom.Threshold = p.bloom.threshold
 	sunRays.Intensity = p.sunRays.intensity
 	sunRays.Spread = p.sunRays.spread
+	Lighting.ShadowSoftness = p.shadowSoftness
+	local sky = Lighting:FindFirstChildOfClass("Sky") or make("Sky", "AS_Sky")
+	sky.StarCount = p.sky.stars
+	sky.SunAngularSize = p.sky.sunSize
+	sky.MoonAngularSize = p.sky.moonSize
+	sky.CelestialBodiesShown = p.sky.celestial
+	-- Nuages volumétriques (enfant de Terrain) : couverture, densité et teinte par carte.
+	local terrain = Workspace:FindFirstChildOfClass("Terrain")
+	if terrain then
+		local clouds = terrain:FindFirstChildOfClass("Clouds")
+		local settings = p.clouds
+		if settings then
+			if not clouds then
+				local created = Instance.new("Clouds")
+				created.Parent = terrain
+				clouds = created
+			end
+			local active = clouds :: Clouds
+			active.Enabled = true
+			active.Cover = settings.cover
+			active.Density = settings.density
+			active.Color = settings.color
+		elseif clouds then
+			clouds.Enabled = false
+		end
+	end
+end
+
+--[[ Éclair lointain (météo) : bref éclaircissement bleuté, ignoré si « flashs réduits ». ]]
+function LightingController.lightningFlash(intensity: number)
+	if SettingsController.get().Video.ReducedFlashes then
+		return
+	end
+	lightning = math.min(1, lightning + intensity)
 end
 
 function LightingController.damageFlash(intensity: number)
@@ -147,15 +183,17 @@ function LightingController.start()
 	RunService.RenderStepped:Connect(function(dt: number)
 		flash = MathUtil.damp(flash, 0, 6, dt)
 		pop = MathUtil.damp(pop, 0, 5, dt)
+		lightning = MathUtil.damp(lightning, 0, 9, dt)
 		menuBlur = MathUtil.damp(menuBlur, menuTarget, 10, dt)
 		local p = profile
 		local baseContrast = if p then p.colorCorrection.contrast else 0.1
 		local baseSaturation = if p then p.colorCorrection.saturation else 0
 		local baseBrightness = if p then p.colorCorrection.brightness else 0
-		grade.TintColor = if p then p.colorCorrection.tint else Color3.new(1, 1, 1)
+		local tint = if p then p.colorCorrection.tint else Color3.new(1, 1, 1)
+		grade.TintColor = tint:Lerp(Color3.fromRGB(205, 220, 255), lightning * 0.5)
 		grade.Contrast = baseContrast + flash * 0.15
 		grade.Saturation = baseSaturation + pop * 0.35 - lowHealth * 0.55
-		grade.Brightness = baseBrightness + pop * 0.06
+		grade.Brightness = baseBrightness + pop * 0.06 + lightning * 0.1
 		-- Teinte rouge combinée : flash de dégâts + bas PV
 		local red = math.clamp(flash * 0.6 + lowHealth * 0.35, 0, 0.8)
 		damage.TintColor = Color3.new(1, 1 - red * 0.55, 1 - red * 0.6)

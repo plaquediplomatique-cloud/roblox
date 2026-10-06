@@ -69,6 +69,13 @@ function MapService.applyLighting(profile: Types.LightingProfile)
 	atmosphere.Glare = profile.atmosphere.glare
 	atmosphere.Haze = profile.atmosphere.haze
 	atmosphere.Parent = Lighting
+	Lighting.ShadowSoftness = profile.shadowSoftness
+	local sky = Lighting:FindFirstChildOfClass("Sky") or Instance.new("Sky")
+	sky.StarCount = profile.sky.stars
+	sky.SunAngularSize = profile.sky.sunSize
+	sky.MoonAngularSize = profile.sky.moonSize
+	sky.CelestialBodiesShown = profile.sky.celestial
+	sky.Parent = Lighting
 end
 
 --[[ Construit une arène pour un match. `participants` : streaming persistant par joueur. ]]

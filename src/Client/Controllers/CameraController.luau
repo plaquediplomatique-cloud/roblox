@@ -18,6 +18,7 @@
 	  Scripted     : CFrame imposé chaque frame (killcam).
 ]]
 
+local GuiService = game:GetService("GuiService")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local Workspace = game:GetService("Workspace")
@@ -215,8 +216,14 @@ local function readLook(dt: number)
 	lastPitchInput = dPitch
 end
 
+-- Préférence système « réduire les animations » : secousses et balancement atténués
+-- (jamais la visée ni le recul réel, qui restent des informations de gameplay).
+local function motionScale(): number
+	return if GuiService.ReducedMotionEnabled then 0.25 else 1
+end
+
 local function shakeAngles(now: number): Vector3
-	local intensity = trauma * trauma * SettingsController.get().Video.CameraShake
+	local intensity = trauma * trauma * SettingsController.get().Video.CameraShake * motionScale()
 	if intensity <= 0.0001 then
 		return Vector3.zero
 	end
@@ -247,10 +254,11 @@ local function firstPerson(camera: Camera, dt: number, now: number)
 	local video = SettingsController.get().Video
 	local punchAngles = punch:step(dt)
 	local shake = shakeAngles(now)
-	local roll = math.rad(body.bobRoll * video.HeadBob + body.tilt)
+	local bob = video.HeadBob * motionScale()
+	local roll = math.rad(body.bobRoll * bob + body.tilt)
 	local aim = CFrame.new(eye.X, y, eye.Z) * CFrame.Angles(0, yaw, 0) * CFrame.Angles(pitch, 0, 0)
 	camera.CFrame = aim
-		* CFrame.new(body.bobOffset * video.HeadBob)
+		* CFrame.new(body.bobOffset * bob)
 		* CFrame.Angles(
 			math.rad(punchAngles.X) + shake.X,
 			math.rad(punchAngles.Y) + shake.Y,

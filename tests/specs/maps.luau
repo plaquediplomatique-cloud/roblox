@@ -205,3 +205,36 @@ T.describe("Hub", function()
 		T.expect(training, "TrainingZone")
 	end)
 end)
+
+T.describe("Environnement des cartes (ciel, météo, ambiance)", function()
+	local Sounds = req(Shared.Config.Sounds)
+	local kinds = { None = true, Rain = true, Snow = true, Motes = true, Embers = true }
+	for id, info in Maps.defs do
+		T.it(id .. " : météo, réverbérations et sons ponctuels valides", function()
+			T.expect(kinds[info.weather.kind], "météo inconnue " .. tostring(info.weather.kind))
+			T.expect(info.weather.intensity >= 0 and info.weather.intensity <= 1, "intensité hors [0, 1]")
+			for _, name in { info.ambience.outdoorReverb, info.ambience.indoorReverb } do
+				local ok = pcall(function()
+					return Enum.ReverbType[name]
+				end)
+				T.expect(ok, "réverbération inconnue " .. name)
+			end
+			for _, spot in info.ambience.spots do
+				T.expect(Sounds.get(spot.key) ~= nil, "son inconnu " .. spot.key)
+				T.expect(spot.interval.Min > 0 and spot.interval.Max >= spot.interval.Min, "intervalle " .. spot.key)
+				T.expect(spot.distance.Max >= spot.distance.Min, "distance " .. spot.key)
+			end
+			T.expect(Sounds.get(info.ambientSound) ~= nil, "boucle d'ambiance inconnue " .. info.ambientSound)
+		end)
+		T.it(id .. " : profil d'éclairage complet", function()
+			local p = info.lighting
+			T.expect(p.shadowSoftness >= 0 and p.shadowSoftness <= 1, "ShadowSoftness")
+			T.expect(p.sky.stars >= 0 and p.sky.stars <= 5000, "StarCount")
+			if p.clouds then
+				T.expect(p.clouds.cover >= 0 and p.clouds.cover <= 1, "Clouds.Cover")
+				T.expect(p.clouds.density >= 0 and p.clouds.density <= 1, "Clouds.Density")
+			end
+			T.expect(p.atmosphere.density <= 0.5, "Atmosphere.Density > 0.5 : purée de pois")
+		end)
+	end
+end)

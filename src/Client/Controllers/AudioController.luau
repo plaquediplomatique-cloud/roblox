@@ -17,6 +17,7 @@
 ]]
 
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 local SoundService = game:GetService("SoundService")
 local TweenService = game:GetService("TweenService")
 local Workspace = game:GetService("Workspace")
@@ -46,6 +47,12 @@ local occlusionParams = RaycastParams.new()
 occlusionParams.FilterType = Enum.RaycastFilterType.Include
 
 local DISTANT_THRESHOLD = 120
+
+-- Ambiance de la carte courante : sons ponctuels autour de l'auditeur + réverbération
+-- du lieu (intérieur / extérieur, détecté par un rayon vers le ciel).
+local ambience: Types.Ambience? = nil
+local spotTimers: { number } = {}
+local reverbClock = 0
 
 local function group(name: string, parent: Instance, volume: number): SoundGroup
 	local soundGroup = Instance.new("SoundGroup")
@@ -307,6 +314,53 @@ function AudioController.setLowHealth(fraction: number)
 	end
 end
 
+--[[ Ambiance d'une carte (Shared/Config/Maps) : nil = aucune. ]]
+function AudioController.setMapAmbience(value: Types.Ambience?)
+	ambience = value
+	table.clear(spotTimers)
+	if value then
+		for index, spot in value.spots do
+			spotTimers[index] = rng:NextNumber(spot.interval.Min, spot.interval.Max)
+		end
+	else
+		SoundService.AmbientReverb = Enum.ReverbType.NoReverb
+	end
+	reverbClock = 0
+end
+
+local function reverbType(name: string): Enum.ReverbType
+	return Enum.ReverbType:FromName(name) or Enum.ReverbType.NoReverb
+end
+
+local function updateAmbience(dt: number)
+	local current = ambience
+	local camera = Workspace.CurrentCamera
+	if not (current and camera) then
+		return
+	end
+	local listener = camera.CFrame.Position
+	for index, spot in current.spots do
+		spotTimers[index] = (spotTimers[index] or 0) - dt
+		if spotTimers[index] <= 0 then
+			spotTimers[index] = rng:NextNumber(spot.interval.Min, spot.interval.Max)
+			local angle = rng:NextNumber(0, math.pi * 2)
+			local distance = rng:NextNumber(spot.distance.Min, spot.distance.Max)
+			local offset = Vector3.new(math.cos(angle) * distance, rng:NextNumber(-2, 10), math.sin(angle) * distance)
+			AudioController.playAt(spot.key, listener + offset)
+		end
+	end
+	reverbClock -= dt
+	if reverbClock <= 0 then
+		reverbClock = 0.3
+		occlusionParams.FilterDescendantsInstances = geometryRoots()
+		local indoor = Workspace:Raycast(listener, Vector3.new(0, 60, 0), occlusionParams) ~= nil
+		local target = reverbType(if indoor then current.indoorReverb else current.outdoorReverb)
+		if SoundService.AmbientReverb ~= target then
+			SoundService.AmbientReverb = target
+		end
+	end
+end
+
 function AudioController.setAmbient(key: string?)
 	if ambient then
 		ambient:Destroy()
@@ -340,6 +394,7 @@ function AudioController.start()
 	Players.LocalPlayer.CharacterRemoving:Connect(function()
 		AudioController.setLowHealth(1)
 	end)
+	RunService.Heartbeat:Connect(updateAmbience)
 end
 
 return AudioController

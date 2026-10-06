@@ -591,6 +591,7 @@ export type VideoSettings = {
 	ViewmodelBob: number,
 	ShowFps: boolean,
 	ReducedFlashes: boolean,
+	Weather: boolean,
 }
 
 export type AudioSettings = {
@@ -720,6 +721,31 @@ export type LightingProfile = {
 	},
 	bloom: { intensity: number, size: number, threshold: number },
 	sunRays: { intensity: number, spread: number },
+	shadowSoftness: number,
+	sky: { stars: number, sunSize: number, moonSize: number, celestial: boolean },
+	clouds: { cover: number, density: number, color: Color3 }?, -- nil = aucun nuage
+}
+
+-- Météo et particules d'ambiance (côté client, désactivables dans les réglages vidéo).
+export type WeatherKind = "None" | "Rain" | "Snow" | "Motes" | "Embers"
+
+export type Weather = {
+	kind: WeatherKind,
+	intensity: number, -- 0..1
+	lightning: boolean, -- éclairs lointains (désactivés par « flashs réduits »)
+}
+
+-- Son d'ambiance d'une carte : réverbération extérieure/intérieure et sons ponctuels.
+export type AmbienceSpot = {
+	key: string,
+	interval: NumberRange, -- secondes entre deux occurrences
+	distance: NumberRange, -- studs autour de l'auditeur
+}
+
+export type Ambience = {
+	outdoorReverb: string, -- nom d'Enum.ReverbType
+	indoorReverb: string,
+	spots: { AmbienceSpot },
 }
 
 export type MapInfo = {
@@ -733,6 +759,8 @@ export type MapInfo = {
 	size: Vector2,
 	ambientSound: string,
 	tips: { string },
+	weather: Weather,
+	ambience: Ambience,
 }
 
 return {}
