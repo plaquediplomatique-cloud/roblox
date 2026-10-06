@@ -189,6 +189,14 @@ T.describe("Balistique", function()
 		T.eq((Ballistics.penetrate(budget, 0.1, Enum.Material.Glass, true)), nil, "impénétrable")
 	end)
 
+	T.it("rechargement tactique : +1 chambrée seulement si le chargeur n'est pas vide", function()
+		local rifle = Weapons.require("vk12")
+		T.eq(Weapons.reloadCapacity(rifle, 0), rifle.ammo.magazine, "à sec")
+		T.eq(Weapons.reloadCapacity(rifle, 7), rifle.ammo.magazine + 1, "tactique")
+		local shotgun = Weapons.require("sg12")
+		T.eq(Weapons.reloadCapacity(shotgun, 3), shotgun.ammo.magazine, "tube : pas de chambre")
+	end)
+
 	-- Tableau de référence (utilisé par docs/07) : TTK corps à 15 studs, bouclier plein.
 	local lines = { "\n  Arme      | tirs corps | TTK corps (s) | dégâts tête" }
 	for _, id in Weapons.order do

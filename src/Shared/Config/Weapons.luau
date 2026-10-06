@@ -1515,6 +1515,18 @@ function Weapons.minInterval(def: WeaponDef): number
 	return 60 / rpm
 end
 
+--[[
+	Capacité visée par un rechargement : chargeur + 1 cartouche chambrée lors d'un
+	rechargement TACTIQUE (chargeur non vide) des armes à culasse fermée. Récompense le
+	réflexe de recharger avant d'être à sec (le serveur applique la même règle).
+]]
+function Weapons.reloadCapacity(def: WeaponDef, currentMag: number): number
+	if def.ammo.chamber and currentMag > 0 then
+		return def.ammo.magazine + 1
+	end
+	return def.ammo.magazine
+end
+
 --[[ Cadence effective d'une arme à spin-up après `heldTime` secondes de tir continu. ]]
 function Weapons.currentRpm(def: WeaponDef, heldTime: number): number
 	local spin = def.fire.spinUp

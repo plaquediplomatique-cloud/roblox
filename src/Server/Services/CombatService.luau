@@ -234,7 +234,7 @@ local function settleReload(state: State, now: number, interrupted: boolean): bo
 		state.reload = nil
 		return false
 	end
-	local needed = math.min(def.ammo.magazine - slot.mag, slot.reserve)
+	local needed = math.min(Weapons.reloadCapacity(def, slot.mag) - slot.mag, slot.reserve)
 	local added = 0
 	if reload.shell then
 		added = shellsInserted(def, reload, now, needed)
@@ -270,7 +270,7 @@ local function onReload(player: Player, _payload: boolean)
 	if not (slot and def) or def.ammo.reloadStyle == "None" then
 		return
 	end
-	if slot.mag >= def.ammo.magazine or slot.reserve <= 0 then
+	if slot.mag >= Weapons.reloadCapacity(def, slot.mag) or slot.reserve <= 0 then
 		return
 	end
 	local now = Workspace:GetServerTimeNow()
