@@ -62,8 +62,8 @@ Maps.defs = {
 		ambientSound = "Ambient.Industrial",
 		tips = {
 			"La TOUR centrale domine le mid : la prendre, c'est contrôler les rotations.",
-			"Les CONTENEURS (gauche) offrent des angles courts : idéal pour les SMG.",
-			"La PASSERELLE (droite) est rapide mais exposée depuis la Tour.",
+			"Les CONTENEURS (nord) offrent des angles courts : idéal pour les SMG.",
+			"La PASSERELLE (sud) est rapide mais exposée depuis la Tour et la fenêtre.",
 		},
 		lighting = {
 			clockTime = 0.5,
@@ -97,7 +97,7 @@ Maps.defs = {
 		size = Vector2.new(150, 120),
 		ambientSound = "Ambient.Hum",
 		tips = {
-			"Le site VAULT a deux accès : MAIN (large) et SHAFT (vertical, discret).",
+			"Le VAULT s'attaque par MAIN (large, sous les portiques) ou par SERVICE (porte ouest, discrète).",
 			"L'ATRIUM relie les deux accès : le défenseur qui le tient voit les rotations.",
 			"Le verre de l'atrium se traverse : écoutez avant de peek.",
 		},
@@ -135,7 +135,7 @@ Maps.defs = {
 		tips = {
 			"A = RÉACTEUR (ouvert, longues lignes) ; B = DATACORE (intérieur, close-range).",
 			"La PLAZA au centre donne accès aux deux sites : la défense doit la contester tôt.",
-			"Les TUNNELS permettent une rotation sûre mais lente entre A et B.",
+			"Rotations : la BACK ROAD pour la défense, le COURTYARD pour l'attaque — rapides mais exposées.",
 		},
 		lighting = {
 			clockTime = 17.6,
@@ -170,7 +170,7 @@ Maps.defs = {
 		ambientSound = "Ambient.Hum",
 		tips = {
 			"Le MONOLITHE bloque toute ligne de vue au centre : on le contourne par les ANNEAUX.",
-			"Les BALCONS offrent du high-ground sur chaque site ; les ascenseurs sont bruyants.",
+			"Les BALCONS (y = 7) dominent l'ANNEAU : on y monte par des rampes à claire-voie, bruyantes.",
 			"En Duel, seule l'arène centrale est active : pas de site, élimination pure.",
 		},
 		lighting = {
