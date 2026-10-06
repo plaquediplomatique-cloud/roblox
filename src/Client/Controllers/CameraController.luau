@@ -65,6 +65,8 @@ local trauma = 0
 local zoom = 1
 local sensitivityMultiplier = 1
 local fovKick = 0
+-- Élargissement de vitesse : ressort lent et sans rebond (montée douce, retour souple).
+local kickSpring = Spring.number(0, 5.5, 1)
 local smoothY: number? = nil
 local thirdDistance = Spring.number(9, 12, 1)
 local shakeSeed = math.random() * 1000
@@ -265,8 +267,9 @@ local function firstPerson(camera: Camera, dt: number, now: number)
 			roll + math.rad(punchAngles.Z) + shake.Z
 		)
 	local baseFov = video.Fov
-	fovSpring.target = baseFov / zoom + fovKick
-	camera.FieldOfView = math.clamp(fovSpring:step(dt) + popSpring:step(dt), 20, 110)
+	kickSpring.target = fovKick * motionScale()
+	fovSpring.target = baseFov / zoom
+	camera.FieldOfView = math.clamp(fovSpring:step(dt) + kickSpring:step(dt) / zoom + popSpring:step(dt), 20, 110)
 end
 
 local thirdParams = RaycastParams.new()
@@ -284,7 +287,8 @@ local function thirdPerson(camera: Camera, dt: number)
 	local backward = rotation * Vector3.new(0, 0, 1)
 	local start = focus + shoulder
 	thirdParams.FilterDescendantsInstances = if body.character then { body.character :: Instance } else {}
-	local desired = 9
+	-- La caméra recule légèrement quand on court (sensation de vitesse).
+	local desired = 9 + kickSpring.position * 0.15
 	local hit = Workspace:Spherecast(start, 0.6, backward * desired, thirdParams)
 	local distance = if hit then math.max(hit.Distance - 0.2, 1.2) else desired
 	if distance < thirdDistance.position then
@@ -295,7 +299,8 @@ local function thirdPerson(camera: Camera, dt: number)
 	local d = thirdDistance:step(dt)
 	camera.CFrame = CFrame.new(start + backward * d) * rotation
 	fovSpring.target = 72
-	camera.FieldOfView = fovSpring:step(dt)
+	kickSpring.target = fovKick * motionScale()
+	camera.FieldOfView = fovSpring:step(dt) + kickSpring:step(dt)
 	lastAimOrigin = camera.CFrame.Position
 end
 

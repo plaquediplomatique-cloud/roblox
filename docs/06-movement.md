@@ -151,3 +151,10 @@ l'intégrité** (`AntiCheatService`, échantillonnage 10 Hz, historique 3 s) :
 
 Toutes les vitesses légitimes (glissade, slide-jump, bhop érodé) restent **sous** les
 seuils avec marge : aucun faux positif sur un joueur rapide.
+
+### Allures visibles (3e personne)
+
+`CharacterAnimator` mélange en continu **marche → course → sprint** selon la vitesse réelle :
+foulée et levée de pied plus amples, rebond du corps, buste penché vers l'avant (jusqu'à 16°),
+balancier du bassin et contre-rotation des épaules, bras qui balancent plus fort et coudes
+pliés en sprint. Aucun saut de pose : chaque paramètre est interpolé.

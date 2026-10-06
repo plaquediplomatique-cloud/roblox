@@ -1547,7 +1547,7 @@ end
 ```
 
 ```lua
--- src/Client/Controllers/MovementController.luau (l. 360–407)
+-- src/Client/Controllers/MovementController.luau (l. 368–415)
 -- Vitesse souhaitée
 local base = if stance == "Crouch"
     then Movement.crouchSpeed
@@ -1604,7 +1604,7 @@ technique, jamais du chaos (les seuils serveur de [§10.11](#1011-anti-exploit) 
 d'atteinte avec marge).
 
 ```lua
--- src/Client/Controllers/MovementController.luau (l. 261–269)
+-- src/Client/Controllers/MovementController.luau (l. 269–277)
 -- Bunny-hop léger : l'excédent au-dessus de la vitesse de course s'érode à chaque hop.
 if now - lastLandAt <= Movement.bhopWindow then
     hopChain += 1
@@ -1914,7 +1914,7 @@ bob, punch, secousse (bruit de Perlin, intensité = trauma²), roulis. Aucune ne
 direction des balles ; le recul *réel*, lui, passe par `addRecoil` et déplace la visée.
 
 ```lua
--- src/Client/Controllers/CameraController.luau (l. 239–270)
+-- src/Client/Controllers/CameraController.luau (l. 241–273)
 local function firstPerson(camera: Camera, dt: number, now: number)
     local body = bodyProvider()
     local root = body.root
@@ -1944,8 +1944,9 @@ local function firstPerson(camera: Camera, dt: number, now: number)
             roll + math.rad(punchAngles.Z) + shake.Z
         )
     local baseFov = video.Fov
-    fovSpring.target = baseFov / zoom + fovKick
-    camera.FieldOfView = math.clamp(fovSpring:step(dt) + popSpring:step(dt), 20, 110)
+    kickSpring.target = fovKick * motionScale()
+    fovSpring.target = baseFov / zoom
+    camera.FieldOfView = math.clamp(fovSpring:step(dt) + kickSpring:step(dt) / zoom + popSpring:step(dt), 20, 110)
 end
 ```
 

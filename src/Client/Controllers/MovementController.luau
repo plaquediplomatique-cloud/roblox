@@ -211,7 +211,15 @@ end
 
 --[[ Élargissement du champ de vision : glissade > sprint > rien (une seule source). ]]
 local function refreshFovKick()
-	local kick = if stance == "Slide" then Movement.slide.fovKick elseif sprinting then Movement.sprint.fovKick else 0
+	-- Progressif : proportionnel à la vitesse au-delà de la course (pas de saut de FOV).
+	local r = root
+	local v = if r then r.AssemblyLinearVelocity else Vector3.zero
+	local speed = Vector3.new(v.X, 0, v.Z).Magnitude
+	local over = math.clamp((speed - Movement.runSpeed * 0.9) / (Movement.sprintSpeed - Movement.runSpeed * 0.9), 0, 1)
+	local kick = if stance == "Slide"
+		then Movement.slide.fovKick
+		else Movement.sprint.fovKick * over * over * (3 - 2 * over)
+	kick = math.floor(kick * 20 + 0.5) / 20
 	if kick ~= fovKickApplied then
 		fovKickApplied = kick
 		CameraController.setFovKick(kick)

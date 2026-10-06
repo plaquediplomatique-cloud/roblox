@@ -750,6 +750,12 @@ local function animate(entry: Entry, dt: number, now: number, isLocal: boolean)
 		entry.lastVerticalSpeed = velocity.Y
 	end
 	local moveAmount = math.clamp(speed / 6, 0, 1)
+	-- Allure : 0 = marche, 1 = course, 2 = sprint (mélanges continus, jamais de saut de pose).
+	local runBlend = math.clamp((speed - Movement.walkSpeed) / (Movement.runSpeed - Movement.walkSpeed), 0, 1)
+	local sprintBlend = math.clamp((speed - Movement.runSpeed) / (Movement.sprintSpeed - Movement.runSpeed), 0, 1)
+	if model:GetAttribute("Sprinting") == true then
+		sprintBlend = math.max(sprintBlend, 0.6 * runBlend)
+	end
 
 	-- Emote (hub) : remplace la pose des bras ; annulée par le mouvement.
 	if entry.emote and speed > 3 then
@@ -759,14 +765,18 @@ local function animate(entry: Entry, dt: number, now: number, isLocal: boolean)
 
 	-- Racine et torse
 	local slideLean = if stance == "Slide" then rad(16) else 0
-	local forwardLean = -math.clamp(-localMove.Z / Movement.runSpeed, -1, 1) * rad(6)
-	local bob = if airborne then 0 else -0.07 * moveAmount * math.abs(math.cos(entry.phase))
-	local tRoot = CFrame.new(0, bob, 0) * CFrame.Angles(forwardLean + slideLean, 0, 0)
+	local forwardLean = -math.clamp(-localMove.Z / Movement.runSpeed, -1, 1) * rad(5 + 4 * runBlend + 7 * sprintBlend)
+	local bounce = 0.05 + 0.06 * runBlend + 0.06 * sprintBlend
+	local bob = if airborne then 0 else -bounce * moveAmount * math.abs(math.cos(entry.phase))
+	-- Balancier du bassin et contre-rotation des épaules : la foulée vit.
+	local hipSway = math.sin(entry.phase) * rad(3 + 5 * runBlend) * moveAmount
+	local tRoot = CFrame.new(0, bob, 0) * CFrame.Angles(forwardLean + slideLean, hipSway, 0)
 	if emoteRoot then
 		tRoot = emoteRoot * tRoot
 	end
 	rig.root.Transform = tRoot
-	local tWaist = Stances.leanTransform(lean) * CFrame.Angles(pitch * 0.4 - slideLean * 0.7, yawOffset * 0.6, 0)
+	local tWaist = Stances.leanTransform(lean)
+		* CFrame.Angles(pitch * 0.4 - slideLean * 0.7, yawOffset * 0.6 - hipSway * 1.6, 0)
 	rig.waist.Transform = tWaist
 	rig.neck.Transform = CFrame.Angles(pitch * 0.45, yawOffset * 0.4, 0)
 	local lowerTorso = hrp * rig.root.C0 * tRoot * rig.root.C1:Inverse()
@@ -788,8 +798,9 @@ local function animate(entry: Entry, dt: number, now: number, isLocal: boolean)
 		local footY = -(entry.root.Size.Y / 2 + standHip + profile.hipHeightOffset) + rig.ankleHeight
 		local crouched = stance == "Crouch"
 		local direction = if speed > 0.1 then Vector3.new(localMove.X, 0, localMove.Z).Unit else Vector3.zero
-		local stride = (if crouched or model:GetAttribute("Walking") == true then 0.55 else 0.95) * moveAmount
-		local lift = (0.18 + 0.22 * moveAmount) * moveAmount
+		local walking = crouched or model:GetAttribute("Walking") == true
+		local stride = (if walking then 0.55 else 0.75 + 0.25 * runBlend + 0.4 * sprintBlend) * moveAmount
+		local lift = (0.16 + 0.2 * runBlend + 0.25 * sprintBlend) * moveAmount
 		local footX = rig.hipX + 0.05
 		for index, limb in { rig.rightLeg, rig.leftLeg } do
 			local side = if index == 1 then 1 else -1
@@ -846,8 +857,8 @@ local function animate(entry: Entry, dt: number, now: number, isLocal: boolean)
 		rig.rightArm.last.Transform = CFrame.identity
 		rig.leftArm.last.Transform = CFrame.identity
 	elseif not emoting then
-		local swing = math.cos(entry.phase) * rad(28) * moveAmount
-		local elbow = rad(12 + 22 * moveAmount)
+		local swing = math.cos(entry.phase) * rad(22 + 22 * runBlend + 20 * sprintBlend) * moveAmount
+		local elbow = rad(10 + (25 + 40 * sprintBlend) * moveAmount)
 		setFK(rig.rightArm, CFrame.Angles(-swing, 0, rad(6)), CFrame.Angles(elbow, 0, 0))
 		setFK(rig.leftArm, CFrame.Angles(swing, 0, rad(-6)), CFrame.Angles(elbow, 0, 0))
 	end

@@ -66,7 +66,7 @@ local Movement = {
 	sprint = {
 		forwardMin = 0.45, -- part « avant » du déplacement nécessaire (pas de sprint latéral)
 		fireDelay = 0.12, -- délai pour relever l'arme après un sprint (tir et visée)
-		fovKick = 4,
+		fovKick = 7,
 		strideLength = 7.6,
 	},
 
