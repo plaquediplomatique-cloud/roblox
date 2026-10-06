@@ -18,11 +18,29 @@ scène avec les vrais modules d'UI, `python3 tools/render_ui.py scene.json hud.j
 docs/renders/kestrel_intro4.jpg` la dessine (mise en page Roblox : UDim2, ancres, listes,
 tailles automatiques, coins, contours, dégradés, texte riche ; Builder Sans ≈ Inter).
 
-**Direction (refonte)** : minimal et premium. Aucune boîte cerclée : des **plaques d'ombre
-en dégradé diagonal** depuis les coins de l'écran (carrées, donc sans arête visible) portent
-les blocs de texte ; gros chiffres **Builder Sans ExtraBold** avec ombre portée ; libellés
-courts en capitales ; une seule couleur d'accent (cyan) plus les couleurs d'équipe ; barres
-**segmentées** (paliers de 25). Lisible sur ciel enneigé comme sur mur sombre.
+**Direction (refonte v3)** : **verre sombre biseauté**. Les blocs du bas sont des
+parallélogrammes « / » (`UI.glass` : un seul Frame découpé par un UIGradient à paliers nets,
+angle calculé en espace UV) en verre bleu nuit, liseré cyan sur le bord oblique, filet
+lumineux au pied ; plaques d'ombre douces derrière pour la lisibilité sur ciel clair.
+Bas-gauche : **portrait de l'avatar** + santé / bouclier (barres segmentées, paliers de 25) ;
+bas-centre : **barre d'armes** à trois emplacements ; bas-droite : munitions (cartouche,
+chargeur, réserve, cartouches restantes). Barre de match en haut au centre : chrono, équipes
+en biseaux symétriques (`mirrored`), lueur aux couleurs d'équipe. Killfeed, notifications,
+panneau du stand et écran de fin de match reprennent le même verre. Icônes dessinées en
+Frames (croix, écusson, cartouche) : aucun asset.
+
+**Écran Roblox respecté** : rien en haut à gauche ni en haut à droite du HUD de combat ; au
+lobby, la carte d'identité, le portefeuille et l'engrenage d'options suivent
+`GuiService.TopbarInset` (`UI.topbarClearance`, `UI.onTopbarChanged`) et ne passent jamais
+sous les boutons Roblox.
+
+**Mobile** : les commandes tactiles occupent les coins bas (joystick dynamique à gauche,
+TIR / VISER / SAUT à droite) ; sur mobile, vie et munitions montent hors des zones du pouce
+(échelle 0,8, sans ombre) et la barre d'armes est masquée (bouton ARME).
+
+**Guide des premières sessions** (`Shared/Rules/Onboarding`, testé) : une seule consigne
+sous la carte d'identité du hub — stand de tir (distance en mètres), première partie,
+missions à réclamer — puis plus rien après 3 parties.
 
 Deux calques : **Combat** (armé, 1re personne : réticule, vitals, munitions, boussole…) et
 **Overlay** (toujours visible pendant un match : bannières, killfeed) — un joueur mort ou

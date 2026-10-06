@@ -205,7 +205,7 @@ nouvelle arme est tenue correctement sans animation dédiée. Un clip interrompu
 | Corps du tir | `Weapon.Rifle.Fire` | 2D pour le tireur, 3D occlus pour les autres ; coupé en fondu avant sa traîne (`cut`), égalisé (`tone`) |
 | Attaque + grave | `Weapon.Layer.Crack` / `Weapon.Layer.Thump` | couches jouées avec le corps (`layers`) : claquement net, impact sourd |
 | Mécanique | `Weapon.Mech.Rifle` | 2D tireur |
-| Queue (tail) | `Weapon.Tail.Rifle` | 3D, souffle grave filtré (plus de tonnerre), **réverbérée en intérieur** |
+| Queue (tail) | `Weapon.Tail.Rifle` | **désactivée** : l'écho des tirs a été jugé désagréable en test, les tirs sont secs |
 | Lointain | `Weapon.Distant.Rifle` | remplace corps + tail au-delà de 120 studs |
 | Rechargement | `Reload.MagOut/MagIn/Rack` | déclenchés par les événements du clip |
 | Équipement / à vide | `Equip.Rifle` / `Weapon.Dry` | + **cliquetis d'alerte** sur les 20 % derniers du chargeur |
@@ -213,8 +213,12 @@ nouvelle arme est tenue correctement sans animation dédiée. Un clip interrompu
 
 Mix : volumes bas par couche (≤ 0,75 cumulé, vérifié par les tests), compresseur sur le
 groupe Armes (seuil −18 dB, ratio 3,5) et limiteur général : une rafale reste pleine sans
-saturer. Les sons sont des placeholders intégrés au client ; brancher un vrai pack =
-remplacer les `ids` dans `Shared/Config/Sounds.luau` (voir l'en-tête du fichier).
+saturer. Les sons de repli sont des sons intégrés au client (plus aucun son d'explosion :
+« Rocket shot » grondait comme du tonnerre). Le **pack maison** est généré par code —
+`tools/gen_weapon_sounds.py` (tirs « pew / thock » secs, coup grave pour les armes lourdes),
+`tools/gen_foley_sounds.py` (pas par matériau, 4 variations ; sons d'interface) — dans
+`assets/sounds/` ; une fois importés sur Roblox, leurs ids se collent dans
+`Shared/Config/SoundPack.luau` et remplacent le repli, joués tels quels.
 
 L'AR-9 utilise une signature **suppressée** (`Weapon.Rifle.Suppressed`), et ses traceurs
 et flashs sont **invisibles pour les autres joueurs au-delà de 60 studs**
