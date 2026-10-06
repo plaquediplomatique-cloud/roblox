@@ -356,8 +356,63 @@ local function armory(kit: Kit, rng: Rng)
 			local p = prim.cframe.Position
 			kit:decorBox("PedestalTop", p.X - 2.05, 3, p.Z - 2.05, p.X + 2.05, 3.08, p.Z + 2.05, "Brass")
 			kit:decorBox("PedestalBase", p.X - 2.2, 0, p.Z - 2.2, p.X + 2.2, 0.3, p.Z + 2.2, "HqMullion")
+			-- Vitrine : un seul bloc de verre solide (une pièce transparente au lieu de quatre :
+			-- budget d'overdraw), couvercle de laiton.
+			local h1, h2, r = 3.08, 6.4, 2.05 -- l'arme tourne à ~1,8 au-dessus du plateau
+			local vitrine = kit:decor(
+				"VitrineGlass",
+				CFrame.new(p.X, (h1 + h2) / 2, p.Z),
+				Vector3.new(r * 2, h2 - h1, r * 2),
+				"HqGlass",
+				{ group = "Props" }
+			)
+			vitrine.collide = true
+			vitrine.query = true
+			kit:decorBox("VitrineLid", p.X - r, h2, p.Z - r, p.X + r, h2 + 0.08, p.Z + r, "Brass")
+			-- Spot de vitrine accroché au rail du plafond (lumière motivée, sans PointLight).
+			kit:decorBox(
+				"DisplaySpot",
+				p.X - 0.3,
+				CEILING - 1.1,
+				p.Z - 0.3,
+				p.X + 0.3,
+				CEILING - 0.5,
+				p.Z + 0.3,
+				"SteelDark"
+			)
+			kit:decorBox(
+				"DisplayLens",
+				p.X - 0.22,
+				CEILING - 1.16,
+				p.Z - 0.22,
+				p.X + 0.22,
+				CEILING - 1.1,
+				p.Z + 0.22,
+				"NeonWhite"
+			)
 		end
 	end
+	-- Rails de laiton des spots, au-dessus de chaque rangée de vitrines
+	for _, x in { 76, 96 } do
+		kit:decorBox("SpotTrack", x - 0.12, CEILING - 0.5, -34, x + 0.12, CEILING - 0.3, 34, "Brass")
+	end
+	-- Plafond à caissons : poutres croisées (la pièce cesse d'être une boîte nue)
+	for _, z in { -26, -13, 0, 13, 26 } do
+		kit:decorBox("CofferBeam", 41, CEILING - 0.9, z - 0.35, 109, CEILING, z + 0.35, "HqConcrete")
+	end
+	for _, x in { 58, 86 } do
+		kit:decorBox("CofferBeam", x - 0.35, CEILING - 0.9, -39, x + 0.35, CEILING, 39, "HqConcrete")
+	end
+	-- Soubassement de noyer et lisse de laiton côté atrium (hors porte)
+	cladding(kit, "Z", 40.6, -39.4, 39.4, 0, 3.4, { { -13, 13 } }, "HqWalnut")
+	cladding(kit, "Z", 40.8, -39.4, 39.4, 3.4, 3.55, { { -13, 13 } }, "Brass")
+	cladding(kit, "X", -39.4, 40.6, 109.4, 0, 3.4, {}, "HqWalnut")
+	cladding(kit, "X", 39.4, 40.6, 109.4, 0, 3.4, { { 53, 67 } }, "HqWalnut") -- porte salle de jeux
+	-- Bandeau haut : même grammaire que l'atrium (béton sous le plafond)
+	cladding(kit, "X", -39.4, 40.6, 109.4, 12.4, 13.2, {}, "HqConcrete")
+	cladding(kit, "X", 39.4, 40.6, 109.4, 12.4, 13.2, { { 53, 67 } }, "HqConcrete")
+	cladding(kit, "Z", 109.4, -39.4, 39.4, 12.4, 13.2, {}, "HqConcrete")
+	cladding(kit, "Z", 40.6, -39.4, 39.4, 12.4, 13.2, { { -13, 13 } }, "HqConcrete")
 	for _, x in { 76, 96 } do
 		kit:decorBox("FloorMat", x - 4, 0, -35, x + 4, 0.05, 35, "Rubber")
 	end
