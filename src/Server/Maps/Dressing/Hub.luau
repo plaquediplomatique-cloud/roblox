@@ -334,6 +334,33 @@ local function games(kit: Kit, rng: Rng)
 	end
 	neon.query = false
 	Furniture.plant(kit, rng, 106.5, 86.5, 2.6, "HqConcrete")
+	-- Table de ping-pong au centre (le cœur de la pièce était vide) : plateau, pieds, filet,
+	-- ligne médiane ; deux suspensions la mettent en scène.
+	local px, pz = 66, 54
+	Decor.solid(kit, "PingPongTop", CFrame.new(px, 2.45, pz), Vector3.new(9, 0.2, 5), "PaintBlack", {
+		color = Color3.fromRGB(28, 64, 96),
+	})
+	kit:decorBox("PingPongLine", px - 4.5, 2.55, pz - 0.04, px + 4.5, 2.57, pz + 0.04, "PaintWhite")
+	kit:decorBox("PingPongEdge", px - 4.5, 2.55, pz - 2.5, px + 4.5, 2.57, pz - 2.44, "PaintWhite")
+	kit:decorBox("PingPongEdge", px - 4.5, 2.55, pz + 2.44, px + 4.5, 2.57, pz + 2.5, "PaintWhite")
+	kit:decorBox("PingPongNet", px - 0.03, 2.55, pz - 2.7, px + 0.03, 3.1, pz + 2.7, "FabricDark")
+	for _, leg in { { -3.6, -1.9 }, { -3.6, 1.9 }, { 3.6, -1.9 }, { 3.6, 1.9 } } do
+		kit:decorBox(
+			"PingPongLeg",
+			px + leg[1] - 0.1,
+			0,
+			pz + leg[2] - 0.1,
+			px + leg[1] + 0.1,
+			2.35,
+			pz + leg[2] + 0.1,
+			"SteelDark"
+		)
+	end
+	for _, x in { px - 2.5, px + 2.5 } do
+		Furniture.pendant(kit, x, pz, CEILING, 6.5, "SteelDark", x < px)
+	end
+	-- Tapis sous le billard : le coin jeu se lit comme une zone
+	Furniture.rug(kit, 94, 56, 16, 10, Color3.fromRGB(60, 52, 70), Color3.fromRGB(40, 34, 48))
 	ceilingLights(kit, CEILING, { { 62, 64 } }, { { 94, 76 }, { 80, 50 } }, Vector2.new(5, 5))
 end
 

@@ -407,7 +407,6 @@ local function build(kit: Kit)
 	kit:platform("Stage", -26, 70, 26, 86, 1.6, "HqFloorWood")
 	kit:ramp("StageSteps", -8, 66, 8, 70, 0, 1.6, "+Z", "HqFloorWood")
 	kiosk(kit, "Ranked", "CLASSÉ", -14, 76, "-Z")
-	kiosk(kit, "Ranked", "CLASSÉ", 0, 78, "-Z")
 	kiosk(kit, "Ranked", "CLASSÉ", 14, 76, "-Z")
 	for _, prim in kit.prims do
 		local raised = prim.name == "Terminal" or prim.name == "KioskPlinth" or prim.name == "KioskCap"
