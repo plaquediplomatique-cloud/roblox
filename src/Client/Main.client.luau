@@ -38,6 +38,7 @@ local TransitionController = require(script.Parent.Controllers.TransitionControl
 local HUDController = require(script.Parent.Controllers.HUDController)
 local MatchController = require(script.Parent.Controllers.MatchController)
 local MobileController = require(script.Parent.Controllers.MobileController)
+local OptionsController = require(script.Parent.Controllers.OptionsController)
 local LobbyController = require(script.Parent.Lobby.LobbyController)
 local WeaponModelBuilder = require(script.Parent.Weapons.WeaponModelBuilder)
 
@@ -80,6 +81,7 @@ HUDController.start()
 MatchController.start()
 LobbyController.start()
 MobileController.start()
+OptionsController.start()
 ReplicaController.start()
 
 -- 2. Audio des déplacements du joueur local

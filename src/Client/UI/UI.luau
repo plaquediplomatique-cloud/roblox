@@ -418,6 +418,12 @@ local function settingRow(label: string): (Frame, Frame)
 	return row, control
 end
 
+export type SliderOptions = {
+	log: boolean?, -- échelle logarithmique (sensibilité : précision fine aux petites valeurs)
+	editable: boolean?, -- valeur saisissable au clavier (Entrée pour valider)
+	nudge: number?, -- boutons − / + d'un pas fin
+}
+
 function UI.slider(
 	label: string,
 	min: number,
@@ -425,14 +431,20 @@ function UI.slider(
 	step: number,
 	value: number,
 	onChange: (number) -> (),
-	format: ((number) -> string)?
+	format: ((number) -> string)?,
+	options: SliderOptions?
 ): Frame
+	local opts: SliderOptions = options or {}
+	local logScale = opts.log == true and min > 0
+	local nudge = opts.nudge
 	local row, control = settingRow(label)
+	local readoutWidth = if opts.editable then 66 else 60
+	local nudgeWidth = if nudge then 60 else 0
 	local track = UI.frame({
 		BackgroundColor3 = Theme.colors.panelLight,
 		AnchorPoint = Vector2.new(0, 0.5),
 		Position = UDim2.fromScale(0, 0.5),
-		Size = UDim2.new(1, -70, 0, 6),
+		Size = UDim2.new(1, -(readoutWidth + nudgeWidth + 10), 0, 6),
 		Parent = control,
 	})
 	UI.corner(3, track)
@@ -447,33 +459,76 @@ function UI.slider(
 		Parent = track,
 	})
 	UI.corner(7, knob)
-	local readout = UI.text({
-		AnchorPoint = Vector2.new(1, 0.5),
-		Position = UDim2.fromScale(1, 0.5),
-		Size = UDim2.fromOffset(60, 24),
-		TextXAlignment = Enum.TextXAlignment.Right,
-		FontFace = Theme.fonts.monoBold,
-		TextSize = 15,
-		Parent = control,
-	})
+	local readout: TextLabel? = nil
+	local box: TextBox? = nil
+	if opts.editable then
+		local input = Instance.new("TextBox")
+		input.AnchorPoint = Vector2.new(1, 0.5)
+		input.Position = UDim2.fromScale(1, 0.5)
+		input.Size = UDim2.fromOffset(readoutWidth, 28)
+		input.BackgroundColor3 = Theme.colors.panelLight
+		input.BorderSizePixel = 0
+		input.ClearTextOnFocus = false
+		input.FontFace = Theme.fonts.monoBold
+		input.TextSize = 15
+		input.TextColor3 = Theme.colors.text
+		input.PlaceholderColor3 = Theme.colors.textDim
+		input.Parent = control
+		UI.corner(4, input)
+		UI.stroke(input, Theme.colors.stroke, 1, 0.1)
+		box = input
+	else
+		readout = UI.text({
+			AnchorPoint = Vector2.new(1, 0.5),
+			Position = UDim2.fromScale(1, 0.5),
+			Size = UDim2.fromOffset(readoutWidth, 24),
+			TextXAlignment = Enum.TextXAlignment.Right,
+			FontFace = Theme.fonts.monoBold,
+			TextSize = 15,
+			Parent = control,
+		})
+	end
+	local function toRatio(v: number): number
+		if logScale then
+			return math.log(v / min) / math.log(max / min)
+		end
+		return (v - min) / (max - min)
+	end
+	local function fromRatio(ratio: number): number
+		if logScale then
+			return min * (max / min) ^ ratio
+		end
+		return min + (max - min) * ratio
+	end
+	local function snap(raw: number): number
+		return math.clamp(math.floor(raw / step + 0.5) * step, min, max)
+	end
 	local current = value
 	local function render()
-		local ratio = (current - min) / (max - min)
+		local ratio = math.clamp(toRatio(current), 0, 1)
 		fill.Size = UDim2.fromScale(ratio, 1)
 		knob.Position = UDim2.fromScale(ratio, 0.5)
-		readout.Text = if format then format(current) else string.format(if step < 1 then "%.2f" else "%d", current)
+		local text = if format then format(current) else string.format(if step < 1 then "%.2f" else "%d", current)
+		if readout then
+			readout.Text = text
+		end
+		if box and not box:IsFocused() then
+			box.Text = text
+		end
 	end
-	render()
-	local dragging = false
-	local function updateFrom(x: number)
-		local ratio = math.clamp((x - track.AbsolutePosition.X) / math.max(track.AbsoluteSize.X, 1), 0, 1)
-		local raw = min + (max - min) * ratio
-		local snapped = math.clamp(math.floor(raw / step + 0.5) * step, min, max)
-		if snapped ~= current then
-			current = snapped
+	local function set(newValue: number)
+		if newValue ~= current then
+			current = newValue
 			render()
 			onChange(current)
+		else
+			render()
 		end
+	end
+	render()
+	local function updateFrom(x: number)
+		local ratio = math.clamp((x - track.AbsolutePosition.X) / math.max(track.AbsoluteSize.X, 1), 0, 1)
+		set(snap(fromRatio(ratio)))
 	end
 	local hit = UI.button({
 		BackgroundTransparency = 1,
@@ -484,29 +539,68 @@ function UI.slider(
 		ZIndex = 3,
 		Parent = track,
 	})
+	-- Glisser : connexions ouvertes le temps du geste seulement (aucune fuite par curseur).
+	local moveConnection: RBXScriptConnection? = nil
+	local endConnection: RBXScriptConnection? = nil
+	local function stopDrag()
+		if moveConnection then
+			moveConnection:Disconnect()
+			moveConnection = nil
+		end
+		if endConnection then
+			endConnection:Disconnect()
+			endConnection = nil
+		end
+	end
 	hit.MouseButton1Down:Connect(function(x: number)
-		dragging = true
+		stopDrag()
 		updateFrom(x)
-	end)
-	UserInputService.InputChanged:Connect(function(input)
-		if
-			dragging
-			and (
+		moveConnection = UserInputService.InputChanged:Connect(function(input: InputObject)
+			if
 				input.UserInputType == Enum.UserInputType.MouseMovement
 				or input.UserInputType == Enum.UserInputType.Touch
-			)
-		then
-			updateFrom(input.Position.X)
-		end
+			then
+				updateFrom(input.Position.X)
+			end
+		end)
+		endConnection = UserInputService.InputEnded:Connect(function(input: InputObject)
+			if
+				input.UserInputType == Enum.UserInputType.MouseButton1
+				or input.UserInputType == Enum.UserInputType.Touch
+			then
+				stopDrag()
+			end
+		end)
 	end)
-	UserInputService.InputEnded:Connect(function(input)
-		if
-			input.UserInputType == Enum.UserInputType.MouseButton1
-			or input.UserInputType == Enum.UserInputType.Touch
-		then
-			dragging = false
+	row.Destroying:Connect(stopDrag)
+	if box then
+		box.FocusLost:Connect(function()
+			local parsed = tonumber((string.gsub(box.Text, ",", ".")))
+			if parsed and parsed == parsed then
+				set(snap(parsed))
+			else
+				render()
+			end
+		end)
+	end
+	if nudge then
+		for index, spec in { { text = "−", delta = -nudge }, { text = "+", delta = nudge } } do
+			local button = UI.button({
+				Text = spec.text,
+				FontFace = Theme.fonts.monoBold,
+				TextSize = 18,
+				AnchorPoint = Vector2.new(1, 0.5),
+				Position = UDim2.new(1, -(readoutWidth + 6 + (2 - index) * 30), 0.5, 0),
+				Size = UDim2.fromOffset(26, 26),
+				Parent = control,
+			})
+			UI.corner(4, button)
+			button.Activated:Connect(function()
+				UI.playSound("UI.Click")
+				set(snap(current + spec.delta))
+			end)
 		end
-	end)
+	end
 	return row
 end
 

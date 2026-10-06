@@ -149,7 +149,7 @@ armes à montée en cadence (HMG-40 : 560 → 800 tirs/min en 1.2 s) recalculent
 chaque balle. Branche automatique de la boucle de tir (`step`) :
 
 ```lua
--- src/Client/Controllers/WeaponController.luau (l. 833–853)
+-- src/Client/Controllers/WeaponController.luau (l. 850–870)
 if mode == "Auto" then
     if not held then
         return
@@ -180,7 +180,7 @@ et le serveur verrait sinon une cadence impossible. Le compteur `n`, le chargeur
 avancent localement **exactement** comme le serveur les fera avancer.
 
 ```lua
--- src/Client/Controllers/WeaponController.luau (l. 466–508)
+-- src/Client/Controllers/WeaponController.luau (l. 471–513)
 local function fireOnce(def: WeaponDef, scheduledAt: number, frameClock: number, frameServer: number)
     local ammo = slotAmmo()
     if not ammo then
@@ -1510,7 +1510,7 @@ accélération vers la vitesse souhaitée — le même couple de fonctions qui r
 counter-strafe (≈ 40–50 ms) et le contrôle aérien possibles ([06-movement.md](06-movement.md)).
 
 ```lua
--- src/Client/Controllers/MovementController.luau (l. 99–107)
+-- src/Client/Controllers/MovementController.luau (l. 107–115)
 local function applyFriction(velocity: Vector3, dt: number): Vector3
     local speed = velocity.Magnitude
     if speed < 0.05 then
@@ -1523,7 +1523,7 @@ end
 ```
 
 ```lua
--- src/Client/Controllers/MovementController.luau (l. 109–128)
+-- src/Client/Controllers/MovementController.luau (l. 117–136)
 local function accelerate(
     velocity: Vector3,
     wishDir: Vector3,
@@ -1547,11 +1547,12 @@ end
 ```
 
 ```lua
--- src/Client/Controllers/MovementController.luau (l. 321–367)
+-- src/Client/Controllers/MovementController.luau (l. 360–407)
 -- Vitesse souhaitée
 local base = if stance == "Crouch"
     then Movement.crouchSpeed
     elseif walking then Movement.walkSpeed
+    elseif sprinting then Movement.sprintSpeed
     else Movement.runSpeed
 local multiplier = weaponMove * (if adsActive then adsMove else 1)
 if now < landingSlowUntil then
@@ -1603,7 +1604,7 @@ technique, jamais du chaos (les seuils serveur de [§10.11](#1011-anti-exploit) 
 d'atteinte avec marge).
 
 ```lua
--- src/Client/Controllers/MovementController.luau (l. 237–245)
+-- src/Client/Controllers/MovementController.luau (l. 261–269)
 -- Bunny-hop léger : l'excédent au-dessus de la vitesse de course s'érode à chaque hop.
 if now - lastLandAt <= Movement.bhopWindow then
     hopChain += 1
@@ -1636,7 +1637,7 @@ expulsion à 60 avec drapeau persistant au profil. Un lag isolé ne fait jamais 
 faut une accumulation d'anomalies impossibles. Aucun bannissement automatique sur heuristique.
 
 ```lua
--- src/Server/Services/AntiCheatService.luau (l. 99–125)
+-- src/Server/Services/AntiCheatService.luau (l. 100–126)
 --[[ Signale une violation. `weight` : 0.5 (spam) … 100 (pot de miel). ]]
 function AntiCheatService.flag(player: Player, reason: string, weight: number)
     if player.Parent ~= Players then
@@ -1672,7 +1673,7 @@ aérien × 1.08 × 1.15 ≈ 24.3 studs/s) qui attrape les speedhacks « discrets
 qu'un seuil instantané laisserait passer.
 
 ```lua
--- src/Server/Services/AntiCheatService.luau (l. 146–237)
+-- src/Server/Services/AntiCheatService.luau (l. 147–238)
 local function checkPlayer(player: Player, state: State, now: number)
     local character = player.Character
     local root = character and character:FindFirstChild("HumanoidRootPart")
@@ -1953,7 +1954,7 @@ point de départ, **sans rendre la part de dérive que le joueur a déjà compen
 (pas de sur-correction vers le sol), et le pattern « redescend » pendant les pauses.
 
 ```lua
--- src/Client/Controllers/WeaponController.luau (l. 416–450)
+-- src/Client/Controllers/WeaponController.luau (l. 421–455)
 local function recover(def: WeaponDef, dt: number, now: number)
     -- Compensation du joueur : elle "consomme" la dérive à récupérer.
     local yawInput, pitchInput = CameraController.lastInput()
@@ -1996,7 +1997,7 @@ valeurs de configuration de chaque arme (recul arrière, montée, roulis), rédu
 accroupi.
 
 ```lua
--- src/Client/Controllers/ViewmodelController.luau (l. 416–444)
+-- src/Client/Controllers/ViewmodelController.luau (l. 433–461)
 --[[ Retour visuel d'un tir : recul du modèle, flash, douille. ]]
 function ViewmodelController.onShot(def: WeaponDef, crouched: boolean)
     local state = current
@@ -2080,7 +2081,7 @@ Workspace:SetAttribute("ServerReady", true)
 envoyé par le serveur.
 
 ```lua
--- src/Client/Main.client.luau (l. 61–83)
+-- src/Client/Main.client.luau (l. 62–85)
 -- 1. Démarrage ordonné
 ClientState.start()
 SettingsController.start()
@@ -2103,6 +2104,7 @@ HUDController.start()
 MatchController.start()
 LobbyController.start()
 MobileController.start()
+OptionsController.start()
 ReplicaController.start()
 ```
 

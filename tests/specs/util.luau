@@ -10,6 +10,7 @@ local Missions = req(Shared.Config.Missions)
 local Progression = req(Shared.Config.Progression)
 local Cosmetics = req(Shared.Config.Cosmetics)
 local Weapons = req(Shared.Config.Weapons)
+local Settings = req(Shared.Config.Settings)
 
 T.describe("Spring", function()
 	T.it("converge vers la cible (critique, sans dépassement)", function()
@@ -157,6 +158,29 @@ T.describe("Profil", function()
 		T.eq(data.Settings.Controls.Sensitivity, 0.4, "réglages réparés")
 		T.expect(data.Inventory["skin_default_vk12"], "inventaire de départ")
 		T.eq(data.Loadout.Primary, "vk12")
+	end)
+	T.it("migration v3 : Maj = sprint, marche sur Alt, sans voler de touche", function()
+		local defaults = Settings.defaults()
+		local old = ProfileTemplate.new() :: any
+		old.Version = 2
+		old.Settings.Keybinds = table.clone(defaults.Keybinds)
+		old.Settings.Keybinds.Walk = "LeftShift"
+		old.Settings.Keybinds.Sprint = nil
+		old.Settings.Keybinds.Options = nil
+		old.Settings.Keybinds.Inspect = "P" -- touche déjà utilisée par le joueur
+		old.Settings.Controls.ToggleSprint = nil
+		local data = ProfileTemplate.reconcile(ProfileTemplate.migrate(old))
+		T.eq(data.Settings.Keybinds.Sprint, "LeftShift")
+		T.eq(data.Settings.Keybinds.Walk, "LeftAlt")
+		T.eq(data.Settings.Keybinds.Inspect, "P", "rebinding du joueur conservé")
+		T.eq(data.Settings.Keybinds.Options, "O", "touche libre suivante")
+		T.eq(data.Settings.Controls.ToggleSprint, false, "nouveau réglage complété")
+		local seen: { [string]: string } = {}
+		for action, key in data.Settings.Keybinds do
+			T.expect(seen[key] == nil, "touche en double : " .. key .. " (" .. action .. ")")
+			seen[key] = action
+		end
+		T.expect(Settings.validate(data.Settings), "réglages valides")
 	end)
 	T.it("corrige un loadout invalide", function()
 		local data = ProfileTemplate.new()

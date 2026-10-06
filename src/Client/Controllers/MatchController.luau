@@ -1243,7 +1243,9 @@ function MatchController.start()
 				sendInteract(available)
 			end
 		elseif action == "Menu" then
-			toggleMenu()
+			if not ClientState.isOverlayOpen("Options") then
+				toggleMenu()
+			end
 		elseif dead and not killcamActive and (action == "Fire" or action == "Aim") then
 			spectateIndex += if action == "Fire" then 1 else -1
 			local candidates = spectateCandidates()

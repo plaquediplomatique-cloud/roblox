@@ -34,6 +34,7 @@ local SettingsPanel = require(script.Parent.Parent.UI.SettingsPanel)
 local ClientState = require(script.Parent.Parent.Core.ClientState)
 local ReplicaController = require(script.Parent.Parent.Core.ReplicaController)
 local InputController = require(script.Parent.Parent.Controllers.InputController)
+local SettingsController = require(script.Parent.Parent.Controllers.SettingsController)
 local CameraController = require(script.Parent.Parent.Controllers.CameraController)
 local AudioController = require(script.Parent.Parent.Controllers.AudioController)
 local LightingController = require(script.Parent.Parent.Controllers.LightingController)
@@ -497,7 +498,7 @@ local function buildTopBar()
 		TextColor3 = colors.gold,
 		TextXAlignment = Enum.TextXAlignment.Right,
 		AnchorPoint = Vector2.new(1, 0),
-		Position = UDim2.new(1, -24, 0, 6),
+		Position = UDim2.new(1, -66, 0, 6),
 		Size = UDim2.fromOffset(300, 22),
 		Parent = topBar,
 	})
@@ -508,21 +509,34 @@ local function buildTopBar()
 		TextColor3 = colors.textDim,
 		TextXAlignment = Enum.TextXAlignment.Right,
 		AnchorPoint = Vector2.new(1, 0),
-		Position = UDim2.new(1, -24, 0, 32),
+		Position = UDim2.new(1, -66, 0, 32),
 		Size = UDim2.fromOffset(520, 18),
 		TextTruncate = Enum.TextTruncate.AtEnd,
 		Parent = topBar,
 	})
-	UI.text({
-		Text = "[M] MENU    [B] EMOTES    [F] INTERAGIR",
+	local keysHint = UI.text({
+		Text = "",
 		FontFace = fonts.mono,
 		TextSize = 12,
 		TextColor3 = colors.textDim,
 		AnchorPoint = Vector2.new(0.5, 0),
 		Position = UDim2.new(0.5, 0, 0, 62),
-		Size = UDim2.fromOffset(500, 16),
+		Size = UDim2.fromOffset(760, 16),
 		Parent = topBar,
 	})
+	-- Touches réelles du joueur (rebinding pris en compte).
+	local function refreshKeysHint()
+		local binds = SettingsController.get().Keybinds
+		keysHint.Text = ("[%s] MENU    [%s] OPTIONS / SENSIBILITÉ    [%s] SPRINT    [%s] EMOTES    [%s] INTERAGIR"):format(
+			binds.Menu or "M",
+			binds.Options or "P",
+			binds.Sprint or "LeftShift",
+			binds.Emote or "B",
+			binds.Interact or "F"
+		)
+	end
+	refreshKeysHint()
+	SettingsController.Changed:Connect(refreshKeysHint)
 end
 
 local function buildMenu()
@@ -778,6 +792,9 @@ function LobbyController.start()
 			return
 		end
 		if action == "Menu" then
+			if ClientState.isOverlayOpen("Options") then
+				return
+			end
 			if menu.Visible then
 				LobbyController.close()
 			elseif not PostMatch.isShowing() then

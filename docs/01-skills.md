@@ -194,7 +194,7 @@ Feedback, Ambient / UI`. Volumes des réglages appliqués aux groupes.
   (passe-bas + atténuation) : on entend « derrière ce mur ».
 - **Ducking** : élimination, détonation, annonce → musique et ambiance s'effacent.
 - **Bas PV** : passe-bas global sur les SFX + battement de cœur.
-- **Pas** : par matériau, volume selon l'allure — **la marche (Maj) est silencieuse**, et
+- **Pas** : par matériau, volume selon l'allure — **la marche (Alt) est silencieuse, le sprint (Maj) s'entend**, et
   les pas des autres joueurs sont synthétisés côté client (`CharacterAnimator`).
 - Le code ne référence **jamais** un SoundId : clés logiques dans `Shared/Config/Sounds.luau`.
 

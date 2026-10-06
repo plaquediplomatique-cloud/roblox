@@ -27,8 +27,9 @@ Humanoid:Move(v̂) ; Humanoid.WalkSpeed = |v|
 
 | Paramètre | Valeur | Effet |
 |---|---|---|
-| `runSpeed` | 17.5 studs/s | course (× mobilité de l'arme, 84 % → 108 %) |
-| `walkSpeed` | 9.5 | marche (Maj) — **silencieuse** |
+| `runSpeed` | 17.5 studs/s | allure normale, on peut tirer (× mobilité de l'arme, 84 % → 108 %) |
+| `sprintSpeed` | 23.5 | **sprint (Maj)** : vers l'avant, arme baissée, ni tir ni visée, pas plus forts |
+| `walkSpeed` | 9.5 | marche (Alt) — **silencieuse** |
 | `crouchSpeed` | 7.5 | accroupi — pas feutrés (volume 0.25) |
 | `groundAccelerate` | 11 | ≈ 0.2 s pour atteindre la vitesse de course |
 | `friction` / `stopSpeed` | 7.5 / 7 | décroissance exponentielle puis arrêt net sous 7 studs/s |
@@ -55,7 +56,7 @@ les références du genre.
 | Glissade | −1.7 | ≈ 2.6 | torse incliné 30°, jambes en avant | élan de glissade |
 
 - Le changement de posture modifie **physiquement** `Humanoid.HipHeight` (collision réelle)
-  et est répliqué au serveur (`Stance` : posture, lean, ADS, marche — throttle 80 ms) qui
+  et est répliqué au serveur (`Stance` : posture, lean, ADS, marche, sprint — throttle 80 ms) qui
   en déduit les hitboxes (`Hitbox.compose`) et le cône minimal plausible.
 - Se relever exige de la **place** (`Spherecast` au-dessus de la tête) : impossible de
   « clipper » sous un plafond bas.
@@ -98,17 +99,32 @@ de duel.
 - **Mobilité par arme** : `handling.moveMultiplier` (HMG-40 84 %, P-10/MP-6 100 %, lame
   108 %) et `adsMoveMultiplier` en visée (sniper 34 % de la course).
 
+### Sprint (Maj)
+
+- Conditions : debout, déplacement **vers l'avant** (au moins 45 % de la direction), ni
+  marche ni visée ; maintien ou bascule (réglage « Sprint en bascule ») ; manette : L3 ;
+  mobile : stick poussé à fond vers l'avant.
+- **Arme baissée** pendant le sprint (même pose que l'abaissement contre un mur) et champ
+  de vision élargi de 4°. Tirer ou viser **interrompt** le sprint ; l'arme met
+  `sprint.fireDelay` = 0,12 s à se relever et le clic est mémorisé jusque-là (jamais perdu).
+  Le sprint reprend 0,25 s après avoir lâché la gâchette ou la visée.
+- Coût tactique : pas plus forts (`Rules/Footsteps` : course 0,81, sprint 1,0) et foulée
+  plus longue ; les autres voient l'arme portée en travers (attribut `Sprinting`).
+- Glisser depuis un sprint fonctionne naturellement (vitesse d'entrée atteinte).
+- Anti-triche : la vitesse soutenue maximale suit `max(sprint, course × 1.12)` × marges.
+
 ## 6.7 Couplage caméra et sensations
 
 - **Oeil = géométrie de posture** lissée verticalement (marches, changements de posture
   sans saut d'image).
 - **Bob de tête** (réglable 0–150 %) : vertical 0.055, roulis 0.35°, phase liée à la
   **distance parcourue** (cadence de pas réelle, pas une sinusoïde au temps).
-- **Pas** : un pas tous les 6.2 studs en course (4.4 accroupi), son par matériau
-  (métal, doux, défaut), volume selon l'allure ; **marche silencieuse**.
+- **Pas** : un pas tous les 6.2 studs en course (7.6 en sprint, 4.4 accroupi), son par
+  matériau, volume selon l'allure (`Shared/Rules/Footsteps`) ; **marche silencieuse**, y
+  compris à mi-course du stick.
 - Les **autres** joueurs émettent eux aussi des pas 3D occlus (synthétisés côté client
-  à partir de leur vitesse, posture et attribut `Walking`) : l'information sonore est
-  symétrique et fiable.
+  avec la même règle, à partir de leur vitesse, posture et attribut `Walking`) :
+  l'information sonore est symétrique et fiable.
 
 ## 6.8 Orientation du corps et réplication
 
@@ -127,7 +143,7 @@ l'intégrité** (`AntiCheatService`, échantillonnage 10 Hz, historique 3 s) :
 | Contrôle | Seuil |
 |---|---|
 | Vitesse en rafale (1 s) | > plafond de glissade × 1.15 = **34.5 studs/s** |
-| Vitesse soutenue (3 s) | > course × 1.12 × 1.08 × 1.15 ≈ **24.3 studs/s** |
+| Vitesse soutenue (3 s) | > max(sprint, course × 1.12) × 1.08 × 1.15 ≈ **29.2 studs/s** |
 | Téléportation | déplacement horizontal > 18 studs + vitesse de rafale × dt entre deux échantillons (sauf téléportations serveur autorisées) |
 | Noclip | raycast entre deux positions successives traversant la géométrie |
 | Vol | montée > 55 studs/s, ou > 3 s en l'air sans retomber (vitesse verticale > −4) |

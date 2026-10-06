@@ -75,6 +75,7 @@ local WeaponController = {
 local SLOT_ORDER: { WeaponSlot } = { "Primary", "Secondary", "Melee" }
 local MAX_SHOTS_PER_FRAME = 3
 local SEMI_BUFFER = 0.12 -- un clic légèrement trop tôt est mémorisé, pas perdu
+local SPRINT_HOLD = 0.25 -- le sprint reprend 0,25 s après avoir lâché la gâchette ou la visée
 
 local player = Players.LocalPlayer
 
@@ -216,7 +217,11 @@ local function updateAds(dt: number, now: number)
 		if held and ViewmodelController.isPlaying("Inspect") then
 			ViewmodelController.stop()
 		end
-		wanted = held and canAim(def, now)
+		if held then
+			-- Viser interrompt le sprint ; la visée commence une fois l'arme relevée.
+			MovementController.blockSprint(SPRINT_HOLD)
+		end
+		wanted = held and canAim(def, now) and MovementController.weaponReady()
 	end
 	if wanted ~= adsWanted then
 		adsWanted = wanted
@@ -819,6 +824,18 @@ local function step(dt: number)
 	if active and active.shell and held and ammo.mag > 0 then
 		cancelReload()
 		readyAt = now + 0.12
+	end
+
+	-- Sprint : la gâchette (ou un clic mémorisé) l'interrompt ; le tir part dès que l'arme est
+	-- relevée, le clic reste mémorisé jusque-là (jamais perdu).
+	if def.category ~= "Melee" and (held or semiQueuedAt ~= nil) then
+		MovementController.blockSprint(SPRINT_HOLD)
+	end
+	if not MovementController.weaponReady() then
+		if semiQueuedAt ~= nil then
+			semiQueuedAt = now
+		end
+		return
 	end
 
 	if not canFire(def, now) then

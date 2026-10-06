@@ -186,6 +186,8 @@ function MobileController.start()
 			-- y écran vers le bas = reculer ; dead-zone de 12 %.
 			local magnitude = vector.Magnitude
 			InputController.setVirtualMove(if magnitude < 0.12 then Vector2.zero else Vector2.new(vector.X, -vector.Y))
+			-- Sprint automatique : stick poussé à fond vers l'avant.
+			InputController.setVirtual("Sprint", magnitude >= 0.92 and -vector.Y >= 0.7)
 		else
 			local previous = lookTouches[input]
 			if previous then
@@ -200,6 +202,7 @@ function MobileController.start()
 			stickBase.Visible = false
 			stickKnob.Position = UDim2.fromScale(0.5, 0.5)
 			InputController.setVirtualMove(Vector2.zero)
+			InputController.setVirtual("Sprint", false)
 		end
 		lookTouches[input] = nil
 	end)

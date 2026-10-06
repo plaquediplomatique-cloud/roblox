@@ -12,7 +12,9 @@
 	    la vitesse est plafonnée et chaque hop rogne l'excédent,
 	  * glissade : élan initial, friction croissante, gain en pente, steering léger,
 	    slide-jump (conserve 85 % de l'élan, plafonné en l'air),
-	  * buffer de saut (120 ms) et coyote time (80 ms) : les commandes ne "ratent" jamais.
+	  * buffer de saut (120 ms) et coyote time (80 ms) : les commandes ne "ratent" jamais,
+	  * sprint (Maj) vers l'avant, arme baissée : tirer ou viser l'interrompt (WeaponController
+	    appelle blockSprint), l'arme se relève en `sprint.fireDelay`.
 	Postures (Stand/Crouch/Slide) : HipHeight physique + géométrie partagée (Stances),
 	répliquées au serveur (hitboxes) ; la visée part en binaire à 30 Hz.
 ]]
@@ -25,6 +27,7 @@ local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
 local Types = require(Shared.Types)
 local Movement = require(Shared.Config.Movement)
 local Stances = require(Shared.Combat.Stances)
+local Footsteps = require(Shared.Rules.Footsteps)
 local Spring = require(Shared.Util.Spring)
 local Signal = require(Shared.Util.Signal)
 local MathUtil = require(Shared.Util.MathUtil)
@@ -53,8 +56,13 @@ local align: AlignOrientation? = nil
 
 local stance: Types.Stance = "Stand"
 local walking = false
+local sprinting = false
 local crouchToggled = false
 local walkToggled = false
+local sprintToggled = false
+local sprintBlockedUntil = 0
+local sprintEndedAt = -math.huge
+local fovKickApplied = 0
 local standHip = 2
 local firstPerson = false
 local frozen = false
@@ -143,7 +151,7 @@ end
 
 local function sendStance(force: boolean)
 	local leanInt = if leanSpring.target > 0.5 then 1 elseif leanSpring.target < -0.5 then -1 else 0
-	local key = ("%s|%d|%s|%s"):format(stance, leanInt, tostring(adsActive), tostring(walking))
+	local key = ("%s|%d|%s|%s|%s"):format(stance, leanInt, tostring(adsActive), tostring(walking), tostring(sprinting))
 	if key == lastStancePacket and not force then
 		return
 	end
@@ -152,7 +160,8 @@ local function sendStance(force: boolean)
 	end
 	lastStancePacket = key
 	lastStanceSent = os.clock()
-	local packet: Types.StancePacket = { stance = stance, lean = leanInt, ads = adsActive, walking = walking }
+	local packet: Types.StancePacket =
+		{ stance = stance, lean = leanInt, ads = adsActive, walking = walking, sprinting = sprinting }
 	Net.event("Stance"):FireServer(packet)
 end
 
@@ -175,7 +184,6 @@ local function startSlide(velocity: Vector3)
 	slideSpeed = math.min(math.max(velocity.Magnitude, Movement.slide.startSpeed), Movement.slide.speedCap)
 	setStance("Slide")
 	tiltSpring.target = Movement.slide.cameraTilt
-	CameraController.setFovKick(Movement.slide.fovKick)
 	MovementController.SlideStarted:Fire()
 end
 
@@ -185,13 +193,29 @@ local function endSlide(toCrouch: boolean)
 	end
 	slideCooldownUntil = os.clock() + Movement.slide.cooldown
 	tiltSpring.target = 0
-	CameraController.setFovKick(0)
 	if toCrouch or not hasHeadroom() then
 		setStance("Crouch")
 	else
 		setStance("Stand")
 	end
 	MovementController.SlideEnded:Fire()
+end
+
+local function stopSprint(now: number)
+	if sprinting then
+		sprinting = false
+		sprintEndedAt = now
+	end
+	sprintToggled = false
+end
+
+--[[ Élargissement du champ de vision : glissade > sprint > rien (une seule source). ]]
+local function refreshFovKick()
+	local kick = if stance == "Slide" then Movement.slide.fovKick elseif sprinting then Movement.sprint.fovKick else 0
+	if kick ~= fovKickApplied then
+		fovKickApplied = kick
+		CameraController.setFovKick(kick)
+	end
 end
 
 local function wantsCrouch(): boolean
@@ -312,6 +336,21 @@ local function step(dt: number)
 		endSlide(false)
 	end
 
+	-- Sprint : debout, vers l'avant, sans viser ni marcher ; tir et visée l'interrompent.
+	local forwardAmount = -moveLocal.Z
+	local canSprint = stance == "Stand"
+		and not walking
+		and not adsActive
+		and not blocked
+		and now >= sprintBlockedUntil
+		and forwardAmount >= Movement.sprint.forwardMin
+	local wantsSprint = if controls.ToggleSprint then sprintToggled else InputController.isDown("Sprint")
+	if wantsSprint and canSprint then
+		sprinting = true
+	else
+		stopSprint(now)
+	end
+
 	-- Saut (buffer + coyote)
 	local buffered = jumpBufferedAt
 	if buffered and now - buffered <= Movement.jumpBuffer and not blocked then
@@ -322,6 +361,7 @@ local function step(dt: number)
 	local base = if stance == "Crouch"
 		then Movement.crouchSpeed
 		elseif walking then Movement.walkSpeed
+		elseif sprinting then Movement.sprintSpeed
 		else Movement.runSpeed
 	local multiplier = weaponMove * (if adsActive then adsMove else 1)
 	if now < landingSlowUntil then
@@ -413,16 +453,12 @@ local function step(dt: number)
 
 	-- Pas et bob
 	if grounded and stance ~= "Slide" and speed > 1 then
-		local stride = if stance == "Crouch" then 4.4 else Movement.footsteps.strideLength
+		local stride = Footsteps.stride(stance, speed)
 		stepDistance += speed * dt
 		bobPhase += speed * dt / stride * math.pi
 		if stepDistance >= stride then
 			stepDistance = 0
-			local volume = if walking
-				then Movement.footsteps.walkVolume
-				elseif stance == "Crouch" then Movement.footsteps.crouchVolume
-				else Movement.footsteps.runVolume * math.clamp(speed / Movement.runSpeed, 0.4, 1)
-			MovementController.Footstep:Fire(h.FloorMaterial, volume)
+			MovementController.Footstep:Fire(h.FloorMaterial, Footsteps.volume(stance, walking, speed))
 		end
 		bobAmplitude.target = math.clamp(speed / Movement.runSpeed, 0, 1.2)
 	else
@@ -430,6 +466,7 @@ local function step(dt: number)
 	end
 	bobAmplitude:step(dt)
 
+	refreshFovKick()
 	sendStance(false)
 
 	-- Visée -> serveur (binaire, 30 Hz)
@@ -471,6 +508,26 @@ end
 
 function MovementController.setFrozen(value: boolean)
 	frozen = value
+end
+
+function MovementController.isSprinting(): boolean
+	return sprinting
+end
+
+--[[ Arme relevée : pas de sprint en cours ni dans les `sprint.fireDelay` dernières secondes. ]]
+function MovementController.weaponReady(): boolean
+	return not sprinting and os.clock() - sprintEndedAt >= Movement.sprint.fireDelay
+end
+
+--[[ Interrompt le sprint et l'empêche pendant `duration` s (tir, visée, action). ]]
+function MovementController.blockSprint(duration: number)
+	local now = os.clock()
+	sprintBlockedUntil = math.max(sprintBlockedUntil, now + duration)
+	if sprinting then
+		stopSprint(now)
+		refreshFovKick()
+		sendStance(true)
+	end
 end
 
 function MovementController.speedRatio(): number
@@ -539,8 +596,11 @@ local function onCharacter(model: Model)
 	end
 	stance = "Stand"
 	slideSpeed = 0
+	sprinting = false
+	sprintToggled = false
 	leanSpring:snap(0)
 	tiltSpring:snap(0)
+	fovKickApplied = 0
 	CameraController.setFovKick(0)
 	local attachment = Instance.new("Attachment")
 	attachment.Name = "AS_Align"
@@ -581,11 +641,14 @@ function MovementController.start()
 			crouchToggled = not crouchToggled
 		elseif action == "Walk" then
 			walkToggled = not walkToggled
+		elseif action == "Sprint" then
+			sprintToggled = not sprintToggled
 		end
 	end)
 	ClientState.MenuChanged:Connect(function(open: boolean)
 		if open then
 			crouchToggled = false
+			sprintToggled = false
 		end
 	end)
 	RunService.PreSimulation:Connect(step)

@@ -23,7 +23,7 @@ local InputController = {
 }
 
 -- Actions qui restent actives menu ouvert (elles servent justement à le fermer).
-local ALWAYS_ACTIVE: { [string]: boolean } = { Menu = true, Scoreboard = true, Emote = true }
+local ALWAYS_ACTIVE: { [string]: boolean } = { Menu = true, Options = true, Scoreboard = true, Emote = true }
 
 local GAMEPAD: { [Enum.KeyCode]: string } = {
 	[Enum.KeyCode.ButtonR2] = "Fire",
@@ -31,7 +31,7 @@ local GAMEPAD: { [Enum.KeyCode]: string } = {
 	[Enum.KeyCode.ButtonX] = "Reload",
 	[Enum.KeyCode.ButtonA] = "Jump",
 	[Enum.KeyCode.ButtonB] = "Crouch",
-	[Enum.KeyCode.ButtonL3] = "Walk",
+	[Enum.KeyCode.ButtonL3] = "Sprint", -- marche lente : stick à mi-course (silencieuse)
 	[Enum.KeyCode.ButtonY] = "Cycle", -- arme suivante (manette : un bouton pour 3 emplacements)
 	[Enum.KeyCode.ButtonR3] = "Melee",
 	[Enum.KeyCode.DPadLeft] = "LeanLeft",

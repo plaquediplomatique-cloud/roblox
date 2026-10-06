@@ -38,6 +38,7 @@ local Movement = require(Shared.Config.Movement)
 local Ranks = require(Shared.Config.Ranks)
 local Theme = require(Shared.Config.Theme)
 local Stances = require(Shared.Combat.Stances)
+local Footsteps = require(Shared.Rules.Footsteps)
 local MathUtil = require(Shared.Util.MathUtil)
 local Net = require(Shared.Net.Net)
 local LookCodec = require(Shared.Net.LookCodec)
@@ -93,6 +94,7 @@ type Entry = {
 	rig: Rig?,
 	phase: number,
 	ads: number,
+	sprint: number,
 	kick: number,
 	frame: number,
 	weapon: ThirdPersonWeapon?,
@@ -529,6 +531,7 @@ local function track(instance: Instance)
 		rig = buildRig(model),
 		phase = 0,
 		ads = 0,
+		sprint = 0,
 		kick = 0,
 		frame = math.random(0, 2),
 		weapon = nil,
@@ -583,6 +586,8 @@ local function stanceOf(model: Model): Types.Stance
 end
 
 type GripStyle = { hip: Vector3, ads: Vector3, tilt: number }
+
+local SPRINT_GRIP_OFFSET = Vector3.new(-0.25, -0.12, 0.2)
 
 local GRIPS: { [string]: GripStyle } = {
 	Rifle = { hip = Vector3.new(0.55, -0.5, -0.75), ads = Vector3.new(0.32, -0.02, -0.7), tilt = 0 },
@@ -671,8 +676,9 @@ local function geometryRoots(): { Instance }
 end
 
 --[[
-	Pas des AUTRES joueurs : information tactique essentielle. Course = audible,
-	accroupi = feutré, marche (Shift) = silencieuse ; matériau du sol par raycast.
+	Pas des AUTRES joueurs : information tactique essentielle. Sprint = fort, course =
+	audible, accroupi = feutré, marche (Alt) = silencieuse (règle partagée Rules/Footsteps) ;
+	matériau du sol par raycast.
 ]]
 local function emitFootstep(entry: Entry, stance: Types.Stance, speed: number)
 	local camera = Workspace.CurrentCamera
@@ -680,12 +686,7 @@ local function emitFootstep(entry: Entry, stance: Types.Stance, speed: number)
 	if not camera or (camera.CFrame.Position - position).Magnitude > Movement.footsteps.maxHearDistance then
 		return
 	end
-	local walking = entry.model:GetAttribute("Walking") == true
-	local volume = if walking
-		then Movement.footsteps.walkVolume
-		elseif stance == "Crouch" then Movement.footsteps.crouchVolume
-		else Movement.footsteps.runVolume
-	volume *= math.clamp(speed / (Movement.runSpeed * 0.7), 0, 1)
+	local volume = Footsteps.volume(stance, entry.model:GetAttribute("Walking") == true, speed)
 	if volume <= 0.01 then
 		return
 	end
@@ -724,6 +725,7 @@ local function animate(entry: Entry, dt: number, now: number, isLocal: boolean)
 	local stance: Types.Stance = stanceOf(model)
 	local lean = if stance == "Slide" then 0 else numberAttr(model, "Lean", 0)
 	entry.ads = MathUtil.damp(entry.ads, if model:GetAttribute("Ads") == true then 1 else 0, 10, dt)
+	entry.sprint = MathUtil.damp(entry.sprint, if model:GetAttribute("Sprinting") == true then 1 else 0, 10, dt)
 	entry.kick = math.max(0, entry.kick - dt * 9)
 	local velocity = entry.root.AssemblyLinearVelocity
 	local flatVelocity = Vector3.new(velocity.X, 0, velocity.Z)
@@ -731,7 +733,7 @@ local function animate(entry: Entry, dt: number, now: number, isLocal: boolean)
 	local localMove = flatRoot:VectorToObjectSpace(flatVelocity)
 	local airborne = if isLocal then entry.humanoid.FloorMaterial == Enum.Material.Air else math.abs(velocity.Y) > 4.5
 	if not airborne and speed > 0.3 then
-		entry.phase = (entry.phase + dt * TWO_PI * speed / (2 * Movement.footsteps.strideLength)) % TWO_PI
+		entry.phase = (entry.phase + dt * TWO_PI * speed / (2 * Footsteps.stride(stance, speed))) % TWO_PI
 	end
 	if not isLocal then
 		local stepIndex = math.floor(entry.phase / math.pi)
@@ -821,11 +823,14 @@ local function animate(entry: Entry, dt: number, now: number, isLocal: boolean)
 		local grip = GRIPS[style]
 		local aimRotation = CFrame.Angles(0, yaw, 0) * CFrame.Angles(pitch, 0, 0)
 		local pivot = upperTorso.Position + upperTorso.UpVector * 0.45
-		local offset = grip.hip:Lerp(grip.ads, entry.ads) + Vector3.new(0, 0, entry.kick * 0.22)
+		local offset = grip.hip:Lerp(grip.ads, entry.ads)
+			+ Vector3.new(0, 0, entry.kick * 0.22)
+			+ SPRINT_GRIP_OFFSET * entry.sprint
+		-- Sprint : arme portée en travers, canon vers le bas (lisible de loin : « il ne tire pas »).
 		local weaponCFrame = CFrame.new(pivot)
 			* aimRotation
 			* CFrame.new(offset)
-			* CFrame.Angles(grip.tilt + rad(9) * entry.kick, 0, 0)
+			* CFrame.Angles(grip.tilt + rad(9) * entry.kick - rad(38) * entry.sprint, rad(32) * entry.sprint, 0)
 		weapon.weld.C0 = upperTorso:Inverse() * weaponCFrame
 		local scale = def.model.worldScale
 		local up = weaponCFrame.UpVector

@@ -1,10 +1,13 @@
---[[ Tests : rangs/MMR, matchmaking, règles de manche et de match. ]]
+--[[ Tests : rangs/MMR, matchmaking, règles de manche et de match, pas, avatars. ]]
 
 local RankMath = req(Shared.Rules.RankMath)
 local MatchmakingAlgorithm = req(Shared.Rules.MatchmakingAlgorithm)
 local MatchRules = req(Shared.Rules.MatchRules)
 local GameModes = req(Shared.Config.GameModes)
 local Ranks = req(Shared.Config.Ranks)
+local Footsteps = req(Shared.Rules.Footsteps)
+local AvatarRules = req(Shared.Rules.AvatarRules)
+local Movement = req(Shared.Config.Movement)
 
 local function rankState(overrides)
 	local state = {
@@ -208,5 +211,42 @@ T.describe("MatchRules", function()
 		T.expect(GameModes.isPistolRound(squad, 8), "8")
 		T.expect(not GameModes.isPistolRound(squad, 2), "2")
 		T.expect(not GameModes.isPistolRound(duel, 1), "duel")
+	end)
+end)
+
+T.describe("Pas et sprint", function()
+	T.it("marche silencieuse, sprint plus fort que la course", function()
+		T.eq(Footsteps.volume("Stand", true, Movement.runSpeed), 0, "marche (Alt) silencieuse")
+		T.eq(Footsteps.volume("Stand", false, Movement.walkSpeed), 0, "allure de marche (stick) silencieuse")
+		local run = Footsteps.volume("Stand", false, Movement.runSpeed)
+		local sprint = Footsteps.volume("Stand", false, Movement.sprintSpeed)
+		local crouch = Footsteps.volume("Crouch", false, Movement.crouchSpeed)
+		T.expect(run > 0.5, "course audible " .. run)
+		T.expect(sprint > run, "sprint plus fort")
+		T.expect(crouch > 0 and crouch < run, "accroupi feutré")
+		T.eq(Footsteps.volume("Slide", false, 25), 0, "glissade")
+	end)
+	T.it("foulée plus longue en sprint", function()
+		T.expect(Footsteps.stride("Stand", Movement.sprintSpeed) > Footsteps.stride("Stand", Movement.runSpeed))
+		T.expect(Footsteps.stride("Crouch", Movement.crouchSpeed) < Footsteps.stride("Stand", Movement.runSpeed))
+	end)
+	T.it("le sprint reste sous les seuils de l'anti-triche", function()
+		local sustained = math.max(Movement.sprintSpeed, Movement.runSpeed * Movement.maxAirSpeedRatio) * 1.08 * 1.15
+		T.expect(Movement.sprintSpeed * 1.1 < sustained, "marge réseau sur le sprint")
+		T.expect(Movement.sprintSpeed < Movement.slide.startSpeed, "la glissade reste un gain")
+	end)
+end)
+
+T.describe("Avatar en combat", function()
+	T.it("retire les accessoires volumineux, garde les compacts", function()
+		T.expect(AvatarRules.oversized(Vector3.new(5, 1, 1)), "épée dorsale")
+		T.expect(AvatarRules.oversized(Vector3.new(2.2, 2.2, 2.2)), "volume")
+		T.expect(not AvatarRules.oversized(Vector3.new(1.4, 1, 1.4)), "chapeau compact")
+		local slots = {}
+		for _, field in AvatarRules.MATCH_REMOVED_SLOTS do
+			slots[field] = true
+		end
+		T.expect(slots.BackAccessory and slots.WaistAccessory, "dos et taille retirés")
+		T.expect(not slots.HatAccessory and not slots.HairAccessory, "chapeau et cheveux gardés")
 	end)
 end)

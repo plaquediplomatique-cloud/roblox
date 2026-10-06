@@ -2,8 +2,12 @@
 --[[
 	CharacterService — personnages, santé, posture, visée répliquée.
 
-	* Spawn standardisé : HumanoidDescription à échelles fixes, sans accessoires
-	  (aucun avantage d'avatar), couleurs + équipement procédural de la tenue équipée.
+	* Spawn avec l'AVATAR ROBLOX du joueur (son apparence, ses vêtements, ses accessoires),
+	  à échelles fixes : les hitboxes (Shared/Combat/Hitbox) sont indépendantes de
+	  l'avatar, la silhouette reste donc dans leur enveloppe. En match, les gros accessoires
+	  (dos, taille, épaules, devant, objets surdimensionnés) sont retirés : rien ne dépasse
+	  d'un couvert ni ne trompe la visée. Tenue d'opérateur (cosmétique) : équipement
+	  procédural par-dessus l'avatar ; avatar indisponible : silhouette aux couleurs de la tenue.
 	* PV et bouclier AUTORITAIRES : seul le serveur les modifie (Humanoid.Health et
 	  attribut "Armor"), via Ballistics.apply. Journal de dégâts -> assists.
 	* Mort : ragdoll serveur, désenregistrement des hitboxes, signal Died.
@@ -31,6 +35,7 @@ local Movement = require(Shared.Config.Movement)
 local Cosmetics = require(Shared.Config.Cosmetics)
 local ServerNet = require(script.Parent.Parent.Net.ServerNet)
 local OperatorGear = require(script.Parent.Parent.Character.OperatorGear)
+local AvatarRules = require(Shared.Rules.AvatarRules)
 local Ragdoll = require(script.Parent.Parent.Character.Ragdoll)
 local DataService = require(script.Parent.DataService)
 local ArenaService = require(script.Parent.ArenaService)
@@ -153,21 +158,84 @@ end
 -- Spawn
 ---------------------------------------------------------------------------------------------
 
-local function buildDescription(player: Player): (HumanoidDescription, Types.ItemDef?)
-	local description = Instance.new("HumanoidDescription")
+local avatarCache: { [number]: HumanoidDescription } = {}
+
+--[[
+	Apparence Roblox du joueur, récupérée une fois par session. Échec (service
+	indisponible, comptes de test Studio à identifiant négatif) : nil.
+]]
+local function avatarDescription(player: Player): HumanoidDescription?
+	local cached = avatarCache[player.UserId]
+	if cached then
+		return cached:Clone()
+	end
+	if player.UserId <= 0 then
+		return nil
+	end
+	local ok, result = pcall(function(): HumanoidDescription
+		return Players:GetHumanoidDescriptionFromUserIdAsync(player.UserId)
+	end)
+	if not ok then
+		log:warn("avatar indisponible", player.Name, result)
+		return nil
+	end
+	avatarCache[player.UserId] = result
+	return result:Clone()
+end
+
+local function buildDescription(
+	player: Player,
+	arenaKind: Types.ArenaKind
+): (HumanoidDescription, Types.ItemDef?, boolean)
+	local data = DataService.getData(player)
+	local operator = Cosmetics.get(if data then data.Cosmetics.Operator else "op_standard")
+		or Cosmetics.get("op_standard")
+	local avatar = avatarDescription(player)
+	local description: HumanoidDescription
+	if avatar then
+		description = avatar
+		if arenaKind ~= "Hub" then
+			for _, field in AvatarRules.MATCH_REMOVED_SLOTS do
+				(description :: any)[field] = ""
+			end
+		end
+	else
+		description = Instance.new("HumanoidDescription")
+		if operator and operator.palette then
+			OperatorGear.bodyColors(description, operator.palette)
+		end
+	end
 	description.HeightScale = 1
 	description.WidthScale = 1
 	description.DepthScale = 1
 	description.HeadScale = 1
 	description.BodyTypeScale = 0
 	description.ProportionScale = 0
-	local data = DataService.getData(player)
-	local operator = Cosmetics.get(if data then data.Cosmetics.Operator else "op_standard")
-		or Cosmetics.get("op_standard")
-	if operator and operator.palette then
-		OperatorGear.bodyColors(description, operator.palette)
+	return description, operator, avatar ~= nil
+end
+
+--[[ Accessoires : jamais de collision ni de requête ; en combat, les surdimensionnés partent. ]]
+local function sanitizeAccessories(character: Model, combat: boolean, removeHeadwear: boolean)
+	for _, child in character:GetChildren() do
+		if not child:IsA("Accessory") then
+			continue
+		end
+		local handle = child:FindFirstChild("Handle")
+		local size = if handle and handle:IsA("BasePart") then handle.Size else Vector3.zero
+		local headwear = child.AccessoryType == Enum.AccessoryType.Hat or child.AccessoryType == Enum.AccessoryType.Hair
+		if (combat and AvatarRules.oversized(size)) or (removeHeadwear and headwear) then
+			child:Destroy()
+			continue
+		end
+		for _, descendant in child:GetDescendants() do
+			if descendant:IsA("BasePart") then
+				descendant.CanCollide = false
+				descendant.CanQuery = false
+				descendant.CanTouch = false
+				descendant.Massless = true
+			end
+		end
 	end
-	return description, operator
 end
 
 local function setCollisionGroup(character: Model, group: string)
@@ -214,7 +282,7 @@ function CharacterService.spawn(player: Player, cframe: CFrame, options: SpawnOp
 		return nil
 	end
 	spawning[player] = true
-	local description, operator = buildDescription(player)
+	local description, operator, ownAvatar = buildDescription(player, options.arenaKind)
 	local ok, err = pcall(function()
 		player:LoadCharacterWithHumanoidDescriptionAsync(description)
 	end)
@@ -245,6 +313,7 @@ function CharacterService.spawn(player: Player, cframe: CFrame, options: SpawnOp
 	character:SetAttribute("Lean", 0)
 	character:SetAttribute("Ads", false)
 	character:SetAttribute("Walking", false)
+	character:SetAttribute("Sprinting", false)
 	character:SetAttribute("Alive", true)
 	character:SetAttribute("Team", options.team or "")
 	character:SetAttribute("Side", options.side or "")
@@ -252,7 +321,13 @@ function CharacterService.spawn(player: Player, cframe: CFrame, options: SpawnOp
 	character:SetAttribute("ArenaKind", options.arenaKind)
 	character:AddTag("Combatant")
 
-	OperatorGear.attach(character, operator)
+	-- Tenue d'opérateur : par-dessus l'avatar seulement si le joueur en a équipé une (le
+	-- casque remplace alors chapeaux et cheveux) ; sans avatar, elle habille la silhouette.
+	local wearsGear = operator ~= nil and (not ownAvatar or operator.id ~= AvatarRules.DEFAULT_OPERATOR)
+	sanitizeAccessories(character, options.arenaKind ~= "Hub", wearsGear)
+	if wearsGear then
+		OperatorGear.attach(character, operator)
+	end
 	setCollisionGroup(character, "Players")
 	AntiCheatService.allowTeleport(player, 3)
 	character:PivotTo(cframe)
@@ -355,6 +430,7 @@ local isStance = Guard.shape({
 	lean = Guard.integer(-1, 1),
 	ads = Guard.boolean,
 	walking = Guard.boolean,
+	sprinting = Guard.boolean,
 })
 
 local function parseStance(packet: any): Types.StancePacket?
@@ -428,6 +504,7 @@ function CharacterService.Start()
 		releaseSlot(player)
 		looks[player] = nil
 		lookHistories[player] = nil
+		avatarCache[player.UserId] = nil
 		damageLogs[player] = nil
 		spawning[player] = nil
 		LagCompensationService.unregister(player.UserId)
@@ -447,6 +524,8 @@ function CharacterService.Start()
 			character:SetAttribute("Lean", lean)
 			character:SetAttribute("Ads", packet.ads)
 			character:SetAttribute("Walking", packet.walking)
+			-- Pose 3e personne uniquement (arme baissée) : la vitesse reste bornée par l'anti-triche.
+			character:SetAttribute("Sprinting", packet.sprinting and packet.stance == "Stand" and not packet.ads)
 		end
 	)
 

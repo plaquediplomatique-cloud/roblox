@@ -382,6 +382,7 @@ export type StancePacket = {
 	lean: number, -- -1, 0, 1
 	ads: boolean,
 	walking: boolean,
+	sprinting: boolean,
 }
 
 ---------------------------------------------------------------------------------------------
@@ -562,6 +563,7 @@ export type ControlSettings = {
 	ToggleAds: boolean,
 	ToggleCrouch: boolean,
 	ToggleWalk: boolean,
+	ToggleSprint: boolean,
 	LeanEnabled: boolean,
 	AutoReload: boolean,
 }

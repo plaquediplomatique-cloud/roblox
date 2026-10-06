@@ -19,7 +19,7 @@ local Progression = require(script.Parent.Parent.Config.Progression)
 
 local ProfileTemplate = {}
 
-ProfileTemplate.VERSION = 2
+ProfileTemplate.VERSION = 3
 
 function ProfileTemplate.new(): Types.ProfileData
 	return {
@@ -99,6 +99,41 @@ local MIGRATIONS: { [number]: (any) -> () } = {
 		if type(cosmetics) == "table" and type(cosmetics.Emotes) == "table" then
 			while #cosmetics.Emotes < 4 do
 				table.insert(cosmetics.Emotes, "")
+			end
+		end
+	end,
+	-- v2 -> v3 : Maj devient le sprint, la marche silencieuse passe sur Alt, touche « Options ».
+	-- Une touche déjà prise par le joueur n'est jamais volée : on prend la suivante libre.
+	[2] = function(data: any)
+		local settings = data.Settings
+		local keybinds = if type(settings) == "table" and type(settings.Keybinds) == "table"
+			then settings.Keybinds
+			else nil
+		if not keybinds then
+			return
+		end
+		if keybinds.Walk == "LeftShift" then
+			keybinds.Walk = nil
+		end
+		local used: { [string]: boolean } = {}
+		for _, key in keybinds do
+			used[key] = true
+		end
+		for _, entry in
+			{
+				{ action = "Sprint", keys = { "LeftShift", "CapsLock", "V" } },
+				{ action = "Walk", keys = { "LeftAlt", "X", "Z" } },
+				{ action = "Options", keys = { "P", "O", "F1" } },
+			}
+		do
+			if keybinds[entry.action] == nil then
+				for _, key in entry.keys do
+					if not used[key] then
+						keybinds[entry.action] = key
+						used[key] = true
+						break
+					end
+				end
 			end
 		end
 	end,

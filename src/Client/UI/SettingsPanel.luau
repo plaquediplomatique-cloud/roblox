@@ -28,6 +28,7 @@ local ACTION_NAMES: { [string]: string } = {
 	Reload = "Recharger",
 	Jump = "Sauter",
 	Crouch = "S'accroupir / glisser",
+	Sprint = "Sprinter",
 	Walk = "Marcher (silencieux)",
 	LeanLeft = "Pencher à gauche",
 	LeanRight = "Pencher à droite",
@@ -38,6 +39,7 @@ local ACTION_NAMES: { [string]: string } = {
 	Interact = "Interagir (uplink)",
 	Scoreboard = "Tableau des scores",
 	Menu = "Menu",
+	Options = "Options rapides (sensibilité)",
 	Emote = "Emote",
 }
 
@@ -104,7 +106,7 @@ local function buildControls(page: ScrollingFrame, s: Types.SettingsData)
 			update(function(d)
 				d.Controls.Sensitivity = v
 			end)
-		end)
+		end, nil, { log = true, editable = true, nudge = 0.01 })
 	)
 	add(
 		page,
@@ -112,7 +114,7 @@ local function buildControls(page: ScrollingFrame, s: Types.SettingsData)
 			update(function(d)
 				d.Controls.AdsMultiplier = v
 			end)
-		end)
+		end, nil, { editable = true, nudge = 0.05 })
 	)
 	add(
 		page,
@@ -120,7 +122,7 @@ local function buildControls(page: ScrollingFrame, s: Types.SettingsData)
 			update(function(d)
 				d.Controls.ScopeMultiplier = v
 			end)
-		end)
+		end, nil, { editable = true, nudge = 0.05 })
 	)
 	add(
 		page,
@@ -144,6 +146,14 @@ local function buildControls(page: ScrollingFrame, s: Types.SettingsData)
 		UI.toggle("Accroupi en bascule", s.Controls.ToggleCrouch, function(v)
 			update(function(d)
 				d.Controls.ToggleCrouch = v
+			end)
+		end)
+	)
+	add(
+		page,
+		UI.toggle("Sprint en bascule", s.Controls.ToggleSprint, function(v)
+			update(function(d)
+				d.Controls.ToggleSprint = v
 			end)
 		end)
 	)

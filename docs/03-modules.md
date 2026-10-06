@@ -59,6 +59,8 @@ Chemins relatifs à `src/`. « Pur » = aucune dépendance moteur, testé sous L
 | `Rules/MatchRules` | **Pur** : fin de manche (élimination, détonation, désamorçage, temps), prolongations, balle de match, vainqueur |
 | `Rules/MatchmakingAlgorithm` | **Pur** : fenêtres MMR/rang qui s'élargissent, sélection de tickets, partition équilibrée |
 | `Rules/RankMath` | **Pur** : Elo d'équipe, K variable, RR (base, convergence, performance), promotions |
+| `Rules/Footsteps` | **Pur** : volume et foulée des pas selon l'allure (marche silencieuse, course, sprint, accroupi), partagé par le joueur local et les autres |
+| `Rules/AvatarRules` | **Pur** : accessoires d'avatar retirés en combat (emplacements dos/taille/épaules/devant, objets surdimensionnés) |
 
 ## 3.2 Server — `ServerScriptService.Server`
 
@@ -79,7 +81,7 @@ Chemins relatifs à `src/`. « Pur » = aucune dépendance moteur, testé sous L
 | `ArenaService` | « Où est ce joueur ? » (Hub / Training / match précis), attributs `Arena` et `ArenaKind` | `set`, `get`, `idOf`, `sameArena`, `playersIn`, `Changed` |
 | `MapService` | Construit le hub et les arènes (slots de 1600 studs), streaming persistant, éclairage | `hub`, `createArena`, `addArenaPlayer`, `releaseArena`, `applyLighting` |
 | `LagCompensationService` | Historique des poses (64), rembobinage interpolé, raycast multi-cibles | `register`, `unregister`, `poseAt`, `rewindTime`, `raycast`, `history` |
-| `CharacterService` | Spawn standardisé (HumanoidDescription, tenue), santé/bouclier autoritaires, postures et visée répliquées (LookBatch 20 Hz), assists, chute hors carte, emotes | `spawn`, `applyDamage`, `kill`, `despawn`, `eyePosition`, `getLook`, `lookHistory`, `assisters`, `health`, `Spawned`, `Died` |
+| `CharacterService` | Spawn avec l'avatar Roblox du joueur (échelles fixes, gros accessoires retirés en match, tenue d'opérateur optionnelle), santé/bouclier autoritaires, postures et visée répliquées (LookBatch 20 Hz), assists, chute hors carte, emotes | `spawn`, `applyDamage`, `kill`, `despawn`, `eyePosition`, `getLook`, `lookHistory`, `assisters`, `health`, `Spawned`, `Died` |
 | `PlayerService` | Cycle de vie joueur : replica de profil, attributs publics, toasts, retour au hub | `getReplica`, `set`, `increment`, `refreshPublic`, `notify`, `returnToHub`, `Ready` |
 | `CombatService` | Gunplay autoritaire (pipeline 10 étapes), rechargements, équipement, mêlée, killcam | `arm`, `disarm`, `isArmed`, `setPhaseResolver`, `setFirstBloodResolver` |
 | `InventoryService` | Inventaire, équipement, monnaie douce (Flux), achats | `owns`, `grant`, `addFlux`, `addCrystals`, `purchase` |
@@ -119,6 +121,7 @@ Chemins relatifs à `src/`. « Pur » = aucune dépendance moteur, testé sous L
 |---|---|
 | `InputController` | Actions abstraites rebindables (clavier/souris, manette, virtuel tactile), suspension en menu |
 | `SettingsController` | Réglages appliqués en direct, sauvegarde temporisée (1.5 s), validation |
+| `OptionsController` | Options rapides partout (touche P, engrenage) : sensibilité d'abord (curseur logarithmique, saisie exacte, pas fins), visée, FOV, volumes ; accès au panneau complet |
 | `CameraController` | Visée vs rendu, 5 modes, punch/shake/FOV, zoom et sensibilité ADS |
 | `MovementController` | Déplacement Source-like, postures, lean, glissade, sauts, pas, envoi `Stance`/`LookUpdate` |
 | `ViewmodelController` | Arme + bras IK en 1re personne, hanche↔visée, sway/bob/respiration/kick, mur, lunette, hit-stop |

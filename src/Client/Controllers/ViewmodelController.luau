@@ -50,6 +50,7 @@ local RIGHT_POLE = Vector3.new(0.9, -1, 0.35)
 local LEFT_POLE = Vector3.new(-1, -0.9, 0.2)
 local MELEE_LEFT_REST = CFrame.new(-0.7, -1.2, -0.85)
 local BLEND_TIME = 0.14
+local SPRINT_LOW = 0.72
 
 local ViewmodelController = {}
 
@@ -144,18 +145,34 @@ local function newArm(side: string): Arm
 	return { upper = upper, fore = fore, glove = glove, cuff = cuff }
 end
 
+local function bodyColor(character: Model?, name: string): Color3?
+	local part = character and character:FindFirstChild(name)
+	return if part and part:IsA("BasePart") then part.Color else nil
+end
+
+--[[
+	Bras à la couleur de l'avatar du joueur (tenue standard) ; une tenue d'opérateur équipée
+	impose ses manches, ses gants et son liseré.
+]]
 local function paintArms()
 	local operatorId = Players.LocalPlayer:GetAttribute("Operator")
-	local item = if type(operatorId) == "string" then Cosmetics.get(operatorId) else nil
+	local item = if type(operatorId) == "string" and operatorId ~= "op_standard" then Cosmetics.get(operatorId) else nil
 	local palette = item and item.palette
-	local sleeve = if palette then palette.Base else Color3.fromRGB(38, 42, 50)
-	local glove = if palette then palette.Grip else Color3.fromRGB(22, 24, 28)
-	local neon = if palette then palette.Neon else Color3.fromRGB(61, 225, 255)
+	local character = Players.LocalPlayer.Character
+	local glove = if palette then palette.Grip else Color3.fromRGB(26, 28, 32)
+	local upper = if palette
+		then palette.Base
+		else (bodyColor(character, "RightUpperArm") or Color3.fromRGB(38, 42, 50))
+	local fore = if palette
+		then palette.Base:Lerp(Color3.new(0, 0, 0), 0.15)
+		else (bodyColor(character, "RightLowerArm") or upper)
+	local cuff = if palette then palette.Neon else glove:Lerp(Color3.new(1, 1, 1), 0.08)
 	for _, arm in { arms.right, arms.left } do
-		arm.upper.Color = sleeve
-		arm.fore.Color = sleeve:Lerp(Color3.new(0, 0, 0), 0.15)
+		arm.upper.Color = upper
+		arm.fore.Color = fore
 		arm.glove.Color = glove
-		arm.cuff.Color = neon
+		arm.cuff.Color = cuff
+		arm.cuff.Material = if palette then Enum.Material.Neon else Enum.Material.SmoothPlastic
 	end
 end
 
@@ -563,7 +580,9 @@ local function update(frameDt: number)
 	local reach = state.muzzleReach + 0.35
 	local hit = Workspace:Raycast(camera.CFrame.Position, camera.CFrame.LookVector * reach, wallParams)
 	local wallAlpha = if hit then math.clamp((reach - hit.Distance) / (reach * 0.55), 0, 1) else 0
-	lowSpring.target = if lowered then 1 else wallAlpha * (1 - 0.5 * adsEase)
+	-- Sprint : arme portée basse (même pose que l'abaissement, un peu moins marquée).
+	local sprintLow = if MovementController.isSprinting() then SPRINT_LOW else 0
+	lowSpring.target = if lowered then 1 else math.max(wallAlpha * (1 - 0.5 * adsEase), sprintLow)
 	local low = math.clamp(lowSpring:step(dt), 0, 1)
 	if low > 0.001 then
 		base = base:Lerp(profile.lowOffset, low * low * (3 - 2 * low))
@@ -610,6 +629,10 @@ function ViewmodelController.start()
 	arms = { right = newArm("Right"), left = newArm("Left") }
 	paintArms()
 	Players.LocalPlayer:GetAttributeChangedSignal("Operator"):Connect(paintArms)
+	Players.LocalPlayer.CharacterAppearanceLoaded:Connect(paintArms)
+	Players.LocalPlayer.CharacterAdded:Connect(function()
+		task.delay(0.5, paintArms)
+	end)
 
 	MovementController.Landed:Connect(function(fallSpeed: number)
 		landSpring:impulse(Vector3.new(0, -math.min(fallSpeed, 70) * 0.06, 0))

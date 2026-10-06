@@ -39,7 +39,8 @@ local log = Logger.new("AntiCheat")
 local SAMPLE_INTERVAL = 0.1
 local HISTORY_SECONDS = 3
 local BURST_MAX_SPEED = Movement.slide.speedCap * 1.15
-local SUSTAINED_MAX_SPEED = Movement.runSpeed * Movement.maxAirSpeedRatio * 1.08 * 1.15
+-- Allure soutenue la plus rapide : sprint au sol ou course + élan aérien plafonné.
+local SUSTAINED_MAX_SPEED = math.max(Movement.sprintSpeed, Movement.runSpeed * Movement.maxAirSpeedRatio) * 1.08 * 1.15
 local TELEPORT_DISTANCE = 18
 local MAX_UPWARD_SPEED = 55
 local FLY_TIME = 3

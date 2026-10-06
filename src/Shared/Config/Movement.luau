@@ -11,14 +11,17 @@
 	    mais pas accélérer librement en l'air,
 	  * bunny-hop LÉGER : sauter dans la fenêtre d'atterrissage (bhopWindow) évite la
 	    friction, mais la vitesse est plafonnée à maxAirSpeedRatio × course et chaque hop
-	    consécutif perd une partie de l'excédent : technique, jamais abusif.
+	    consécutif perd une partie de l'excédent : technique, jamais abusif,
+	  * sprint (Maj) : vers l'avant uniquement, arme baissée ; tirer ou viser l'interrompt et
+	    l'arme met `sprint.fireDelay` à se relever. Marche silencieuse sur Alt.
 	Toutes les vitesses en studs/s, accélérations en studs/s².
 ]]
 
 local Movement = {
-	runSpeed = 17.5,
-	walkSpeed = 9.5, -- marche silencieuse (Shift)
+	runSpeed = 17.5, -- allure normale (on peut tirer)
+	walkSpeed = 9.5, -- marche silencieuse (Alt)
 	crouchSpeed = 7.5,
+	sprintSpeed = 23.5, -- sprint (Maj) : arme baissée, pas de tir ni de visée
 
 	groundAccelerate = 11,
 	friction = 7.5,
@@ -60,6 +63,13 @@ local Movement = {
 		fovKick = 6,
 	},
 
+	sprint = {
+		forwardMin = 0.45, -- part « avant » du déplacement nécessaire (pas de sprint latéral)
+		fireDelay = 0.12, -- délai pour relever l'arme après un sprint (tir et visée)
+		fovKick = 4,
+		strideLength = 7.6,
+	},
+
 	lean = {
 		speed = 14,
 		blockedFraction = 0.25, -- si un mur bloque, lean réduit à 25 %
@@ -76,9 +86,10 @@ local Movement = {
 
 	footsteps = {
 		strideLength = 6.2, -- studs entre deux pas en course
+		crouchStride = 4.4,
 		runVolume = 1,
 		crouchVolume = 0.25,
-		walkVolume = 0, -- marche = silencieuse (fondamental en tactique)
+		walkVolume = 0, -- marche = silencieuse (fondamental en tactique), voir Rules/Footsteps
 		maxHearDistance = 70,
 	},
 }

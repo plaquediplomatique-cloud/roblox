@@ -31,6 +31,7 @@
         "CharacterWalkSpeed": 16,
         "CharacterMaxSlopeAngle": 50,
         "LoadCharacterAppearance": false,
+        "GameSettingsAvatar": "R15",
         "AutoJumpEnabled": false,
         "EnableMouseLockOption": false,
         "DevComputerMovementMode": "Scriptable",

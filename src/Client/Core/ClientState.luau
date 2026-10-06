@@ -72,11 +72,35 @@ function ClientState.myTeam(): string?
 	return if entry then entry.team else nil
 end
 
-function ClientState.setMenuOpen(open: boolean)
+-- Menus « de base » (lobby, menu de match) et fenêtres superposées (options rapides) :
+-- la souris reste libre tant que l'un d'eux est ouvert, quel que soit l'ordre de fermeture.
+local baseMenuOpen = false
+local overlays: { [string]: boolean } = {}
+
+local function publishMenu()
+	local open = baseMenuOpen or next(overlays) ~= nil
 	if ClientState.menuOpen ~= open then
 		ClientState.menuOpen = open
 		ClientState.MenuChanged:Fire(open)
 	end
+end
+
+function ClientState.setMenuOpen(open: boolean)
+	baseMenuOpen = open
+	publishMenu()
+end
+
+function ClientState.setOverlay(name: string, open: boolean)
+	if open then
+		overlays[name] = true
+	else
+		overlays[name] = nil
+	end
+	publishMenu()
+end
+
+function ClientState.isOverlayOpen(name: string): boolean
+	return overlays[name] == true
 end
 
 function ClientState.start()

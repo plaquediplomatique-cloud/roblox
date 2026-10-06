@@ -239,7 +239,8 @@ deux murs pleins : ligne de vue impossible (test automatique).
 - Profils par carte (ci-dessus) appliqués côté serveur (`MapService.applyLighting`) et côté
   client (`LightingController.applyMap`) — un serveur lobby qui héberge des matchs locaux
   applique le profil de la carte **pour les seuls participants**.
-- Contraste ennemi garanti : personnages en tenues sombres + visière néon, contour ennemi
+- Contraste ennemi garanti : chaque joueur garde son avatar Roblox (gros accessoires retirés
+  en match, `Rules/AvatarRules`), contour ennemi
   `Highlight` en mode **Occluded** (n'apparaît que sur les pixels réellement visibles —
   jamais à travers un mur), couleur réglable (rouge, jaune « deutéranopie », violet
   « tritanopie »).
