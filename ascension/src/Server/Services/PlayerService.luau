@@ -19,6 +19,7 @@ local Profile = require(Shared.Rules.Profile)
 local Combat = require(Shared.Rules.Combat)
 local Economy = require(Shared.Rules.Economy)
 local WeaponCatalog = require(Shared.Rules.WeaponCatalog)
+local Fighter = require(Shared.Rules.Fighter)
 local Zones = require(Shared.Config.Zones)
 local Game = require(Shared.Config.Game)
 local DataService = require(script.Parent.DataService)
@@ -99,24 +100,13 @@ function PlayerService.fighter(state: State): Combat.Fighter
 	if cached then
 		return cached
 	end
-	local profile = state.Profile
-	local weapon = WeaponCatalog.ById[profile.Equipped] or WeaponCatalog.Main[1]
-	local fighter: Combat.Fighter = {
-		Damage = weapon.Damage,
-		AttackSpeed = weapon.AttackSpeed,
-		PowerLevel = profile.Upgrades.Power,
-		SpeedLevel = profile.Upgrades.Speed,
-		CritChanceLevel = profile.Upgrades.CritChance,
-		CritDamageLevel = profile.Upgrades.CritDamage,
-		Stars = profile.Stars,
-		Special = weapon.Special,
-	}
+	local fighter = Fighter.fromProfile(state.Profile)
 	state.Fighter = fighter
 	return fighter
 end
 
 function PlayerService.weapon(state: State): WeaponCatalog.Weapon
-	return WeaponCatalog.ById[state.Profile.Equipped] or WeaponCatalog.Main[1]
+	return Fighter.weapon(state.Profile)
 end
 
 function PlayerService.hasPass(state: State, id: string): boolean
