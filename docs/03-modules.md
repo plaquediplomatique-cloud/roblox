@@ -1,6 +1,6 @@
 # 3. Liste complète des ModuleScripts / Services et responsabilités
 
-103 modules Luau strict. Pour chacun : responsabilité, API principale, dépendances notables.
+104 modules Luau strict. Pour chacun : responsabilité, API principale, dépendances notables.
 Chemins relatifs à `src/`. « Pur » = aucune dépendance moteur, testé sous Lune.
 
 ## 3.1 Shared — partagé client/serveur (`ReplicatedStorage.Shared`)
@@ -28,6 +28,7 @@ Chemins relatifs à `src/`. « Pur » = aucune dépendance moteur, testé sous L
 | `Combat/Stances` | Géométrie de chaque posture : hauteur, oeil, hitboxes, sphère englobante ; transformation de lean (caméra = hitbox) |
 | `Combat/Hitbox` | Rayon vs OBB (broadphase sphère → narrowphase boîtes), zone touchée la plus proche, centre/tête |
 | `Combat/Spread` | Cône (hanche/ADS, mouvement au-delà de 34 % de la vitesse, air, accroupi, bloom, 1re balle), directions **déterministes**, motif des plombs |
+| `Combat/SpreadAudit` | Détection « no-spread » : corrélation, par fenêtres de 40 paires de tirs, entre la variation de visée et le décalage de dispersion connu d'avance |
 | `Combat/Ballistics` | Dégâts (zone × chute × pénétration), bouclier (66 %), pénétration par matériau/épaisseur (2 surfaces max), tirs pour tuer |
 
 ### Config (données typées)
@@ -87,7 +88,7 @@ Chemins relatifs à `src/`. « Pur » = aucune dépendance moteur, testé sous L
 | `MissionService` | Missions quotidiennes/hebdo : tirage, progression sur `GameEvents`, réclamation, reroll | (remote `MissionAction`) |
 | `StoreService` | Achats en Flux, paliers du Pass | (remote `ShopAction`) |
 | `SettingsService` | Sauvegarde validée des réglages | (remote `SettingsSave`) |
-| `PurchaseService` | Robux : `ProcessReceipt` **idempotent**, sauvegarde avant octroi | — |
+| `PurchaseService` | Robux : `ProcessReceipt` **idempotent** ; `PurchaseGranted` seulement après sauvegarde réussie, sinon annulation complète (reçu + octroi) | — |
 | `MatchService` | Orchestration des `MatchInstance` (locale ou serveur réservé), remotes `Interact`/`LoadoutSelect`, retour au hub / téléportation | `startLocal`, `forPlayer`, `isInMatch` |
 | `PartyService` | Parties de 1 à 3 : invitations (TTL), exclusion, promotion, verrou, mode | `ensure`, `get`, `byId`, `setQueue`, `Changed` |
 | `MatchmakingService` | Files classées/casual, backend MemoryStore (cloud) ou local (Studio), estimation, réservation de serveur, reprise de match | (remote `QueueAction`) |
@@ -155,7 +156,7 @@ Chemins relatifs à `src/`. « Pur » = aucune dépendance moteur, testé sous L
 
 ## 3.5 Graphe de dépendances
 
-Vérifié automatiquement : **aucun cycle de `require`** sur les 103 modules (481 arêtes).
+Vérifié automatiquement (`python3 tools/require_graph.py --check`) : **aucun cycle de `require`** et aucun `require` non résolu sur les 104 modules (511 dépendances).
 Couches (une couche ne dépend que des couches inférieures) :
 
 ```

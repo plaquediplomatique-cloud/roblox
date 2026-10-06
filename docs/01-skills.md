@@ -3,7 +3,7 @@
 > Règle de lecture : chaque compétence est **activée par du code qui existe** dans ce dépôt.
 > Les chemins sont relatifs à `src/`. Rien ici n'est une intention : c'est une description
 > de ce qui est implémenté, vérifié par l'analyse stricte (`scripts/analyze.sh`, 0 erreur sur
-> 103 modules), les tests (`scripts/test.sh`, 87 tests) et le build Rojo (`scripts/build.sh`).
+> 104 modules), les tests (`scripts/test.sh`, 91 tests) et le build Rojo (`scripts/build.sh`).
 
 | # | Skill | Statut | Où ça vit |
 |---|---|---|---|
@@ -242,7 +242,8 @@ Défense en profondeur (détails : [10-code.md](10-code.md)) :
 1. **Réseau** : rate limit + validation de forme de **chaque** remote, pot de miel.
 2. **Combat** : rejeu de n° de tir, cadence (même arme), fenêtre glissante 1 s, origine du
    tir (≤ 3.5 + 0.35 × vitesse studs de l'oeil serveur), cône déclaré ≥ cône minimal
-   plausible, vitesse angulaire > 3500°/s, équipement trop rapide, horloge du tir.
+   plausible, vitesse angulaire > 3500°/s, équipement trop rapide, horloge du tir, audit
+   statistique de pré-compensation de la dispersion (`SpreadAudit`, anti « no-spread »).
 3. **Mouvement** (`AntiCheatService`, 10 Hz) : vitesse en rafale (1 s) et soutenue (3 s),
    téléportation (> 18 studs/échantillon), noclip (raycast entre positions), vol
    (montée > 55 studs/s, > 3 s en l'air), rubber-banding.

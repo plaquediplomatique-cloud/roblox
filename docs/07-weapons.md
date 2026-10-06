@@ -139,7 +139,9 @@ directions : graine = hash(graine serveur, n° de tir) → décalage dans le cô
 
 Le serveur recalcule **les mêmes** directions et impose un **cône minimal plausible**
 (état observé : vitesse, posture, ADS confirmé, en l'air > 0.25 s, bloom × 0.5, × 0.85 de
-tolérance) : un « no-spread » ne gagne rien.
+tolérance) : déclarer un cône réduit ne sert à rien. La graine, elle, est connue du client
+(condition de la prédiction exacte) : la **pré-compensation** du décalage par un cheat est
+détectée statistiquement par `SpreadAudit` ([10-code.md §10.11](10-code.md#1011-anti-exploit)).
 
 ## 7.6 Recul : pattern, aléa, récupération
 

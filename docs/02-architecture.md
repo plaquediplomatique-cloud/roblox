@@ -98,7 +98,8 @@ Propriétés clés :
   son, recul, impact sur la cible prédite) ne promet pas de dégâts.
 - **Même balle des deux côtés** : `Spread.seed(seedBase, n)` — `seedBase` est attribué par le
   serveur (`AmmoSync`), `n` est séquentiel. Un client ne peut ni choisir sa graine, ni
-  déclarer un cône nul (rejeté au profit du cône minimal + signalement).
+  déclarer un cône nul (rejeté au profit du cône minimal + signalement) ; s'il exploite sa
+  connaissance de la graine pour pré-compenser la dispersion, `SpreadAudit` le détecte.
 - **Auto-réparation** : tout refus serveur renvoie `AmmoSync` ; le client repart de la
   vérité serveur (compteur, chargeurs, graine).
 
@@ -155,7 +156,7 @@ roblox/
 ├── tests/
 │   ├── run.luau                Runner (describe/it/expect/eq/near)
 │   ├── lib/loader.luau         Arbre d'instances virtuel + shims (Random PCG32, task, game)
-│   └── specs/                  combat · rules · util · maps (87 tests)
+│   └── specs/                  combat · rules · util · maps (91 tests)
 ├── tools/
 │   ├── export_maps.luau        Blueprints -> build/maps/*.json
 │   ├── render_maps.py          JSON -> vues de dessus PNG (docs/maps)

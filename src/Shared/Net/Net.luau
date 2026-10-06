@@ -43,7 +43,6 @@ export type EventName =
 	| "ReplicaUpdate"
 	| "ReplicaDestroy"
 	| "ReplicaRequest"
-	| "ClientReady"
 	| "AdminCommand"
 
 export type UnreliableName = "LookUpdate" | "LookBatch" | "ShotVisual"
@@ -98,7 +97,6 @@ local DEFINITIONS: { [string]: Definition } = {
 	ReplicaUpdate = { kind = "Event", folder = "Replica" },
 	ReplicaDestroy = { kind = "Event", folder = "Replica" },
 	ReplicaRequest = { kind = "Event", folder = "Replica" },
-	ClientReady = { kind = "Event", folder = "Replica" },
 	-- Pot de miel anti-exploit
 	AdminCommand = { kind = "Event", folder = "Admin" },
 }
