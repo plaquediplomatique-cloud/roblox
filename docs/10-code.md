@@ -1384,7 +1384,7 @@ partition en deux équipes qui minimise l'écart de MMR moyen (énumération exh
 équilibrées **et** homogènes.
 
 ```lua
--- src/Shared/Rules/MatchmakingAlgorithm.luau (l. 93–105)
+-- src/Shared/Rules/MatchmakingAlgorithm.luau (l. 94–106)
 local function compatible(config: Config, ranked: boolean, a: MatchTicket, b: MatchTicket, now: number): boolean
     local waited = math.max(now - a.enqueuedAt, now - b.enqueuedAt)
     if math.abs(a.mmr - b.mmr) > MatchmakingAlgorithm.window(config, waited) then
@@ -1401,7 +1401,7 @@ end
 ```
 
 ```lua
--- src/Shared/Rules/MatchmakingAlgorithm.luau (l. 63–91)
+-- src/Shared/Rules/MatchmakingAlgorithm.luau (l. 64–92)
 --[[ Meilleure partition de `group` en deux équipes de `teamSize` joueurs. ]]
 function MatchmakingAlgorithm.bestSplit(group: { MatchTicket }, teamSize: number): MatchProposal?
     local count = #group

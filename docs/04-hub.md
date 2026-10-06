@@ -83,8 +83,9 @@ serverId }`.
 3. Parmi les candidats compatibles les plus proches en MMR (10 max), sélection d'un
    ensemble de tickets totalisant **exactement** 2 × taille d'équipe joueurs — **une party
    n'est jamais séparée**.
-4. Toutes les partitions en deux équipes sont énumérées (≤ 6 tickets → ≤ 64) ; score =
-   écart de MMR moyen + 0.25 × dispersion. On joue le meilleur.
+4. Toutes les partitions en deux équipes sont énumérées (≤ 6 tickets → ≤ 32 partitions, le
+   1er ticket étant fixé dans l'équipe A) ; score = écart de MMR moyen + 0.25 × dispersion.
+   On joue le meilleur.
 
 **Affichage** (widget permanent + onglet JOUER) : état (RECHERCHE / MATCH TROUVÉ),
 temps écoulé, **estimation** (moyenne glissante des 20 dernières attentes de cette file ;

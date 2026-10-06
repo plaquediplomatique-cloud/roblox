@@ -11,7 +11,8 @@
 	3. On sélectionne, parmi les candidats compatibles les plus proches en MMR, un
 	   ensemble de tickets totalisant exactement 2 × teamSize joueurs (une party n'est
 	   jamais séparée), puis on cherche la partition en deux équipes qui minimise l'écart
-	   de MMR moyen (énumération exhaustive : ≤ 6 tickets -> ≤ 64 sous-ensembles).
+	   de MMR moyen (énumération exhaustive : ≤ 6 tickets -> ≤ 32 partitions, le ticket 1
+	   étant fixé dans l'équipe A).
 	4. Score = écart entre équipes + 0.25 × dispersion : on privilégie des équipes
 	   équilibrées ET homogènes.
 ]]
