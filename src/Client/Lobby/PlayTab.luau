@@ -34,17 +34,41 @@ local PlayTab = {}
 
 export type Tab = { frame: Frame, refresh: () -> (), focus: (option: string?) -> () }
 
+-- Titre de section : filet d'accent + capitales (même grammaire que le HUD).
 local function heading(parent: Instance, text: string, order: number): TextLabel
-	return UI.text({
+	local label = UI.text({
 		Text = text,
-		FontFace = fonts.heading,
-		TextSize = 15,
-		TextColor3 = colors.primary,
+		FontFace = fonts.headingHeavy,
+		TextSize = 14,
+		TextColor3 = colors.text,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		Size = UDim2.new(1, 0, 0, 22),
 		LayoutOrder = order,
 		Parent = parent,
 	})
+	UI.padding(label, 12, 0, 0, 0)
+	UI.frame({
+		Name = "Accent",
+		BackgroundColor3 = colors.primary,
+		Position = UDim2.new(0, -12, 0.5, -7),
+		Size = UDim2.fromOffset(3, 14),
+		Parent = label,
+	})
+	return label
+end
+
+-- Couleur d'ambiance de chaque mode (visuel de la carte) : jetons du thème uniquement.
+local MODE_ACCENTS: { [string]: Color3 } = {
+	Duel = colors.gold,
+	Wingman = colors.secondary,
+	Squad = colors.primary,
+	Clash2 = colors.attack,
+	Clash3 = colors.danger,
+}
+
+-- « 3v3 — Attaque/Défense… » -> « Attaque/Défense… » (le format est déjà dans l'étiquette).
+local function shortTagline(tagline: string): string
+	return (string.gsub(tagline, "^%d+v%d+%s*—%s*", ""))
 end
 
 local function isLeader(party: Types.PartyData?): boolean
@@ -62,9 +86,9 @@ function PlayTab.build(parent: Instance): Tab
 		UI.frame({ BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 40), LayoutOrder = 2, Parent = left })
 	UI.list(rankedRow, Enum.FillDirection.Horizontal, 8)
 	local cards =
-		UI.frame({ BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 300), LayoutOrder = 3, Parent = left })
+		UI.frame({ BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 380), LayoutOrder = 3, Parent = left })
 	local grid = Instance.new("UIGridLayout")
-	grid.CellSize = UDim2.new(0.5, -6, 0, 92)
+	grid.CellSize = UDim2.new(0.5, -6, 0, 118)
 	grid.CellPadding = UDim2.fromOffset(10, 10)
 	grid.SortOrder = Enum.SortOrder.LayoutOrder
 	grid.Parent = cards
@@ -76,8 +100,9 @@ function PlayTab.build(parent: Instance): Tab
 		TextSize = 15,
 		TextColor3 = colors.textDim,
 		TextXAlignment = Enum.TextXAlignment.Left,
-		Position = UDim2.fromOffset(250, 0),
-		Size = UDim2.new(1, -250, 1, 0),
+		Position = UDim2.fromOffset(300, 0),
+		Size = UDim2.new(1, -300, 1, 0),
+		TextWrapped = true,
 		Parent = queueRow,
 	})
 
@@ -160,52 +185,153 @@ function PlayTab.build(parent: Instance): Tab
 			end
 			local available = if selectedRanked then mode.ranked else mode.casual
 			local active = modeId == currentMode
+			local accent = MODE_ACCENTS[modeId] or colors.primary
 			local card = UI.button({
 				Text = "",
+				AutoButtonColor = false,
+				ClipsDescendants = true,
 				LayoutOrder = order,
-				BackgroundColor3 = if active then colors.panelLight else colors.panel,
-				BackgroundTransparency = if available then 0.05 else 0.6,
+				BackgroundColor3 = colors.panel,
+				BackgroundTransparency = if available then 0.05 else 0.5,
 				Parent = cards,
 			})
 			UI.corner(4, card)
 			UI.stroke(card, if active then colors.primary else colors.stroke, if active then 2 else 1, 0)
+			-- Visuel : lumière de la couleur du mode venue du coin haut-droit.
+			local art = UI.frame({
+				Name = "Art",
+				BackgroundColor3 = accent,
+				Size = UDim2.fromScale(1, 1),
+				Parent = card,
+			})
+			UI.gradient(
+				art,
+				ColorSequence.new(accent),
+				155,
+				NumberSequence.new({
+					NumberSequenceKeypoint.new(0, if available then 0.55 else 0.85),
+					NumberSequenceKeypoint.new(0.55, 0.92),
+					NumberSequenceKeypoint.new(1, 1),
+				})
+			)
+			local format = ("%dv%d"):format(mode.teamSize, mode.teamSize)
+			UI.text({
+				Name = "Watermark",
+				Text = format,
+				FontFace = fonts.display,
+				TextSize = 76,
+				TextColor3 = colors.text,
+				TextTransparency = 0.9,
+				TextXAlignment = Enum.TextXAlignment.Right,
+				AnchorPoint = Vector2.new(1, 0.5),
+				Position = UDim2.new(1, 10, 0.5, 6),
+				Size = UDim2.fromOffset(220, 80),
+				Parent = card,
+			})
 			UI.text({
 				Text = mode.displayName,
 				FontFace = fonts.display,
-				TextSize = 20,
+				TextSize = 22,
 				TextXAlignment = Enum.TextXAlignment.Left,
-				Position = UDim2.fromOffset(16, 10),
-				Size = UDim2.new(1, -32, 0, 26),
+				Position = UDim2.fromOffset(16, 12),
+				Size = UDim2.new(1, -110, 0, 26),
 				TextColor3 = if available then colors.text else colors.textFaint,
 				Parent = card,
 			})
+			local tag = UI.text({
+				Name = "Format",
+				Text = format,
+				FontFace = fonts.monoBold,
+				TextSize = 12,
+				TextColor3 = colors.void,
+				BackgroundColor3 = accent,
+				BackgroundTransparency = if available then 0 else 0.6,
+				AutomaticSize = Enum.AutomaticSize.X,
+				Position = UDim2.fromOffset(16, 42),
+				Size = UDim2.fromOffset(0, 18),
+				Parent = card,
+			})
+			UI.corner(3, tag)
+			UI.padding(tag, 6, 6, 0, 0)
 			UI.text({
-				Text = mode.tagline,
+				Text = shortTagline(mode.tagline),
 				FontFace = fonts.body,
 				TextSize = 14,
 				TextXAlignment = Enum.TextXAlignment.Left,
+				TextTruncate = Enum.TextTruncate.AtEnd,
 				TextColor3 = colors.textDim,
-				Position = UDim2.fromOffset(16, 38),
-				Size = UDim2.new(1, -32, 0, 18),
+				Position = UDim2.fromOffset(62, 42),
+				Size = UDim2.new(1, -78, 0, 18),
 				Parent = card,
 			})
-			local mapNames = {}
-			for _, mapId in mode.maps do
-				local info = Maps.get(mapId)
-				table.insert(mapNames, if info then info.displayName else mapId)
+			-- Cartes jouables : une pastille par carte.
+			local chips = UI.frame({
+				Name = "Maps",
+				BackgroundTransparency = 1,
+				Position = UDim2.fromOffset(16, 76),
+				Size = UDim2.new(1, -32, 0, 22),
+				Parent = card,
+			})
+			UI.list(
+				chips,
+				Enum.FillDirection.Horizontal,
+				6,
+				Enum.HorizontalAlignment.Left,
+				Enum.VerticalAlignment.Center
+			)
+			if available then
+				for index, mapId in mode.maps do
+					local info = Maps.get(mapId)
+					local chip = UI.text({
+						Text = string.upper(if info then info.displayName else mapId),
+						FontFace = fonts.heading,
+						TextSize = 11,
+						TextColor3 = colors.text,
+						BackgroundColor3 = colors.void,
+						BackgroundTransparency = 0.45,
+						AutomaticSize = Enum.AutomaticSize.X,
+						Size = UDim2.fromOffset(0, 20),
+						LayoutOrder = index,
+						Parent = chips,
+					})
+					UI.corner(3, chip)
+					UI.padding(chip, 8, 8, 0, 0)
+				end
+			else
+				UI.text({
+					Text = "INDISPONIBLE EN " .. (if selectedRanked then "CLASSÉ" else "CASUAL"),
+					FontFace = fonts.heading,
+					TextSize = 11,
+					TextColor3 = colors.danger,
+					AutomaticSize = Enum.AutomaticSize.X,
+					Size = UDim2.fromOffset(0, 20),
+					Parent = chips,
+				})
 			end
-			UI.text({
-				Text = if available
-					then table.concat(mapNames, " · ")
-					else "INDISPONIBLE EN " .. (if selectedRanked then "CLASSÉ" else "CASUAL"),
-				FontFace = fonts.mono,
-				TextSize = 12,
-				TextXAlignment = Enum.TextXAlignment.Left,
-				TextColor3 = if available then colors.primary else colors.danger,
-				Position = UDim2.fromOffset(16, 62),
-				Size = UDim2.new(1, -32, 0, 16),
-				Parent = card,
-			})
+			-- Sélection : coche dans le coin (la sélection ne repose pas que sur la couleur).
+			if active then
+				local check = UI.text({
+					Name = "Check",
+					Text = "✓",
+					FontFace = fonts.headingHeavy,
+					TextSize = 14,
+					TextColor3 = colors.void,
+					BackgroundColor3 = colors.primary,
+					AnchorPoint = Vector2.new(1, 0),
+					Position = UDim2.new(1, -10, 0, 10),
+					Size = UDim2.fromOffset(22, 22),
+					Parent = card,
+				})
+				UI.corner(11, check)
+			end
+			card.MouseEnter:Connect(function()
+				if available then
+					card.BackgroundColor3 = colors.panelLight
+				end
+			end)
+			card.MouseLeave:Connect(function()
+				card.BackgroundColor3 = colors.panel
+			end)
 			card.Activated:Connect(function()
 				if not (leader and available) then
 					return
@@ -217,10 +343,11 @@ function PlayTab.build(parent: Instance): Tab
 	end
 
 	local queueButton = UI.actionButton("RECHERCHER", "Primary", function() end, {
-		Size = UDim2.fromOffset(230, 54),
+		Size = UDim2.fromOffset(280, 58),
 		Parent = queueRow,
 	})
-	queueButton.TextSize = 22
+	queueButton.TextSize = 24
+	queueButton.FontFace = fonts.display
 	queueButton.Activated:Connect(function()
 		local party = ClientState.partyData()
 		if not party then
@@ -253,7 +380,7 @@ function PlayTab.build(parent: Instance): Tab
 		elseif not leader then
 			queueStatus.Text = "Seul le leader de la party lance la recherche."
 		else
-			queueStatus.Text = "Matchmaking par MMR et rang (les écarts s'élargissent avec l'attente)."
+			queueStatus.Text = "ⓘ  Adversaires choisis selon ton rang ; la recherche s'élargit avec l'attente."
 		end
 	end
 
