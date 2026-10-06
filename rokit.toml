@@ -1,0 +1,6 @@
+# Toolchain épinglée (https://github.com/rojo-rbx/rokit) — `rokit install`
+[tools]
+rojo = "rojo-rbx/rojo@7.7.1"
+luau-lsp = "JohnnyMorganz/luau-lsp@1.70.1"
+stylua = "JohnnyMorganz/StyLua@2.5.2"
+lune = "lune-org/lune@0.10.5"
