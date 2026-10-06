@@ -965,25 +965,21 @@ end
 	partagée n'est posée qu'une fois), numéro. `x` = ligne de tir, couloir vers -X.
 ]]
 function Furniture.shootingBooth(kit: Kit, x: number, z: number, number: number, width: number, sides: { number })
+	-- Cloison légère : bas acoustique clair (protection), vitre dépolie au-dessus (on voit
+	-- le poste voisin, la pièce reste ouverte), chant d'acier. Plus de mur sombre de 7 m.
 	for _, side in sides do
+		local wz = z + side * (width / 2)
 		Decor.solid(
 			kit,
 			"BoothWall",
-			CFrame.new(x - 0.5, 3.6, z + side * (width / 2)),
-			Vector3.new(4.5, 7.2, 0.35),
+			CFrame.new(x - 0.5, 1.8, wz),
+			Vector3.new(4.5, 3.6, 0.35),
 			"FabricDark",
-			{ color = Color3.fromRGB(66, 70, 78) }
+			{ color = Color3.fromRGB(112, 118, 126) }
 		)
-		kit:decorBox(
-			"BoothEdge",
-			x - 2.8,
-			0,
-			z + side * (width / 2) - 0.2,
-			x - 2.7,
-			7.3,
-			z + side * (width / 2) + 0.2,
-			"Steel"
-		)
+		Decor.solid(kit, "BoothGlass", CFrame.new(x - 0.5, 4.9, wz), Vector3.new(4.3, 2.6, 0.12), "HqGlass")
+		kit:decorBox("BoothRail", x - 2.75, 6.2, wz - 0.12, x + 1.75, 6.32, wz + 0.12, "Steel")
+		kit:decorBox("BoothEdge", x - 2.8, 0, wz - 0.2, x - 2.7, 6.32, wz + 0.2, "Steel")
 	end
 	local plate = kit:sign(tostring(number), x + 1.6, 8, z, 1.6, 1.2, "+X", Color3.fromRGB(245, 245, 240))
 	local spec = plate.sign
