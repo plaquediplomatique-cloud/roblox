@@ -1,9 +1,11 @@
 {
   "name": "SmashAscension",
-  "globIgnorePaths": ["**/*.spec.luau", "**/.DS_Store"],
+  "globIgnorePaths": [
+    "**/*.spec.luau",
+    "**/.DS_Store"
+  ],
   "tree": {
     "$className": "DataModel",
-
     "ReplicatedStorage": {
       "$className": "ReplicatedStorage",
       "Shared": {
@@ -13,14 +15,12 @@
         }
       }
     },
-
     "ServerScriptService": {
       "$className": "ServerScriptService",
       "Server": {
         "$path": "ascension/src/Server"
       }
     },
-
     "StarterPlayer": {
       "$className": "StarterPlayer",
       "$properties": {
@@ -31,7 +31,8 @@
         "CameraMaxZoomDistance": 40,
         "CameraMinZoomDistance": 4,
         "HealthDisplayDistance": 0,
-        "NameDisplayDistance": 60
+        "NameDisplayDistance": 60,
+        "GameSettingsAvatar": "R15"
       },
       "StarterPlayerScripts": {
         "$className": "StarterPlayerScripts",
@@ -40,7 +41,6 @@
         }
       }
     },
-
     "StarterGui": {
       "$className": "StarterGui",
       "$properties": {
@@ -48,14 +48,12 @@
         "ScreenOrientation": "LandscapeSensor"
       }
     },
-
     "Players": {
       "$className": "Players",
       "$properties": {
         "CharacterAutoLoads": false
       }
     },
-
     "Workspace": {
       "$className": "Workspace",
       "$properties": {
@@ -68,7 +66,6 @@
         "FallenPartsDestroyHeight": -400
       }
     },
-
     "Lighting": {
       "$className": "Lighting",
       "$properties": {
@@ -80,13 +77,16 @@
         "EnvironmentSpecularScale": 0.4
       }
     },
-
     "SoundService": {
       "$className": "SoundService",
       "$properties": {
         "RespectFilteringEnabled": true,
         "AmbientReverb": "NoReverb"
       }
+    },
+    "ReplicatedFirst": {
+      "$className": "ReplicatedFirst",
+      "$path": "ascension/src/ReplicatedFirst"
     }
   }
 }
