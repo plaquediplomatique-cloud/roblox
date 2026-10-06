@@ -1753,8 +1753,15 @@ function HUDController.start()
 	-- Les éléments ancrés aux bords (santé, munitions, boussole, killfeed) vivent dans une
 	-- zone sûre : sur téléphone, ni encoche ni coin arrondi ne les mangent. Les overlays
 	-- plein écran (lunette, vignette) restent sur tout l'écran.
-	local safe =
-		UI.frame({ Name = "SafeArea", BackgroundTransparency = 1, Size = UDim2.fromScale(1, 1), Parent = root })
+	-- ZIndex 3 : au-dessus de la vignette (1) et des franges (2), sous la lunette (5+),
+	-- comme lorsque ces éléments étaient directement enfants de `root`.
+	local safe = UI.frame({
+		Name = "SafeArea",
+		BackgroundTransparency = 1,
+		Size = UDim2.fromScale(1, 1),
+		ZIndex = 3,
+		Parent = root,
+	})
 	local safePadding = Instance.new("UIPadding")
 	safePadding.Parent = safe
 	local function refreshSafeArea()

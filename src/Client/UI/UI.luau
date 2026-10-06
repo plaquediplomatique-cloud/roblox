@@ -195,7 +195,8 @@ end
 
 --[[
 	Marges de la zone sûre de l'appareil (encoches, coins arrondis), en pixels :
-	gauche, haut, droite, bas. Nulles sur ordinateur. Mesurées par deux ScreenGui sondes.
+	gauche, haut, droite, bas. Nulles sur ordinateur. Mesurées par deux ScreenGui sondes
+	(cède une frame : appeler depuis un thread qui peut attendre).
 ]]
 function UI.safeInsets(): (number, number, number, number)
 	local playerGui = Players.LocalPlayer:WaitForChild("PlayerGui")
@@ -207,6 +208,7 @@ function UI.safeInsets(): (number, number, number, number)
 	safe.Name = "AS_InsetProbe"
 	safe.ScreenInsets = Enum.ScreenInsets.DeviceSafeInsets
 	safe.Parent = playerGui
+	task.wait() -- tailles absolues calculées au rendu suivant
 	local fp, fs = full.AbsolutePosition, full.AbsoluteSize
 	local sp, ss = safe.AbsolutePosition, safe.AbsoluteSize
 	full:Destroy()
