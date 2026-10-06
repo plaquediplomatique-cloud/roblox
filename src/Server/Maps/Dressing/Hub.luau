@@ -621,7 +621,13 @@ local function lounge(kit: Kit, rng: Rng)
 	for _, spot in { { -106.5, -50 }, { -45, -86.5 }, { -68, -86.5 }, { -106.5, -70 }, { -45, -52 } } do
 		Furniture.plant(kit, rng, spot[1], spot[2], 2.6, "HqConcrete")
 	end
-	ceilingLights(kit, CEILING, {}, { { -78, -69 }, { -98, -80 }, { -96, -50 } }, Vector2.new(4, 4))
+	-- Lumière motivée (skill roblox-lighting-art) : suspensions chaudes au-dessus des tables
+	-- basses, là où l'on s'assoit ; la table de lecture garde ses lampes de bureau.
+	Furniture.pendant(kit, -78, -69.5, CEILING, 5.5, "Brass")
+	Furniture.pendant(kit, -95, -60, CEILING, 5.5, "Brass")
+	Furniture.pendant(kit, -61, -80, CEILING, 6.5, "Brass", false)
+	Furniture.pendant(kit, -55, -80, CEILING, 6.5, "Brass", false)
+	ceilingLights(kit, CEILING, {}, { { -98, -80 }, { -96, -50 } }, Vector2.new(4, 4))
 end
 
 local function cafe(kit: Kit, rng: Rng)
