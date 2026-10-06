@@ -27,6 +27,7 @@ export type SignSpec = {
 	color: Color3,
 	face: string,
 	background: Color3,
+	plain: boolean?, -- lettrage mural (sans fond lumineux ni cadre, éclairé par la scène)
 }
 
 export type LightSpec = {
@@ -338,6 +339,8 @@ local BASE_STYLES: { [string]: Style } = {
 	Wood = { material = "Wood", color = rgb(92, 64, 44) },
 	WoodLight = { material = "WoodPlanks", color = rgb(150, 112, 74) },
 	Foliage = { material = "Grass", color = rgb(46, 92, 52) },
+	Leaf = { material = "Grass", color = rgb(76, 128, 62) }, -- feuillage d'intérieur (lumière du jour)
+	LeafDeep = { material = "Grass", color = rgb(50, 98, 54) },
 	FoliageDark = { material = "Grass", color = rgb(28, 62, 38) },
 	Soil = { material = "Ground", color = rgb(58, 46, 36) },
 	Water = { material = "Glass", color = rgb(70, 130, 160), transparency = 0.35, reflectance = 0.2 },

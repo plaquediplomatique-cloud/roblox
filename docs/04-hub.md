@@ -1,25 +1,40 @@
 # 4. Hub — logique et flux complets
 
-Le hub **AETHER SPIRE** (« Hub opérationnel — Niveau 88 ») est un *vrai lieu* : on y
-marche en 3e personne, on y croise les autres joueurs (plaque nom · niveau · rang · titre),
-chaque zone a une identité néon et un terminal. Tout ce qu'un menu permet est aussi
-accessible physiquement — et inversement ([M] ouvre le même menu partout).
+Le hub **AETHER HQ** (« Quartier général — Niveau 88 ») est un *vrai lieu* : on y
+marche en 3e personne avec son **avatar Roblox**, on y croise les autres joueurs (plaque
+nom · niveau · rang · titre), chaque pièce a une fonction et un terminal. Tout ce qu'un menu
+permet est aussi accessible physiquement — et inversement ([M] ouvre le même menu partout,
+[P] les options rapides).
 
-![Hub](maps/hub.png)
+**Refonte « vrai bâtiment »** (retour joueur : « que des trucs en néon, aucun vrai
+mobilier ») : le hangar néon nocturne est devenu le siège de l'escouade en **plein jour** —
+murs enduits, bois, béton ciré, marbre, moquette, briques, **baies vitrées** sur une ville
+de tours de verre, plafonds éclairés, **atrium double hauteur sous verrière**. Le néon n'est
+plus qu'un accent (écrans, deux enseignes, diodes) : 126 pièces néon dont les dalles LED du
+plafond, contre ~600 avant. Mobilier réaliste et solide (`Server/Maps/Furniture.luau` :
+canapés, fauteuils club, chaises, tabourets, tables, bureaux à écrans, bibliothèques,
+casiers, baies de serveurs, vitrines, billard, bornes d'arcade, distributeurs, arrière-bar,
+luminaires, plantes et arbres, tapis, tableaux), à l'échelle d'un avatar (assise 1,5 stud,
+table 2,5, comptoir 3,4).
 
-## 4.1 Zones et terminaux
+![Atrium](renders/hub_intro1.jpg)
+![Café](renders/hub_intro2.jpg)
+![Salon](renders/hub_intro3.jpg)
+![Salle de briefing](renders/hub_intro4.jpg)
 
-| Zone | Couleur | Terminal (attribut `Action`) | Ouvre |
+## 4.1 Pièces et terminaux
+
+| Pièce | Ambiance | Terminal (attribut `Action`) | Ouvre |
 |---|---|---|---|
-| **PLAZA** (centre, spawn en couronne) | cyan | `Play` (0, −20) | onglet JOUER |
-| **RANKED TERMINAL** (nord, estrade) | ambre | `Ranked` ×3 | JOUER pré-réglé en CLASSÉ |
-| **CASUAL BAY** (nord-est) | vert | `Casual` | JOUER pré-réglé en CASUAL |
-| **CUSTOM LAB** (nord-ouest) | magenta | `Custom` | JOUER, section salons |
-| **ARMORY** (est) | cyan | `Armory` + **14 socles** `WeaponPedestal` | ARMURERIE (le socle inspecté pré-sélectionne l'arme) |
-| **TRAINING RANGE** (ouest) | vert | `Training` | panneau du stand (stats, boucliers des drones, munitions) |
-| **HALL OF FAME** (sud) | ambre/cyan/magenta | `Leaderboard`, `Missions`, `Pass` + mur `LeaderboardDisplay` | CLASSEMENT, MISSIONS, PASS |
-| **LOUNGES** (sud-ouest/sud-est) | — | `Play` ×2 | JOUER |
-| Couloir sud-est | blanc | `Settings` | RÉGLAGES |
+| **ATRIUM** (centre, spawn en couronne) | verrière, bassin, sculpture, arbres, bancs | `Play` (0, −20) | onglet JOUER |
+| **SALLE DE BRIEFING** (nord) | gradins face à un mur d'écrans, scène en bois | `Ranked` ×3 (sur la scène) | JOUER pré-réglé en CLASSÉ |
+| **SALLE DE JEUX** (nord-est) | billard, arcades, coin télé, mur de briques | `Casual` | JOUER pré-réglé en CASUAL |
+| **LABORATOIRE** (nord-ouest) | îlots de bureaux, serveurs, table de réunion | `Custom` | JOUER, section salons |
+| **ARMURERIE** (est) | socles de pierre, râteliers, casiers, établi | `Armory` + **14 socles** `WeaponPedestal` | ARMURERIE (le socle inspecté pré-sélectionne l'arme) |
+| **STAND DE TIR** (ouest) | postes cloisonnés numérotés, baffles, cibles, butte | `Training` | panneau du stand (stats, boucliers des drones, munitions) |
+| **GALERIE DES CHAMPIONS** (sud) | vitrines à trophées, portraits, plafond à caissons | `Leaderboard`, `Missions`, `Pass`, `Settings` + mur `LeaderboardDisplay` | CLASSEMENT, MISSIONS, PASS, RÉGLAGES |
+| **SALON** (sud-ouest) | bibliothèques, canapés, fauteuils club, table de lecture | `Play` | JOUER |
+| **CAFÉ** (sud-est) | bar et arrière-bar, tables rondes, mange-debout | `Play` | JOUER |
 
 Implémentation : `Server/Maps/Blueprints/Hub.luau` (déclaratif) → `MapBuilder` pose le tag
 `HubTerminal`, l'attribut `Action` et un `ProximityPrompt` [F] → `LobbyController`

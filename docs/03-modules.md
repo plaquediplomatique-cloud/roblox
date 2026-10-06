@@ -102,7 +102,8 @@ Chemins relatifs à `src/`. « Pur » = aucune dépendance moteur, testé sous L
 |---|---|
 | `Maps/MapKit` | **DSL déclaratif** de blockout jouable : `floor`, `wall`, `wallDoor`, `window`, `crate`, `cover`, `platform`, `ramp`, `pillar`, `spawn`, `barrier`, `modeBarrier`, `site`, `callout`, `zone`, `terminal`, `light`, `sign`, `bounds`… avec styles de matériaux |
 | `Maps/MapBuilder` | Blueprint → `Model` : pièces, tags, attributs, panneaux, lumières, invites, filtrage par mode ; expose spawns/sites/callouts/barrières/intro ; validation (aucune ligne de vue entre spawns ennemis) en Studio |
-| `Maps/Blueprints/*` | Hub (AETHER SPIRE), Kestrel, Helix, Spire, Monolith |
+| `Maps/Blueprints/*` | Hub (AETHER HQ), Kestrel, Helix, Spire, Monolith |
+| `Maps/Furniture` | Mobilier réaliste du hub (recettes pures : assises, tables, bureaux, rangements, luminaires, végétal, loisirs, stand de tir) |
 | `Match/MatchInstance` | Machine à états du match (Waiting → Intro → Prep → Live/Planted → RoundEnd → SideSwap → MatchEnd → Closed), Uplink (porteur, pose 4 s, désamorçage 7 s avec point de sauvegarde à 50 %, mèche 40 s), stats, clutch/ace/premier sang, forfait | 
 | `Character/OperatorGear` | Équipement procédural de l'opérateur (casque, visière néon, gilet, épaulières, module dorsal) sans grossir la silhouette |
 | `Character/Ragdoll` | Motor6D → BallSocketConstraints bornées, collisions dédiées, ownership serveur |

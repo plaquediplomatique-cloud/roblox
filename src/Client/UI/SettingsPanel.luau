@@ -600,7 +600,8 @@ local function buildKeybinds(page: ScrollingFrame)
 			render()
 		end)
 	end
-	UserInputService.InputBegan:Connect(function(input: InputObject)
+	-- Écoute globale le temps que la page existe (le panneau peut être reconstruit).
+	local connection = UserInputService.InputBegan:Connect(function(input: InputObject)
 		local action = listening
 		if not action then
 			return
@@ -627,6 +628,9 @@ local function buildKeybinds(page: ScrollingFrame)
 		end)
 		UI.playSound("UI.Confirm")
 		render()
+	end)
+	page.Destroying:Connect(function()
+		connection:Disconnect()
 	end)
 	render()
 end

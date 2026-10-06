@@ -107,18 +107,20 @@ local function createPart(prim: MapKit.Prim): BasePart
 end
 
 local function attachSign(part: BasePart, sign: MapKit.SignSpec)
+	local plain = sign.plain == true
 	local gui = Instance.new("SurfaceGui")
 	gui.Name = "Sign"
 	gui.Face = (Enum.NormalId :: any)[sign.face] :: Enum.NormalId
 	gui.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
 	gui.PixelsPerStud = 40
-	gui.LightInfluence = 0
-	gui.Brightness = 1.6
+	-- Lettrage mural : éclairé par la scène comme une vraie inscription ; écran : lumineux.
+	gui.LightInfluence = if plain then 1 else 0
+	gui.Brightness = if plain then 1 else 1.6
 	gui.ZOffset = 0.05
 	local label = Instance.new("TextLabel")
 	label.Size = UDim2.fromScale(1, 1)
 	label.BackgroundColor3 = sign.background
-	label.BackgroundTransparency = 0.15
+	label.BackgroundTransparency = if plain then 1 else 0.15
 	label.BorderSizePixel = 0
 	label.TextColor3 = sign.color
 	label.FontFace = Theme.fonts.display
@@ -130,11 +132,13 @@ local function attachSign(part: BasePart, sign: MapKit.SignSpec)
 	padding.PaddingTop = UDim.new(0.1, 0)
 	padding.PaddingBottom = UDim.new(0.1, 0)
 	padding.Parent = label
-	local stroke = Instance.new("UIStroke")
-	stroke.Color = sign.color
-	stroke.Thickness = 3
-	stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-	stroke.Parent = label
+	if not plain then
+		local stroke = Instance.new("UIStroke")
+		stroke.Color = sign.color
+		stroke.Thickness = 3
+		stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+		stroke.Parent = label
+	end
 	label.Parent = gui
 	gui.Parent = part
 end

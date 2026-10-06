@@ -560,7 +560,8 @@ def draw_signs(image, scene, eye, rot, depth, fpx):
         background = tuple(int(255 * v) for v in prim.get("signBackground") or (0.03, 0.04, 0.05))
         fg = tuple(int(255 * min(v * 1.15, 1)) for v in prim.get("signColor") or (1, 1, 1))
         polygon = [(p[0], p[1]) for p in projected]
-        draw.polygon(polygon, fill=background, outline=fg)
+        if not prim.get("signPlain"):
+            draw.polygon(polygon, fill=background, outline=fg)
         box_h = max(abs(projected[2][1] - projected[1][1]), abs(projected[3][1] - projected[0][1]))
         box_w = max(abs(projected[1][0] - projected[0][0]), abs(projected[2][0] - projected[3][0]))
         size = int(min(box_h * 0.62, box_w / max(len(text), 1) * 1.6))

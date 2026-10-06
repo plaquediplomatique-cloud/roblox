@@ -92,6 +92,7 @@ for _, name in { "Hub", "Kestrel", "Helix", "Spire", "Monolith" } do
 				signColor = if sign then rgb(sign.color) else nil,
 				signBackground = if sign then rgb(sign.background) else nil,
 				signFace = if sign then sign.face else nil,
+				signPlain = if sign then sign.plain == true else nil,
 				light = if light
 					then {
 						kind = light.kind,

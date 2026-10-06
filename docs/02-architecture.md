@@ -14,7 +14,7 @@
                                    │                               │
    ┌───────────────────────────────┴──────┐        ┌───────────────┴──────────────────┐
    │ SERVEUR LOBBY (public)               │ Telep. │ SERVEUR MATCH (réservé)           │
-   │  Hub "AETHER SPIRE", party, file,    │──────► │  lit sa MatchSpec dans MemoryStore│
+   │  Hub "AETHER HQ"  , party, file,    │──────► │  lit sa MatchSpec dans MemoryStore│
    │  Training Range, salons perso,       │◄────── │  1 MatchInstance, arène persist.  │
    │  progression, boutique, classement   │ retour │  combat, manches, récompenses     │
    └──────────────▲───────────────────────┘        └───────────────▲──────────────────┘

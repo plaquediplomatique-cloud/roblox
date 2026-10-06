@@ -1,24 +1,25 @@
 --!strict
 --[[
-	AETHER SPIRE — Hub / lobby vivant.
+	AETHER HQ — Hub / quartier général de l'escouade, 88e étage d'une tour, en journée.
 
 	          x=-110        -40          0          40          x=110
 	z=90  ┌──────────────┬─────────────────────┬──────────────────┐
-	      │ CUSTOM LAB   │   RANKED TERMINAL   │   CASUAL BAY      │
-	z=40  ├─────┬────────┴─────────┬───────────┴────────┬─────────┤
-	      │     │                  │                    │         │
-	      │TRAIN│      PLAZA       ◆ AETHER CORE        │ ARMORY  │
-	      │ RANGE◄═ booths         (spawn)              │ (vitrines│
-	      │     │                  │                    │  armes) │
-	z=-40 ├─────┴────────┬─────────┴──────────┬─────────┴─────────┤
-	      │  LOUNGE W    │   HALL OF FAME     │   LOUNGE E         │
-	      │              │ (leaderboard, missions, pass, réglages) │
+	      │ LABORATOIRE  │  SALLE DE BRIEFING  │  SALLE DE JEUX   │  baies vitrées au nord
+	      │ (personnal.) │   (classé, scène)   │   (casual)       │
+	z=40  ├──────────────┼──────┐ ATRIUM ┌─────┼──────────────────┤
+	      │ STAND DE TIR │      verrière      │   ARMURERIE      │
+	      │ (entraîn.)  ◄═     ◆ sculpture     ═►  (vitrines)     │
+	z=-40 ├──────────────┼────────────────────┼──────────────────┤
+	      │ SALON        │  GALERIE DES       │   CAFÉ           │  baies vitrées au sud
+	      │ (bibliothèque)│  CHAMPIONS         │   (bar)          │
 	z=-90 └──────────────┴────────────────────┴───────────────────┘
 
-	Chaque zone a une identité visuelle (couleur néon), un terminal interactif
-	(ProximityPrompt -> panneau d'UI dédié) et une raison d'y aller : le hub n'est pas
-	un menu déguisé, c'est un lieu où l'on croise les autres joueurs, où l'on s'échauffe
-	(Training Range) et où l'on admire les skins (Armory).
+	Un vrai bâtiment : murs enduits, bois, béton ciré, marbre, moquette, baies vitrées sur la
+	ville, plafonds éclairés, verrière au-dessus de l'atrium (double hauteur). Le néon n'est
+	plus qu'un accent (écrans, quelques diodes) : la lumière vient du soleil et des
+	luminaires. Chaque pièce garde sa fonction (terminal interactif → panneau d'UI) : le hub
+	reste un lieu de vie où l'on croise les autres joueurs, où l'on s'échauffe (stand de tir)
+	et où l'on admire les armes (armurerie). Mobilier : Maps/Dressing/Hub + Maps/Furniture.
 ]]
 
 local MapKit = require(script.Parent.Parent.MapKit)
@@ -26,170 +27,446 @@ local dress = require(script.Parent.Parent.Dressing.Hub)
 
 type Kit = MapKit.Kit
 
-local CYAN = Color3.fromRGB(61, 225, 255)
-local MAGENTA = Color3.fromRGB(220, 80, 255)
-local AMBER = Color3.fromRGB(255, 190, 70)
-local GREEN = Color3.fromRGB(61, 255, 162)
-local RED = Color3.fromRGB(255, 70, 85)
-local WHITE = Color3.fromRGB(230, 240, 255)
+local SIGN_INK = Color3.fromRGB(38, 34, 30) -- lettrage mural sombre (sur enduit clair)
+local SIGN_BRASS = Color3.fromRGB(196, 158, 92)
+local SCREEN_TEXT = Color3.fromRGB(235, 242, 250)
+
+local CEILING = 16 -- pièces latérales
+local GALLERY_CEILING = 28
+local ATRIUM_CEILING = 30
+local SILL, HEAD = 3, 13 -- allège et linteau des baies vitrées
+
+local function styles(kit: Kit)
+	kit:defineStyle("HqWall", { material = "Plaster", color = Color3.fromRGB(214, 208, 198) })
+	kit:defineStyle("HqWallWarm", { material = "Plaster", color = Color3.fromRGB(196, 186, 170) })
+	kit:defineStyle("HqCeiling", { material = "SmoothPlastic", color = Color3.fromRGB(226, 226, 222) })
+	kit:defineStyle("HqConcrete", { material = "Concrete", color = Color3.fromRGB(150, 150, 148) })
+	kit:defineStyle("HqFloorStone", { material = "Marble", color = Color3.fromRGB(206, 204, 198), reflectance = 0.04 })
+	kit:defineStyle("HqFloorWood", { material = "WoodPlanks", color = Color3.fromRGB(126, 92, 62) })
+	kit:defineStyle("HqFloorWoodDark", { material = "WoodPlanks", color = Color3.fromRGB(86, 60, 42) })
+	kit:defineStyle("HqCarpet", { material = "Carpet", color = Color3.fromRGB(48, 54, 66) })
+	kit:defineStyle(
+		"HqEpoxy",
+		{ material = "SmoothPlastic", color = Color3.fromRGB(168, 172, 174), reflectance = 0.04 }
+	)
+	kit:defineStyle("HqPolished", { material = "Concrete", color = Color3.fromRGB(124, 126, 128) })
+	kit:defineStyle("HqTiles", { material = "CeramicTiles", color = Color3.fromRGB(206, 200, 190) })
+	kit:defineStyle("HqDarkStone", { material = "Marble", color = Color3.fromRGB(34, 34, 36), reflectance = 0.06 })
+	kit:defineStyle("HqGreyStone", { material = "Marble", color = Color3.fromRGB(92, 92, 94), reflectance = 0.05 })
+	kit:defineStyle("HqGlass", {
+		material = "Glass",
+		color = Color3.fromRGB(196, 214, 228),
+		transparency = 0.72,
+		reflectance = 0.12,
+	})
+	kit:defineStyle("HqMullion", { material = "Metal", color = Color3.fromRGB(30, 31, 33) })
+	kit:defineStyle("HqSteelWhite", { material = "Metal", color = Color3.fromRGB(214, 216, 218) })
+	kit:defineStyle("HqBrick", { material = "Brick", color = Color3.fromRGB(150, 88, 66) })
+	kit:defineStyle("HqWoodSlat", { material = "Wood", color = Color3.fromRGB(150, 108, 70) })
+	kit:defineStyle("HqWalnut", { material = "Wood", color = Color3.fromRGB(92, 62, 42) })
+	kit:defineStyle("HqFabricPanel", { material = "Fabric", color = Color3.fromRGB(62, 70, 84) })
+	kit:defineStyle("HqTowerDay", { material = "Concrete", color = Color3.fromRGB(172, 176, 182) })
+	kit:defineStyle("HqTowerDark", { material = "Concrete", color = Color3.fromRGB(96, 102, 110) })
+	kit:defineStyle("HqTowerGlass", {
+		material = "Glass",
+		color = Color3.fromRGB(86, 120, 150),
+		reflectance = 0.3,
+	})
+	kit:defineStyle("HqTowerGlassWarm", {
+		material = "Glass",
+		color = Color3.fromRGB(150, 140, 120),
+		reflectance = 0.25,
+	})
+end
+
+--[[
+	Mur extérieur axe-aligné avec baies vitrées : allège pleine, bandeau vitré (vitrage +
+	meneaux tous les 5 studs), retombée pleine jusqu'en haut. `bays` : portions vitrées.
+]]
+local function outerWall(kit: Kit, axis: string, fixed: number, from: number, to: number, bays: { { number } })
+	local t = 2
+	local function slab(name: string, a: number, b: number, y1: number, y2: number, style: string)
+		if axis == "X" then
+			kit:box(name, a, y1, fixed - t / 2, b, y2, fixed + t / 2, style)
+		else
+			kit:box(name, fixed - t / 2, y1, a, fixed + t / 2, y2, b, style)
+		end
+	end
+	local cursor = from
+	for _, bay in bays do
+		local a, b = bay[1], bay[2]
+		if a > cursor then
+			slab("OuterWall", cursor, a, 0, ATRIUM_CEILING, "HqWall")
+		end
+		slab("WindowSill", a, b, 0, SILL, "HqWall")
+		slab("WindowHead", a, b, HEAD, ATRIUM_CEILING, "HqWall")
+		local panes = math.max(math.floor((b - a) / 5 + 0.5), 1)
+		for index = 0, panes do
+			local p = a + (b - a) * index / panes
+			slab("Mullion", p - 0.25, p + 0.25, SILL, HEAD, "HqMullion")
+		end
+		slab("WindowGlass", a, b, SILL, HEAD, "HqGlass")
+		-- Tablette intérieure et pare-closes (bandeaux fins)
+		if axis == "X" then
+			local inner = if fixed > 0 then fixed - t / 2 else fixed + t / 2
+			local dir = if fixed > 0 then -1 else 1
+			kit:decorBox("WindowLedge", a, SILL - 0.15, inner, b, SILL, inner + dir * 0.7, "HqWalnut")
+			kit:decorBox("WindowTransom", a, HEAD - 0.1, inner, b, HEAD + 0.25, inner + dir * 0.2, "HqMullion")
+		else
+			local inner = if fixed > 0 then fixed - t / 2 else fixed + t / 2
+			local dir = if fixed > 0 then -1 else 1
+			kit:decorBox("WindowLedge", inner, SILL - 0.15, a, inner + dir * 0.7, SILL, b, "HqWalnut")
+			kit:decorBox("WindowTransom", inner, HEAD - 0.1, a, inner + dir * 0.2, HEAD + 0.25, b, "HqMullion")
+		end
+		cursor = b
+	end
+	if cursor < to then
+		slab("OuterWall", cursor, to, 0, ATRIUM_CEILING, "HqWall")
+	end
+end
+
+--[[ Cloison intérieure axe-alignée, éventuellement percée d'une porte (cadre en noyer). ]]
+local function partition(
+	kit: Kit,
+	axis: string,
+	fixed: number,
+	from: number,
+	to: number,
+	height: number,
+	door: { number }?,
+	style: string?
+)
+	local wallStyle = style or "HqWall"
+	local t = 1.6
+	if not door then
+		if axis == "X" then
+			kit:box("Partition", from, 0, fixed - t / 2, to, height, fixed + t / 2, wallStyle)
+		else
+			kit:box("Partition", fixed - t / 2, 0, from, fixed + t / 2, height, to, wallStyle)
+		end
+		return
+	end
+	local a, b = door[1], door[2]
+	local doorHeight = 10
+	if axis == "X" then
+		kit:wallDoor("Partition", from, fixed, to, fixed, height, a, b, doorHeight, wallStyle, t)
+		for _, x in { a, b } do
+			kit:decorBox(
+				"DoorJamb",
+				x - 0.3,
+				0,
+				fixed - t / 2 - 0.15,
+				x + 0.3,
+				doorHeight,
+				fixed + t / 2 + 0.15,
+				"HqWalnut"
+			)
+		end
+		kit:decorBox(
+			"DoorHead",
+			a - 0.3,
+			doorHeight,
+			fixed - t / 2 - 0.15,
+			b + 0.3,
+			doorHeight + 0.6,
+			fixed + t / 2 + 0.15,
+			"HqWalnut"
+		)
+	else
+		kit:wallDoor("Partition", fixed, from, fixed, to, height, a, b, doorHeight, wallStyle, t)
+		for _, z in { a, b } do
+			kit:decorBox(
+				"DoorJamb",
+				fixed - t / 2 - 0.15,
+				0,
+				z - 0.3,
+				fixed + t / 2 + 0.15,
+				doorHeight,
+				z + 0.3,
+				"HqWalnut"
+			)
+		end
+		kit:decorBox(
+			"DoorHead",
+			fixed - t / 2 - 0.15,
+			doorHeight,
+			a - 0.3,
+			fixed + t / 2 + 0.15,
+			doorHeight + 0.6,
+			b + 0.3,
+			"HqWalnut"
+		)
+	end
+end
+
+--[[ Lettrage mural (sans fond lumineux) : nom de pièce au-dessus d'une porte. ]]
+local function lettering(
+	kit: Kit,
+	text: string,
+	x: number,
+	y: number,
+	z: number,
+	width: number,
+	height: number,
+	facing: string,
+	color: Color3
+)
+	local sign = kit:sign(text, x, y, z, width, height, facing, color)
+	local spec = sign.sign
+	if spec then
+		spec.plain = true
+	end
+	sign.query = false
+end
+
+--[[ Borne interactive : pied en acier sombre, écran blanc sur fond nuit, lumière douce. ]]
+local function kiosk(kit: Kit, action: string, label: string, x: number, z: number, facing: string)
+	local first = #kit.prims + 1
+	kit:terminal(action, label, x, z, facing, SCREEN_TEXT)
+	for index = first, #kit.prims do
+		local prim = kit.prims[index]
+		if prim.name == "Terminal" then
+			prim.material = "Metal"
+			prim.color = Color3.fromRGB(42, 44, 48)
+			-- Socle et chapeau : la borne devient un meuble fini, pas une boîte.
+			local p, size = prim.cframe.Position, prim.size
+			kit:decorBox(
+				"KioskPlinth",
+				p.X - size.X / 2 - 0.15,
+				0,
+				p.Z - size.Z / 2 - 0.15,
+				p.X + size.X / 2 + 0.15,
+				0.25,
+				p.Z + size.Z / 2 + 0.15,
+				"HqSteelWhite"
+			)
+			kit:decorBox(
+				"KioskCap",
+				p.X - size.X / 2 - 0.05,
+				size.Y,
+				p.Z - size.Z / 2 - 0.05,
+				p.X + size.X / 2 + 0.05,
+				size.Y + 0.12,
+				p.Z + size.Z / 2 + 0.05,
+				"HqSteelWhite"
+			)
+		elseif prim.light then
+			prim.light.color = Color3.fromRGB(220, 232, 255)
+			prim.light.brightness = 0.8
+			prim.light.range = 10
+		elseif prim.sign then
+			prim.sign.background = Color3.fromRGB(14, 22, 34)
+		end
+	end
+end
 
 local function build(kit: Kit)
-	kit:floor("Deck", -110, -90, 110, 90, "FloorDark", 0, 4)
+	styles(kit)
 	kit:bounds(-110, -90, 110, 90, 60)
-	kit:wall("OuterN", -110, 90, 110, 90, 30, "Hull", 2)
-	kit:wall("OuterS", -110, -90, 110, -90, 30, "Hull", 2)
-	kit:wall("OuterW", -110, -90, -110, 90, 30, "Hull", 2)
-	kit:wall("OuterE", 110, -90, 110, 90, 30, "Hull", 2)
+	kit:floor("Slab", -110, -90, 110, 90, "HqConcrete", -0.3, 4)
 
-	-- PLAZA + AETHER CORE ----------------------------------------------------------------
-	kit:floor("PlazaFloor", -40, -40, 40, 40, "FloorTile", 0.1, 0.2)
-	for _, offset in { -30, -15, 0, 15, 30 } do
-		kit:trim(offset - 0.1, -40, offset + 0.1, 40, 0.12, Color3.fromRGB(30, 70, 90), 0.05)
-		kit:trim(-40, offset - 0.1, 40, offset + 0.1, 0.12, Color3.fromRGB(30, 70, 90), 0.05)
+	-- SOLS (finition par pièce, dessus à y = 0) --------------------------------------
+	kit:floor("AtriumFloor", -40, -40, 40, 40, "HqFloorStone", 0, 0.3)
+	kit:floor("BriefingFloor", -40, 40, 40, 90, "HqCarpet", 0, 0.3)
+	kit:floor("LabFloor", -110, 40, -40, 90, "HqEpoxy", 0, 0.3)
+	kit:floor("GamesFloor", 40, 40, 110, 90, "HqFloorWood", 0, 0.3)
+	kit:floor("ArmoryFloor", 40, -40, 110, 40, "HqPolished", 0, 0.3)
+	kit:floor("RangeFloor", -110, -40, -40, 40, "ConcreteDark", 0, 0.3)
+	kit:floor("GalleryFloor", -40, -90, 40, -40, "HqGreyStone", 0, 0.3)
+	kit:floor("LoungeFloor", -110, -90, -40, -40, "HqFloorWoodDark", 0, 0.3)
+	kit:floor("CafeFloor", 40, -90, 110, -40, "HqTiles", 0, 0.3)
+
+	-- ENVELOPPE : baies vitrées au nord, au sud et sur les pignons des pièces de vie -----
+	outerWall(kit, "X", 90, -110, 110, { { -104, -46 }, { 46, 104 } })
+	outerWall(kit, "X", -90, -110, 110, { { -104, -46 }, { 46, 104 } })
+	outerWall(kit, "Z", -110, -90, 90, { { -84, -46 }, { 46, 70 } })
+	outerWall(kit, "Z", 110, -90, 90, {})
+
+	-- CLOISONS ----------------------------------------------------------------------------
+	-- Atrium (double hauteur jusqu'à la verrière)
+	partition(kit, "X", 40, -40, 40, ATRIUM_CEILING, { -14, 14 })
+	partition(kit, "X", -40, -40, 40, ATRIUM_CEILING, { -14, 14 })
+	partition(kit, "Z", -40, -40, 40, ATRIUM_CEILING, { -12, 12 })
+	partition(kit, "Z", 40, -40, 40, ATRIUM_CEILING, { -12, 12 })
+	-- Galerie (haute) / salon et café
+	partition(kit, "Z", -40, -90, -40, GALLERY_CEILING, { -70, -56 })
+	partition(kit, "Z", 40, -90, -40, GALLERY_CEILING, { -70, -56 })
+	-- Briefing / laboratoire et salle de jeux
+	partition(kit, "Z", -40, 40, 90, CEILING, { 50, 64 })
+	partition(kit, "Z", 40, 40, 90, CEILING, { 50, 64 })
+	-- Rangée nord et sud des ailes
+	partition(kit, "X", 40, -110, -40, CEILING, nil) -- stand de tir | laboratoire (fermé)
+	partition(kit, "X", 40, 40, 110, CEILING, { 54, 66 }) -- armurerie | salle de jeux
+	partition(kit, "X", -40, -110, -40, CEILING, nil) -- stand de tir | salon (fermé)
+	partition(kit, "X", -40, 40, 110, CEILING, { 54, 66 }) -- armurerie | café
+
+	-- PLAFONDS ----------------------------------------------------------------------------
+	for _, room in
+		{
+			{ -40, 40, 40, 90 },
+			{ -110, 40, -40, 90 },
+			{ 40, 40, 110, 90 },
+			{ 40, -40, 110, 40 },
+			{ -110, -40, -40, 40 },
+			{ -110, -90, -40, -40 },
+			{ 40, -90, 110, -40 },
+		}
+	do
+		kit:ceiling(room[1], room[2], room[3], room[4], CEILING, "HqCeiling")
 	end
-	kit:box("CoreBase", -6, 0, -6, 6, 1.2, 6, "HullLight")
-	kit:box("AetherCore", -2.5, 1.2, -2.5, 2.5, 46, 2.5, "Monolith")
-	for index, y in { 8, 18, 28, 38 } do
-		local ring = kit:box("CoreRing" .. index, -3.2, y, -3.2, 3.2, y + 0.4, 3.2, "NeonCyan", "Trim")
-		ring.collide = false
+	kit:ceiling(-40, -90, 40, -40, GALLERY_CEILING, "HqCeiling")
+	-- Verrière de l'atrium : vitrage collidable (le soleil passe), résille d'acier
+	for index = 0, 7 do
+		for row = 0, 7 do
+			local x1, z1 = -40 + index * 10, -40 + row * 10
+			kit:box("Skylight", x1, ATRIUM_CEILING, z1, x1 + 10, ATRIUM_CEILING + 0.3, z1 + 10, "HqGlass", "Ceiling")
+		end
 	end
-	kit:light(0, 24, 0, CYAN, 3, 60, false)
-	kit:sign("AETHER STRIKE", 0, 52, 0, 34, 6, "-Z", CYAN)
+	for offset = -40, 40, 10 do
+		kit:decorBox(
+			"SkylightBeam",
+			offset - 0.2,
+			ATRIUM_CEILING - 0.8,
+			-40,
+			offset + 0.2,
+			ATRIUM_CEILING,
+			40,
+			"HqSteelWhite"
+		)
+		kit:decorBox(
+			"SkylightBeam",
+			-40,
+			ATRIUM_CEILING - 0.8,
+			offset - 0.2,
+			40,
+			ATRIUM_CEILING,
+			offset + 0.2,
+			"HqSteelWhite"
+		)
+	end
+
+	-- ATRIUM : sculpture, bassin, apparitions, borne ----------------------------------------
+	-- Bassin carré (margelle assise), obélisque de pierre noire au centre.
+	kit:box("PoolFloor", -8, 0, -8, 8, 0.1, 8, "HqDarkStone", "Props")
+	for _, spec in
+		{
+			{ -9, -9, 9, -8 },
+			{ -9, 8, 9, 9 },
+			{ -9, -8, -8, 8 },
+			{ 8, -8, 9, 8 },
+		}
+	do
+		kit:box("PoolRim", spec[1], 0, spec[2], spec[3], 1.5, spec[4], "HqFloorStone", "Props")
+	end
+	kit:decorBox("PoolWater", -8, 0.9, -8, 8, 1, 8, "Water")
+	kit:box("SculptureBase", -2.6, 0, -2.6, 2.6, 2.2, 2.6, "HqConcrete", "Props")
+	kit:box("AetherCore", -1.4, 2.2, -1.4, 1.4, 24, 1.4, "Monolith", "Props")
+	kit:decorBox("CoreLine", -1.45, 22.5, -1.45, 1.45, 22.7, 1.45, "NeonWhite", {
+		color = Color3.fromRGB(150, 225, 255),
+	})
 	for index = 0, 7 do
 		local angle = index / 8 * math.pi * 2
-		local x, z = math.cos(angle) * 14, math.sin(angle) * 14
-		kit:spawn("Hub", x, z, 0, 0)
+		kit:spawn("Hub", math.cos(angle) * 14, math.sin(angle) * 14, 0, 0)
 	end
-	-- Bancs et bornes (lieu de vie)
-	for _, sx in { 1, -1 } do
-		kit:cover(sx * 22 - 4, 22, sx * 22 + 4, 24, 1.6, "HullLight")
-		kit:cover(sx * 22 - 4, -24, sx * 22 + 4, -22, 1.6, "HullLight")
-		kit:lamp(sx * 34, 34, 10, WHITE)
-		kit:lamp(sx * 34, -34, 10, WHITE)
+	kiosk(kit, "Play", "JOUER", 0, -20, "-Z")
+	lettering(kit, "AETHER STRIKE", 0, 23, 39, 34, 4, "-Z", SIGN_BRASS)
+	lettering(kit, "SALLE DE BRIEFING · CLASSÉ", 0, 11.6, 39.15, 26, 1.6, "-Z", SIGN_INK)
+	lettering(kit, "GALERIE DES CHAMPIONS", 0, 11.6, -39.15, 24, 1.6, "+Z", SIGN_INK)
+	lettering(kit, "STAND DE TIR", -39.15, 11.6, 0, 14, 1.6, "+X", SIGN_INK)
+	lettering(kit, "ARMURERIE", 39.15, 11.6, 0, 12, 1.6, "-X", SIGN_INK)
+
+	-- SALLE DE BRIEFING (classé) ------------------------------------------------------------
+	kit:platform("Stage", -26, 70, 26, 86, 1.6, "HqFloorWood")
+	kit:ramp("StageSteps", -8, 66, 8, 70, 0, 1.6, "+Z", "HqFloorWood")
+	kiosk(kit, "Ranked", "CLASSÉ", -14, 76, "-Z")
+	kiosk(kit, "Ranked", "CLASSÉ", 0, 78, "-Z")
+	kiosk(kit, "Ranked", "CLASSÉ", 14, 76, "-Z")
+	for _, prim in kit.prims do
+		local raised = prim.name == "Terminal" or prim.name == "KioskPlinth" or prim.name == "KioskCap"
+		if raised and prim.cframe.Position.Z > 70 then
+			prim.cframe += Vector3.new(0, 1.6, 0)
+		elseif prim.name == "Sign" and prim.cframe.Position.Z > 70 and prim.cframe.Position.Y < 8 then
+			prim.cframe += Vector3.new(0, 1.6, 0)
+		end
 	end
-	kit:terminal("Play", "JOUER", 0, -20, "-Z", CYAN)
+	local screenSign = kit:sign("CLASSÉ  ·  SAISON 1", 0, 9, 88.7, 40, 9, "-Z", SCREEN_TEXT)
+	local screenSpec = screenSign.sign
+	if screenSpec then
+		screenSpec.background = Color3.fromRGB(16, 30, 52)
+	end
+	screenSign.query = false
 
-	-- Séparations des zones (murs bas + portiques)
-	kit:wallDoor("PlazaNorth", -40, 40, 40, 40, 12, -14, 14, 10, "HullLight", 1)
-	kit:wallDoor("PlazaSouth", -40, -40, 40, -40, 12, -14, 14, 10, "HullLight", 1)
-	kit:wallDoor("PlazaWest", -40, -40, -40, 40, 12, -12, 12, 10, "HullLight", 1)
-	kit:wallDoor("PlazaEast", 40, -40, 40, 40, 12, -12, 12, 10, "HullLight", 1)
+	-- LABORATOIRE (parties personnalisées) ---------------------------------------------------
+	kiosk(kit, "Custom", "PERSONNALISÉ", -76, 70, "-Z")
+	lettering(kit, "LABORATOIRE", -39.15, 11.6, 57, 12, 1.4, "+X", SIGN_INK)
 
-	-- RANKED TERMINAL (nord) ------------------------------------------------------------
-	kit:floor("RankedFloor", -40, 40, 40, 90, "Marble", 0.15, 0.3)
-	kit:platform("RankedDais", -24, 62, 24, 84, 2, "HullLight")
-	kit:ramp("RankedSteps", -10, 54, 10, 62, 0.15, 2, "+Z", "HullLight")
-	kit:terminal("Ranked", "CLASSÉ", -14, 74, "-Z", AMBER)
-	kit:terminal("Ranked", "CLASSÉ", 0, 76, "-Z", AMBER)
-	kit:terminal("Ranked", "CLASSÉ", 14, 74, "-Z", AMBER)
-	kit:sign("RANKED", 0, 18, 89, 30, 6, "-Z", AMBER)
-	kit:trim(-24, 61.8, 24, 62, 2.05, AMBER, 0.2)
-	kit:light(0, 14, 72, AMBER, 2, 40, false)
+	-- SALLE DE JEUX (casual) ----------------------------------------------------------------
+	kiosk(kit, "Casual", "CASUAL", 76, 70, "-Z")
+	lettering(kit, "SALLE DE JEUX", 39.15, 11.6, 57, 12, 1.4, "-X", SIGN_INK)
 
-	-- CUSTOM LAB (nord-ouest) ------------------------------------------------------------
-	kit:wallDoor("LabEast", -40, 40, -40, 90, 12, 50, 64, 10, "HullLight", 1)
-	kit:floor("LabFloor", -110, 40, -40, 90, "FloorMetal", 0.15, 0.3)
-	kit:terminal("Custom", "PERSONNALISÉ", -76, 70, "-Z", MAGENTA)
-	kit:box("HoloTable", -84, 0, 52, -68, 3, 60, "MetalDark")
-	kit:trim(-84, 52, -68, 60, 3.05, MAGENTA, 0.1)
-	kit:sign("CUSTOM LAB", -76, 16, 89, 26, 5, "-Z", MAGENTA)
-	kit:light(-76, 12, 64, MAGENTA, 2, 36, false)
-
-	-- CASUAL BAY (nord-est) --------------------------------------------------------------
-	kit:wallDoor("BayWest", 40, 40, 40, 90, 12, 50, 64, 10, "HullLight", 1)
-	kit:floor("BayFloor", 40, 40, 110, 90, "FloorMetal", 0.15, 0.3)
-	kit:terminal("Casual", "CASUAL", 76, 70, "-Z", GREEN)
-	kit:cover(62, 52, 90, 54, 1.6, "HullLight")
-	kit:sign("CASUAL BAY", 76, 16, 89, 26, 5, "-Z", GREEN)
-	kit:light(76, 12, 64, GREEN, 2, 36, false)
-
-	-- ARMORY (est) ------------------------------------------------------------------------
-	kit:floor("ArmoryFloor", 40, -40, 110, 40, "Marble", 0.15, 0.3)
-	kit:terminal("Armory", "ARMURERIE", 60, 0, "-X", CYAN)
+	-- ARMURERIE : 14 vitrines d'armes (affichage des skins par HubWorld) --------------------
+	kiosk(kit, "Armory", "ARMURERIE", 60, 0, "-X")
 	for row, x in { 76, 96 } do
 		for index = 0, 6 do
 			local z = -30 + index * 10
-			local pedestal = kit:box("Pedestal", x - 2, 0, z - 2, x + 2, 3, z + 2, "HullLight", "Props")
+			local pedestal = kit:box("Pedestal", x - 2, 0, z - 2, x + 2, 3, z + 2, "HqDarkStone", "Props")
 			table.insert(pedestal.tags, "WeaponPedestal")
 			pedestal.attributes.Slot = (row - 1) * 7 + index + 1
-			kit:trim(x - 2, z - 2.05, x + 2, z - 1.95, 3.05, CYAN, 0.1)
 		end
 	end
-	kit:sign("ARMORY", 109, 16, 0, 30, 6, "-X", CYAN)
-	kit:light(86, 14, 0, WHITE, 2.5, 50, true)
 
-	-- TRAINING RANGE (ouest) ------------------------------------------------------------
-	kit:floor("RangeFloor", -110, -40, -40, 40, "Floor", 0.15, 0.3)
+	-- STAND DE TIR (entraînement) : le joueur tire vers -X ------------------------------------
 	kit:zone("TrainingZone", "TrainingZone", -110, -2, -40, -40.5, 30, 40, nil)
-	kit:terminal("Training", "ENTRAÎNEMENT", -46, 30, "+X", GREEN)
-	-- Box de tir (le joueur tire vers -X)
+	kiosk(kit, "Training", "ENTRAÎNEMENT", -46, 30, "+X")
 	for index, z in { -26, -14, -2, 10 } do
-		kit:cover(-50, z - 5, -48, z + 5, 3.2, "MetalDark")
-		kit:trim(-50, z - 5, -48, z + 5, 3.25, GREEN, 0.1)
+		kit:cover(-50, z - 5, -48, z + 5, 3.2, "HqWalnut")
 		local lane =
 			kit:zone("BotAnchor", "LaneAnchor", -96, 0, z - 1, -94, 4, z + 1, { Kind = "Static", Lane = index })
 		lane.attributes.Distances = "15,30,45"
 	end
 	for _, z in { -20, -8, 4 } do
-		kit:wall("LaneDivider", -94, z, -50, z, 1.2, "Grate", 0.4)
+		kit:wall("LaneDivider", -94, z, -54, z, 1.2, "HqConcrete", 0.4)
 	end
-	for _, info in { { x = -63, label = "15" }, { x = -78, label = "30" }, { x = -93, label = "45" } } do
-		kit:sign(info.label, info.x, 7, -32, 4, 2, "+Z", GREEN)
-	end
-	-- Arène de tracking (bots mobiles)
-	kit:box("TrackWall", -108, 0, 18, -60, 10, 20, "MetalDark")
+	kit:box("TrackWall", -108, 0, 18, -60, 10, 20, "HqConcrete")
 	kit:zone("BotAnchor", "StrafeAnchor", -98, 0, 26, -70, 4, 36, { Kind = "Strafe", Lane = 5 })
-	kit:crate(-86, 24, 0, 4, "Crate")
-	kit:crate(-74, 34)
-	kit:sign("TRAINING RANGE", -109, 14, 0, 30, 5, "+X", GREEN)
-	kit:light(-75, 16, -6, WHITE, 2.4, 60, true)
+	-- Butte de tir (pare-balles incliné) au fond
+	kit:box("Backstop", -110, 0, -38, -105, 12, 17, "SteelDark")
+	kit:ramp("BackstopSlope", -105, -38, -100, 17, 0, 6, "-X", "Rubber")
+	for _, info in { { x = -64, label = "15" }, { x = -79, label = "30" }, { x = -94, label = "45" } } do
+		local plate = kit:sign(info.label, info.x, 13.5, -30, 3, 1.6, "+X", Color3.fromRGB(250, 214, 80))
+		local spec = plate.sign
+		if spec then
+			spec.plain = true
+		end
+	end
+	lettering(kit, "ZONE DE TIR — PROTECTION AUDITIVE", -84, 7.5, 17.85, 22, 1.4, "-Z", Color3.fromRGB(250, 214, 80))
 
-	-- HALL OF FAME (sud) ------------------------------------------------------------------
-	kit:floor("HallFloor", -40, -90, 40, -40, "Marble", 0.15, 0.3)
+	-- GALERIE DES CHAMPIONS (classement, missions, pass, réglages) --------------------------
 	local board = kit:box("LeaderboardWall", -36, 2, -88.4, 36, 26, -87.6, "Monolith", "Props")
 	table.insert(board.tags, "LeaderboardDisplay")
-	kit:trim(-36, -87.5, 36, -87.4, 26.2, AMBER, 0.3)
-	kit:terminal("Leaderboard", "CLASSEMENT", -18, -70, "+Z", AMBER)
-	kit:terminal("Missions", "MISSIONS", 0, -66, "+Z", CYAN)
-	kit:terminal("Pass", "AETHER PASS", 18, -70, "+Z", MAGENTA)
-	kit:terminal("Settings", "RÉGLAGES", 30, -50, "-X", WHITE)
-	kit:sign("HALL OF FAME", 0, 30, -87, 30, 4, "+Z", AMBER)
-	kit:light(0, 18, -70, AMBER, 2, 46, false)
+	kiosk(kit, "Leaderboard", "CLASSEMENT", -18, -70, "+Z")
+	kiosk(kit, "Missions", "MISSIONS", 0, -66, "+Z")
+	kiosk(kit, "Pass", "AETHER PASS", 18, -70, "+Z")
+	kiosk(kit, "Settings", "RÉGLAGES", 30, -50, "-X")
 
-	-- LOUNGES (sud-ouest / sud-est)
-	kit:wallDoor("LoungeW", -40, -90, -40, -40, 12, -70, -56, 10, "HullLight", 1)
-	kit:wallDoor("LoungeE", 40, -90, 40, -40, 12, -70, -56, 10, "HullLight", 1)
-	for _, sx in { 1, -1 } do
-		kit:floor("LoungeFloor", sx * 40, -90, sx * 110, -40, "FloorTile", 0.15, 0.3)
-		kit:cover(sx * 60, -76, sx * 90, -72, 1.6, "HullLight")
-		kit:cover(sx * 60, -58, sx * 90, -54, 1.6, "HullLight")
-		kit:light(sx * 75, 12, -65, if sx > 0 then CYAN else MAGENTA, 1.6, 40, false)
-	end
-	kit:terminal("Play", "JOUER", -75, -46, "-Z", CYAN)
-	kit:terminal("Play", "JOUER", 75, -46, "-Z", CYAN)
+	-- SALON (bibliothèque) et CAFÉ -----------------------------------------------------------
+	kiosk(kit, "Play", "JOUER", -75, -46, "-Z")
+	kiosk(kit, "Play", "JOUER", 75, -46, "-Z")
+	lettering(kit, "SALON", -39.15, 11.6, -63, 8, 1.4, "+X", SIGN_INK)
+	lettering(kit, "CAFÉ", 39.15, 11.6, -63, 6, 1.4, "-X", SIGN_INK)
 
-	-- Callouts (affichés en haut de l'écran dans le hub)
-	kit:callout("PLAZA", -40, -40, 40, 40)
-	kit:callout("RANKED TERMINAL", -40, 40, 40, 90)
-	kit:callout("CUSTOM LAB", -110, 40, -40, 90)
-	kit:callout("CASUAL BAY", 40, 40, 110, 90)
-	kit:callout("ARMORY", 40, -40, 110, 40)
-	kit:callout("TRAINING RANGE", -110, -40, -40, 40)
-	kit:callout("HALL OF FAME", -40, -90, 40, -40)
-	kit:callout("LOUNGE", -110, -90, -40, -40)
-	kit:callout("LOUNGE", 40, -90, 110, -40)
+	-- Callouts (nom de la pièce en haut de l'écran) ------------------------------------------
+	kit:callout("ATRIUM", -40, -40, 40, 40)
+	kit:callout("SALLE DE BRIEFING", -40, 40, 40, 90)
+	kit:callout("LABORATOIRE", -110, 40, -40, 90)
+	kit:callout("SALLE DE JEUX", 40, 40, 110, 90)
+	kit:callout("ARMURERIE", 40, -40, 110, 40)
+	kit:callout("STAND DE TIR", -110, -40, -40, 40)
+	kit:callout("GALERIE DES CHAMPIONS", -40, -90, 40, -40)
+	kit:callout("SALON", -110, -90, -40, -40)
+	kit:callout("CAFÉ", 40, -90, 110, -40)
 
-	-- Accent de couleur : la marque de chaque zone au plafond du portique
-	kit:trim(-14, 40, 14, 40.3, 10.2, AMBER, 0.3)
-	kit:trim(-40.3, -12, -40, 12, 10.2, GREEN, 0.3)
-	kit:trim(40, -12, 40.3, 12, 10.2, CYAN, 0.3)
-	kit:trim(-14, -40.3, 14, -40, 10.2, AMBER, 0.3)
-	kit:light(0, 9, 40, AMBER, 1, 16, false)
-	kit:light(-40, 9, 0, GREEN, 1, 16, false)
-	kit:light(40, 9, 0, CYAN, 1, 16, false)
-	kit:light(0, 9, -40, RED, 0.6, 12, false)
-
-	-- Habillage (mégapole, charpente, salons, zones) : Maps/Dressing/Hub
+	-- Mobilier, luminaires et ville : Maps/Dressing/Hub
 	dress(kit)
 end
 
@@ -197,8 +474,10 @@ return {
 	id = "hub",
 	build = build,
 	intro = {
-		CFrame.lookAt(Vector3.new(0, 60, -110), Vector3.new(0, 20, 0)),
-		CFrame.lookAt(Vector3.new(30, 18, -20), Vector3.new(0, 30, 0)),
+		CFrame.lookAt(Vector3.new(-22, 7, -36), Vector3.new(6, 9, 10)),
+		CFrame.lookAt(Vector3.new(58, 7, -44), Vector3.new(96, 4, -72)),
+		CFrame.lookAt(Vector3.new(-48, 8, -44), Vector3.new(-92, 4, -76)),
+		CFrame.lookAt(Vector3.new(0, 7, 44), Vector3.new(0, 7, 88)),
 	},
 	overview = CFrame.lookAt(Vector3.new(0, 200, -120), Vector3.new(0, 0, 0)),
 }

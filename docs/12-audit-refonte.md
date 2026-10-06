@@ -164,7 +164,22 @@ nuages, particules) :
 - Interface : contraste de `textFaint`, `ReducedMotionEnabled`, `PreferredTransparency`,
   zone sûre des téléphones pour les éléments ancrés aux bords.
 
-### 6.4 Reste à faire
+### 6.4 Deuxième passe : retours de jeu en Studio
+
+| Retour | Réponse | Où |
+|---|---|---|
+| « Le hub est moche, que du néon, aucun vrai mobilier » | hub reconstruit en vrai bâtiment de jour (AETHER HQ) : 9 pièces meublées, baies vitrées sur la ville, atrium sous verrière ; 3 176 parts, 40 lumières (0 ombrée), 126 néons au lieu de ~600 | `Blueprints/Hub`, `Dressing/Hub`, `Maps/Furniture`, [04-hub.md](04-hub.md) |
+| « On ne peut pas courir avec Maj » | sprint sur Maj (vers l'avant, arme baissée, tir/visée l'interrompent), marche silencieuse sur Alt, migration des touches des profils existants | `MovementController`, `Rules/Footsteps`, [06-movement.md](06-movement.md) |
+| « Je veux voir mon propre skin Roblox » | avatar du joueur (échelles fixes, gros accessoires retirés en match), bras du viewmodel à sa couleur | `CharacterService`, `Rules/AvatarRules` |
+| « Le HUD est beaucoup trop moche » | HUD refait (Builder Sans, plaques d'ombre sans cadre, barres segmentées, cartouches, pastilles) ; aperçu hors Studio | `UI/HudWidgets`, `tools/ui_preview.luau`, `tools/render_ui.py`, [08-hud.md](08-hud.md) |
+| « Il faut un truc pour régler la sensibilité » | options rapides partout (P / engrenage), sensibilité en premier : curseur logarithmique, saisie exacte, pas fins | `OptionsController`, `UI.slider` |
+| « Le son des tirs est horrible et trop fort » | plus de tonnerre ni de roquette aiguë, coupe des traînées, égaliseur, compresseur et limiteur, volumes ÷ 2 | `Config/Sounds`, `AudioController` |
+
+Limite connue : les sons restent des échantillons intégrés au client Roblox (aucun asset
+téléchargeable depuis cet environnement). Un vrai pack de tirs = coller des
+`rbxassetid://` dans `Shared/Config/Sounds.luau`.
+
+### 6.5 Reste à faire
 
 Voir le rapport final de la refonte et `docs/11-roadmap.md` : play-tests en Studio
 (ressenti, lisibilité de la météo, niveau sonore des ambiances), production des assets
