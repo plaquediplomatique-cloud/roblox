@@ -1264,6 +1264,19 @@ end
 -- Construction
 ---------------------------------------------------------------------------------------------
 
+--[[ Mobile : déplace un bloc du HUD hors des boutons tactiles, un peu plus petit, sans ombre. ]]
+local function moveForMobile(parent: Instance, root: Frame, shadowName: string, anchor: Vector2, position: UDim2)
+	root.AnchorPoint = anchor
+	root.Position = position
+	local scale = Instance.new("UIScale")
+	scale.Scale = 0.8
+	scale.Parent = root
+	local shadow = parent:FindFirstChild(shadowName)
+	if shadow and shadow:IsA("GuiObject") then
+		shadow.Visible = false
+	end
+end
+
 local function buildHealth(parent: Instance)
 	local vitals = HudWidgets.vitals(parent)
 	healthText = vitals.health
@@ -1272,12 +1285,26 @@ local function buildHealth(parent: Instance)
 	armorBar = vitals.armorBar
 	-- Portrait : la tête de l'avatar Roblox du joueur (miniature servie par Roblox).
 	vitals.portrait.Image = ("rbxthumb://type=AvatarHeadShot&id=%d&w=150&h=150"):format(math.max(player.UserId, 1))
+	if UI.isMobile() then
+		-- Le joystick dynamique occupe le bas-gauche : vie et bouclier montent sous le bouton
+		-- MENU, hors de la zone du pouce (skill roblox-mobile-playtest).
+		moveForMobile(parent, vitals.root, "VitalsShadow", Vector2.new(0, 0), UDim2.new(0, 24, 0, 150))
+	end
 end
 
 local function buildAmmo(parent: Instance)
 	ammoWidget = HudWidgets.ammo(parent)
 	ammoScale = Instance.new("UIScale")
 	ammoScale.Parent = ammoWidget.mag
+	if UI.isMobile() then
+		-- VISER, SAUT et TIR occupent le bas-droit : les munitions passent sous le killfeed ;
+		-- la barre d'armes est masquée (le bouton ARME change d'arme sur mobile).
+		moveForMobile(parent, ammoWidget.root, "AmmoShadow", Vector2.new(1, 0), UDim2.new(1, -96, 0, 240))
+		local bar = parent:FindFirstChild("WeaponBar")
+		if bar and bar:IsA("GuiObject") then
+			bar.Visible = false
+		end
+	end
 end
 
 local function buildMatchBar(parent: Instance)
